@@ -1,7 +1,4 @@
-"""POST /checks/run: duplicate, orphan and zone, then storage (lane:ai, S4-14).
-
-Until #38 and #39 land, the checks find nothing and store_run returns the fixture.
-"""
+"""POST /checks/run: duplicate, orphan and zone, then storage (lane:ai, S4-14)."""
 
 import psycopg
 
