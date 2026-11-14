@@ -2,22 +2,16 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Clock,
-  LoaderCircle,
-  MousePointerClick,
-  Play,
-  ShieldCheck,
-} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { MousePointerClick, ShieldCheck } from "lucide-react";
 import { cn } from "cn";
 import { PageHeader, card } from "@/components/page-header";
 import { QueryStates } from "@/components/query-states";
+import { RunChecks, useLatestRun } from "@/components/run-checks";
 import { StatCard } from "@/components/stat-card";
 import { StatusBadge } from "@/components/status-badge";
-import { toast } from "@/components/toast";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { apiGet, apiPost, type Schemas } from "@/lib/api";
+import { buttonVariants } from "@/components/ui/button";
+import { apiGet, type Schemas } from "@/lib/api";
 import {
   CHECK_ICONS,
   CHECK_LABELS,
@@ -29,8 +23,11 @@ import {
 type Finding = Schemas["Finding"];
 type CheckRun = Schemas["CheckRunResult"];
 
-// S4-17: the checks S4 shows, in order. S5 adds "ccc".
-const CHECK_ORDER: Finding["check"][] = ["duplicate", "orphan", "zone"];
+// S4-17, S5-15: the checks shown, in order.
+const CHECK_ORDER: Finding["check"][] = ["duplicate", "orphan", "ccc", "zone"];
+
+const unitOf = (check: Finding["check"]) =>
+  check === "duplicate" || check === "ccc" ? "pairs" : "PPAs";
 
 const NO_BARANGAY = "No barangay";
 
@@ -44,11 +41,6 @@ const CHECK_HELP: Record<Finding["check"], string> = {
   ccc: "Two projects in the same place that may work against each other.",
 };
 
-const ranAt = new Intl.DateTimeFormat("en-PH", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
-
 /** "Upland road → Farm roads" for an orphan's suggested parent, "A vs B" otherwise. */
 function itemTitle(f: Finding): string {
   const a = f.ppa_a.title ?? "Untitled PPA";
@@ -58,26 +50,7 @@ function itemTitle(f: Finding): string {
 }
 
 export default function FindingsPage() {
-  const queryClient = useQueryClient();
-  const latest = useQuery({
-    queryKey: ["checks", "latest"],
-    queryFn: () => apiGet<CheckRun | null>("/checks/latest"),
-  });
-  const run = useMutation({
-    mutationFn: () => apiPost<CheckRun>("/checks/run"),
-    onSuccess: (result) => {
-      queryClient.setQueryData(["checks", "latest"], result);
-      const found = result.counts.reduce((sum, c) => sum + c.found, 0);
-      toast.success(
-        "Checks finished",
-        found === 0
-          ? "No issues found across your confirmed plans."
-          : `${found} ${found === 1 ? "finding" : "findings"} to review.`,
-      );
-      return queryClient.invalidateQueries({ queryKey: ["findings"] });
-    },
-    onError: (e) => toast.error("Couldn't run checks", e.message),
-  });
+  const latest = useLatestRun();
 
   return (
     <div className="flex flex-col gap-6">
@@ -85,57 +58,7 @@ export default function FindingsPage() {
         title="Findings"
         description="PlanTrace compares your confirmed plans and lists anything that doesn't line up. Review each one: confirm it if it's a real problem, or reject it if it isn't."
       />
-      <div
-        className={`${card} relative flex animate-fade-up flex-wrap items-center justify-between gap-4 overflow-hidden bg-ink p-5 text-ink-foreground sm:p-6`}
-      >
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full bg-primary/40 blur-3xl"
-        />
-        <div className="relative flex items-center gap-4">
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white/10">
-            <ShieldCheck aria-hidden className="size-6" />
-          </span>
-          <div className="flex flex-col gap-0.5">
-            <p className="font-heading text-lg font-bold">
-              Check every confirmed plan at once
-            </p>
-            {latest.data ? (
-              <p className="flex items-center gap-1.5 text-sm text-ink-foreground/75">
-                <Clock aria-hidden className="size-4" />
-                Last run {ranAt.format(new Date(latest.data.ran_at))}
-              </p>
-            ) : (
-              <p className="text-sm text-ink-foreground/75">
-                Duplicates, orphans and zone conflicts, each with its source.
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="relative flex flex-col items-end gap-2">
-          <Button
-            size="lg"
-            disabled={run.isPending}
-            onClick={() => run.mutate()}
-            className="bg-white text-ink shadow-none hover:bg-white/90"
-          >
-            {run.isPending ? (
-              <LoaderCircle aria-hidden className="animate-spin" />
-            ) : (
-              <Play aria-hidden />
-            )}
-            {run.isPending ? "Running checks…" : "Run checks"}
-          </Button>
-        </div>
-      </div>
-      {run.isError && (
-        <p
-          role="alert"
-          className="rounded-2xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-        >
-          Couldn&apos;t run checks: {run.error.message}
-        </p>
-      )}
+      <RunChecks />
       <QueryStates
         query={latest}
         what="the last run"
@@ -176,7 +99,7 @@ function FindingsBody({ counts }: { counts: CheckRun["counts"] }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
         {CHECK_ORDER.map((check, i) => {
           const count = counts.find((c) => c.check === check);
           return (
@@ -184,7 +107,7 @@ function FindingsBody({ counts }: { counts: CheckRun["counts"] }) {
               key={check}
               label={CHECK_LABELS[check]}
               value={count?.found ?? 0}
-              hint={`${count?.checked ?? 0} ${check === "duplicate" ? "pairs" : "PPAs"} checked`}
+              hint={`${count?.checked ?? 0} ${unitOf(check)} checked`}
               icon={CHECK_ICONS[check]}
               tone={(count?.found ?? 0) > 0 ? "warning" : "success"}
               delay={i * 60}
@@ -289,7 +212,7 @@ function CheckGroup({
     const name = f.barangay === null ? NO_BARANGAY : barangayName(f.barangay);
     groups.set(name, [...(groups.get(name) ?? []), f]);
   }
-  const unit = check === "duplicate" ? "pairs" : "PPAs";
+  const unit = unitOf(check);
   const found = count?.found ?? findings.length;
   const Icon = CHECK_ICONS[check];
 
@@ -353,6 +276,7 @@ function CheckGroup({
                           selected && "bg-white text-ink ring-white/0",
                         )}
                       >
+                        {f.check === "ccc" && `${f.verdict}, `}
                         {STATUS_LABELS[f.status]}
                       </StatusBadge>
                     </button>

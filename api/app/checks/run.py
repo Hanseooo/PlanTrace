@@ -1,19 +1,18 @@
-"""POST /checks/run: duplicate, orphan and zone, then storage (lane:ai, S4-14)."""
+"""POST /checks/run: duplicate, orphan, CCC and zone, then storage (lane:ai, S4-14)."""
 
 import psycopg
 
-from app.checks import findings, orphan, rules
-from app.models import CheckCount, CheckRunResult
+from app.checks import ccc, findings, orphan, rules
+from app.models import CheckRunResult
 
 
 def run_checks(conn: psycopg.Connection) -> CheckRunResult:
     duplicate_count, duplicates = rules.find_duplicates(conn)
     orphan_count, orphans = orphan.find_orphans(conn)
     zone_count, zones = rules.find_zone_conflicts(conn)
-    # S5 replaces this with the CCC check.
-    ccc_count = CheckCount(check="ccc", checked=0, found=0)
+    ccc_count, ccc_findings = ccc.find_ccc(conn)
     return findings.store_run(
         conn,
         [duplicate_count, orphan_count, ccc_count, zone_count],
-        duplicates + orphans + zones,
+        duplicates + orphans + ccc_findings + zones,
     )

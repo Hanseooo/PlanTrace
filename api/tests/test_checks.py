@@ -110,7 +110,7 @@ def test_run_finds_the_answer_keys_duplicates_and_zone_finding(confirmed: TestCl
     # sector; every barangay has a zone row, so zone checks each (PPA, barangay): 36.
     assert got["duplicate"] == (51, 3)
     assert got["zone"] == (36, 1)
-    assert got["ccc"] == (0, 0)
+    assert got["ccc"] == (49, 0)  # providers fail: every candidate pair is skipped
 
     rule_findings = [f for f in list_findings(confirmed) if f.check in RULE_CHECKS]
     expected = {
@@ -255,3 +255,205 @@ def test_patch_on_an_unknown_finding_is_404(confirmed: TestClient) -> None:
     response = confirmed.patch("/findings/999999", json={"status": "confirmed"})
     assert response.status_code == 404
     assert response.json()["detail"] == "Finding not found"
+
+
+# ---- S5-06 to S5-09: CCC storage, matrix and export (findings inserted without the AI) ----
+
+XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+def ppa_id(plan_type: str, code: str) -> int:
+    with open_test_db() as conn:
+        row = conn.execute(
+            "SELECT p.id FROM ppas p JOIN plans pl ON pl.id = p.plan_id "
+            "WHERE pl.type = %s AND p.code = %s",
+            (plan_type, code),
+        ).fetchone()
+    assert row
+    return row[0]
+
+
+def ccc_finding(a: tuple[str, str], b: tuple[str, str], verdict: str) -> NewFinding:
+    ids = (ppa_id(*a), ppa_id(*b))
+    with open_test_db() as conn:
+        pages = [
+            r[0]
+            for r in conn.execute(
+                "SELECT page_id FROM ppas WHERE id = ANY(%s) ORDER BY id", (list(ids),)
+            )
+        ]
+    return NewFinding(
+        "ccc",
+        ids[0],
+        ids[1],
+        "1199900009",
+        f"{verdict} reason",
+        pages,
+        "ai",
+        verdict,  # type: ignore[arg-type]
+    )
+
+
+CONFLICT = (("CDP", "CDP-01"), ("LDRRMP", "LDRRMP-02"), "Conflict")
+COMPLEMENTARY = (("CDP", "CDP-02"), ("LDRRMP", "LDRRMP-01"), "Complementary")
+TO_REJECT = (("CDP", "CDP-05"), ("LDRRMP", "LDRRMP-03"), "Conflict")
+
+
+def store_ccc(*pairs: tuple[tuple[str, str], tuple[str, str], str]) -> None:
+    with open_test_db() as conn:
+        findings.store_run(
+            conn,
+            [CheckCount(check="ccc", checked=len(pairs), found=0)],
+            [ccc_finding(*p) for p in pairs],
+        )
+
+
+def ccc_ids(client: TestClient, a: str, b: str) -> int:
+    pair = {a, b}
+    found = [
+        f
+        for f in list_findings(client)
+        if f.check == "ccc" and f.ppa_b and {f.ppa_a.code, f.ppa_b.code} == pair
+    ]
+    assert len(found) == 1, found
+    return found[0].id
+
+
+@pytest.fixture
+def ccc_stored(confirmed: TestClient) -> TestClient:
+    store_ccc(CONFLICT, COMPLEMENTARY, TO_REJECT)
+    reject = confirmed.patch(
+        f"/findings/{ccc_ids(confirmed, 'CDP-05', 'LDRRMP-03')}", json={"status": "rejected"}
+    )
+    assert reject.status_code == 200, reject.text
+    return confirmed
+
+
+@needs_db
+def test_findings_list_shows_only_ccc_conflicts(ccc_stored: TestClient) -> None:
+    ccc = [f for f in list_findings(ccc_stored) if f.check == "ccc"]
+    assert sorted((f.ppa_a.code, f.verdict) for f in ccc) == [
+        ("CDP-01", "Conflict"),
+        ("CDP-05", "Conflict"),
+    ]
+
+
+@needs_db
+def test_ccc_matrix_lists_confirmed_ppas_and_every_stored_cell(ccc_stored: TestClient) -> None:
+    matrix = ccc_stored.get("/ccc").json()
+    assert len(matrix["ppas"]) == 28
+    codes = [p["code"] for p in matrix["ppas"]]
+    assert codes[0] == "AIP-01" and codes.index("CDP-01") < codes.index("CDP-02")
+    assert codes.index("CDP-07") < codes.index("LDRRMP-01")
+    assert matrix["ppas"][codes.index("CDP-01")]["plan_type"] == "CDP"
+    cells = {(c["ppa_a"], c["ppa_b"]): (c["verdict"], c["status"]) for c in matrix["cells"]}
+    assert cells == {
+        (ppa_id("CDP", "CDP-01"), ppa_id("LDRRMP", "LDRRMP-02")): ("Conflict", "suggested"),
+        (ppa_id("CDP", "CDP-02"), ppa_id("LDRRMP", "LDRRMP-01")): ("Complementary", "suggested"),
+        (ppa_id("CDP", "CDP-05"), ppa_id("LDRRMP", "LDRRMP-03")): ("Conflict", "rejected"),
+    }
+    assert all(c["page_ids"] and c["reason"] for c in matrix["cells"])
+
+
+@needs_db
+def test_ccc_matrix_before_any_run_has_no_cells(confirmed: TestClient) -> None:
+    assert confirmed.get("/ccc").json()["cells"] == []
+
+
+@needs_db
+def test_ccc_matrix_leaves_out_an_unconfirmed_plan(client: TestClient) -> None:
+    assert len(client.get("/ccc").json()["ppas"]) == 25
+
+
+@needs_db
+def test_rerun_carries_a_ccc_review_only_for_the_same_verdict(confirmed: TestClient) -> None:
+    store_ccc(CONFLICT, COMPLEMENTARY)
+    conflict = ccc_ids(confirmed, "CDP-01", "LDRRMP-02")
+    done = confirmed.patch(f"/findings/{conflict}", json={"status": "confirmed", "note": "Seen"})
+    assert done.status_code == 200, done.text
+
+    store_ccc(CONFLICT, COMPLEMENTARY)
+    kept = by_code(confirmed, "ccc", "CDP-01")
+    assert (kept.status, kept.note) == ("confirmed", "Seen")
+
+    store_ccc((CONFLICT[0], CONFLICT[1], "Compatible"), COMPLEMENTARY)
+    cells = confirmed.get("/ccc").json()["cells"]
+    changed = next(c for c in cells if c["ppa_a"] == ppa_id("CDP", "CDP-01"))
+    assert (changed["verdict"], changed["status"]) == ("Compatible", "suggested")
+    with open_test_db() as conn:
+        row = conn.execute(
+            "SELECT note, reviewed_at FROM findings WHERE ppa_a = %s",
+            (ppa_id("CDP", "CDP-01"),),
+        ).fetchone()
+    assert row == ("Seen", None)
+
+
+def sheet_rows(client: TestClient, name: str) -> list[list[object]]:
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    response = client.get("/ccc/export")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == XLSX
+    assert 'filename="ccc_export.xlsx"' in response.headers["content-disposition"]
+    book = load_workbook(BytesIO(response.content))
+    assert book.sheetnames == ["CCC matrix", "Pairs"]
+    return [list(r) for r in book[name].iter_rows(values_only=True)]
+
+
+CDP_01 = "CDP CDP-01: Socialized housing project, Barangay 9"
+LDRRMP_02 = "LDRRMP LDRRMP-02: Evacuation centre construction"
+
+
+def grid_cell(rows: list[list[object]], row_label: str, col_label: str) -> object:
+    header = next(r for r in rows if r[1:] and col_label in r)
+    line = next(r for r in rows if r[0] == row_label)
+    return line[header.index(col_label)]
+
+
+@needs_db
+def test_export_matrix_marks_suggested_and_blanks_rejected(ccc_stored: TestClient) -> None:
+    rows = sheet_rows(ccc_stored, "CCC matrix")
+    assert rows[0][0] == "City of Sampaguita CCC matrix. Synthetic demo data."
+    assert grid_cell(rows, CDP_01, LDRRMP_02) == "C*"
+    assert grid_cell(rows, LDRRMP_02, CDP_01) == "C*"
+    assert (
+        grid_cell(
+            rows,
+            "CDP CDP-02: Drainage improvement, Barangay 5",
+            "LDRRMP LDRRMP-01: Drainage improvement works, Barangay 5",
+        )
+        == "Cp*"
+    )
+    rejected = [r for r in rows if r[0] and str(r[0]).startswith("CDP CDP-05")][0]
+    assert not any(rejected[1:])
+    assert any(r[0] == "* AI suggestion, not yet reviewed" for r in rows)
+
+    conflict = ccc_ids(ccc_stored, "CDP-01", "LDRRMP-02")
+    ccc_stored.patch(f"/findings/{conflict}", json={"status": "confirmed"})
+    assert grid_cell(sheet_rows(ccc_stored, "CCC matrix"), CDP_01, LDRRMP_02) == "C"
+    ccc_stored.patch(f"/findings/{conflict}", json={"status": "rejected"})
+    assert grid_cell(sheet_rows(ccc_stored, "CCC matrix"), CDP_01, LDRRMP_02) is None
+
+
+@needs_db
+def test_export_pairs_sheet_lists_every_stored_finding(ccc_stored: TestClient) -> None:
+    rows = sheet_rows(ccc_stored, "Pairs")
+    assert rows[0] == ["PPA A", "PPA B", "Verdict", "Status", "Reason", "Pages"]
+    by_a = {r[0]: r for r in rows[1:]}
+    assert len(rows) == 4
+    conflict = by_a[CDP_01]
+    assert conflict[1:5] == [LDRRMP_02, "Conflict", "AI suggestion", "Conflict reason"]
+    assert str(conflict[5]).startswith("CDP p. ") and "; LDRRMP p. " in str(conflict[5])
+    rejected = next(r for r in rows[1:] if str(r[0]).startswith("CDP CDP-05"))
+    assert rejected[3] == "Rejected"
+
+
+@needs_db
+def test_export_before_any_run_has_headers_only(confirmed: TestClient) -> None:
+    pairs = sheet_rows(confirmed, "Pairs")
+    assert pairs == [["PPA A", "PPA B", "Verdict", "Status", "Reason", "Pages"]]
+    rows = sheet_rows(confirmed, "CCC matrix")
+    assert rows[0][0] == "City of Sampaguita CCC matrix. Synthetic demo data."
+    assert grid_cell(rows, CDP_01, LDRRMP_02) is None
