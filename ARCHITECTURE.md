@@ -135,9 +135,9 @@ Every row carries `lgu_psgc` through its plan. Office names, sectors and languag
 | GET | `/chain` | Nodes and edges for the chain view (deferred) |
 | POST | `/ask` | Question in, cited answer out (deferred) |
 
-The schema is `api/app/db/migrations/001_init.sql` (#3); its check constraints use the `models.py` strings. `findings."check"` is a reserved word, so quote it in SQL. `pg_trgm` is enabled.
+The schema is `api/app/db/migrations/001_init.sql` (#3); its check constraints use the `models.py` strings. `findings."check"` is a reserved word, so quote it in SQL. `pg_trgm` is enabled. The migrate command keeps applied file names in `schema_migrations`.
 
 ## Settled in ticket 01
 
 - Test database (D7): pytest reads only `TEST_DATABASE_URL` (a second Supabase project locally, a Postgres service in CI) and skips the database tests when it is unset. The tests drop and recreate its `public` schema.
-- Rejected stays rejected (D5): a reviewed finding is kept on re-run while both PPAs' `updated_at` are older than its `reviewed_at`. A trigger sets `ppas.updated_at` on every update.
+- Rejected stays rejected (D5): a reviewed finding is kept on re-run while both PPAs' `updated_at` are older than its `reviewed_at`. A trigger sets `ppas.updated_at` to `now()` on every update that does not set `updated_at` itself, so writers never touch it (seed scripts may).

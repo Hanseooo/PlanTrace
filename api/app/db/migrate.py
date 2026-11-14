@@ -21,18 +21,28 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 )
 """
 
+SELECT_APPLIED = """
+SELECT version FROM schema_migrations
+"""
+
+INSERT_APPLIED = """
+INSERT INTO schema_migrations (version) VALUES (%s)
+"""
+
 
 def migrate(conn: psycopg.Connection) -> list[str]:
     """Apply every migration not yet in schema_migrations. Returns the files applied."""
     with conn.transaction():
         conn.execute(CREATE_SCHEMA_MIGRATIONS)
-        applied = {row[0] for row in conn.execute("SELECT version FROM schema_migrations")}
+        applied = {row[0] for row in conn.execute(SELECT_APPLIED)}
     # Files are named NNN_name.sql, so name order is number order.
     pending = [p for p in sorted(MIGRATIONS_DIR.glob("*.sql")) if p.name not in applied]
     for path in pending:
         with conn.transaction():
+            # Bytes: psycopg accepts a file's text as a query only as bytes (pyright
+            # LiteralString rule). With no parameters, a multi-statement file runs whole.
             conn.execute(path.read_text(encoding="utf-8").encode())
-            conn.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.name,))
+            conn.execute(INSERT_APPLIED, (path.name,))
     return [p.name for p in pending]
 
 
