@@ -2,7 +2,7 @@
 
 # PlanTrace architecture
 
-2026-11-14. Status: walking skeleton (S0, spec #1) in progress. `api/` serves fixture stubs (#2), migration 001 and the migrate command exist (#3), `web/` shows the journey screens on fixture data (#4, #5), and CI runs the checks (#6). Deploy and the contract-file list are #7. If the code and this file disagree, the code wins: fix this file in the same PR.
+2026-11-14. Status: walking skeleton (S0, spec #1) built and deployed. `api/` serves fixture stubs (#2), migration 001 and the migrate command exist (#3), `web/` shows the journey screens on fixture data (#4, #5), CI runs the checks (#6), and the web app is on Vercel and the api on Render (#7). Contract file paths are in AGENTS.md "Parallel work". If the code and this file disagree, the code wins: fix this file in the same PR.
 
 Product scope and the demo journey are in [PRD.md](PRD.md). How to write the code is in [CODING_STANDARDS.md](CODING_STANDARDS.md).
 
@@ -31,7 +31,7 @@ The web app calls the API directly over HTTPS, with CORS. There is no Next.js pr
 | DB access | psycopg 3, SQL written by hand, numbered `.sql` migrations | Trigram similarity, `tsvector` and arrays are plain SQL. An ORM would need workarounds |
 | AI | Gemini (a current Flash model; check the model list for the ID) through LangChain `with_structured_output`, `.with_fallbacks([OpenRouter model])` | PDF input, JSON matching Pydantic models, fallback in two lines |
 | Files | PyMuPDF (page text), pandas/openpyxl (Excel in, CCC export out) | Page-level citations |
-| Deploy | Vercel (web), Render or Railway (api) | Free tiers. Wake the api 2 minutes before the demo |
+| Deploy | Vercel (web, root `web/`), Render (api, root `api/`, free tier), both from `main` | Render's free tier sleeps: wake the api 2 minutes before the demo. Vercel needs `NEXT_PUBLIC_API_URL` before the build; Render's `CORS_ORIGINS` must list the Vercel origin |
 | Tooling | ruff and pyright (api), ESLint and `tsc` (web), pytest, Playwright | Run by CI on every PR |
 
 **Not used, and why**
@@ -134,6 +134,8 @@ Every row carries `lgu_psgc` through its plan. Office names, sectors and languag
 | GET | `/ccc`, `/ccc/export` | Matrix data, Excel file |
 | GET | `/chain` | Nodes and edges for the chain view (deferred) |
 | POST | `/ask` | Question in, cited answer out (deferred) |
+
+Web routes: `/` redirects to `/plans`; `/plans` (plans list and upload form), `/plans/[id]` (a plan's PPA table), `/findings` (findings list and side-by-side detail), `/ccc` (CCC matrix and export link).
 
 The schema is `api/app/db/migrations/001_init.sql` (#3); its check constraints use the `models.py` strings. `findings."check"` is a reserved word, so quote it in SQL. `pg_trgm` is enabled. The migrate command keeps applied file names in `schema_migrations`.
 

@@ -110,11 +110,11 @@ Full steps: [master spec section 1](plantrace-spec.md#acceptance-journey-the-dem
 
 ## Slices
 
-**Current slice:** S0. Tickets: GitHub Issues on Hanseooo/PlanTrace. S0 spec: [#1](https://github.com/Hanseooo/PlanTrace/issues/1); tickets #2 to #7. #7, the S0 closeout, gates S1 to S6 implementation.
+**Current slice:** S1. Tickets: GitHub Issues on Hanseooo/PlanTrace. S0 is Complete ([#1](https://github.com/Hanseooo/PlanTrace/issues/1)); S1 to S6 implementation is unblocked.
 
 | ID | Outcome | Master spec scope | Depends on | Status | Spec |
 |---|---|---|---|---|---|
-| S0 | Walking skeleton: the deployed app shows every journey screen on `seed/fixtures/`, every endpoint in ARCHITECTURE.md's API table answers, CI runs typecheck, lint, unit tests and the demo smoke | AGENTS.md "Parallel work", RS-01 to RS-03 shells, D3 sector list in the contract, D7 | — | Specced | [#1](https://github.com/Hanseooo/PlanTrace/issues/1) |
+| S0 | Walking skeleton: the deployed app shows every journey screen on `seed/fixtures/`, every endpoint in ARCHITECTURE.md's API table answers, CI runs typecheck, lint, unit tests and the demo smoke | AGENTS.md "Parallel work", RS-01 to RS-03 shells, D3 sector list in the contract, D7 | — | Complete | [#1](https://github.com/Hanseooo/PlanTrace/issues/1); PR [#8](https://github.com/Hanseooo/PlanTrace/pull/8); [CI green](https://github.com/Hanseooo/PlanTrace/actions/runs/43611755202); deployed smoke passed 2026-11-15 on https://plan-trace-gov.vercel.app with api https://plantrace-2a39.onrender.com |
 | S1 | Seeded demo city: one command loads CLUP, CDP, LDRRMP and AIP as confirmed; answer key and the LCCAP PDF exist | US-06 AC-37 to AC-40, D11 | S0 | Outline | — |
 | S2 | Upload and extract: a PDF becomes a plan with draft PPAs (and zones for a CLUP), with failure and retry. Ships `llm.py` (cache, Gemini, OpenRouter) first, since S4 and S5 call it | US-01 AC-01 to AC-09, RS-09, D1, D2, D8, D13 | S0 | Outline | — |
 | S3 | Confirm the PPA table: edit, add, delete, source panel, confirm | US-02 AC-10 to AC-16, RS-05, RS-06, D6 | S0 | Outline | — |
@@ -132,7 +132,7 @@ Full steps: [master spec section 1](plantrace-spec.md#acceptance-journey-the-dem
 | Whether `api/app/plans/` stays in the data lane | S3 ticket lanes | Team decides at ticket 01 (ARCHITECTURE.md) |
 | Move the duplicate and zone SQL checks from the AI lane to the data lane, to unload the AI lane | S4 ticket lanes | Team decides before S4 tickets (lane change in ARCHITECTURE.md) |
 
-**Next:** the data lane posts the D3 sector list on #1, then claim #2 (lane:ai), #3 (lane:data) and #4 (lane:web), which can start in parallel. S1 to S3 specs can be written in parallel by their lane owners while S0 is built.
+**Next:** write S1's spec (`/han-to-spec`), then its tickets. S2 and S3 specs can be written in parallel by their lane owners.
 
 ## Changes
 
@@ -140,3 +140,4 @@ Full steps: [master spec section 1](plantrace-spec.md#acceptance-journey-the-dem
 - 2026-11-14: Team confirmed D1 to D13 as recommended. Master spec marked Ready.
 - 2026-11-14: S0 specced as [#1](https://github.com/Hanseooo/PlanTrace/issues/1). Team decisions: confirmed test seams (demo smoke, endpoint test, migrations on CI Postgres); `/chain` and `/ask` get no stubs, so S0's "every endpoint" means the MVP rows; api deploys on Render. Env contract gains `TEST_DATABASE_URL` (D7 guard).
 - 2026-11-14: S0 broken into #2 to #7, sub-issues of #1 with native blocking links. #7, the closeout, takes over "ticket 01"'s role as the gate for later slices.
+- 2026-11-15: S0 Complete. #2 to #6 merged in PR #8, CI green, deployed smoke green on Vercel and Render, demo database migrated (#7). Accepted open findings from the final review: the export link shows `undefined/ccc/export` when `NEXT_PUBLIC_API_URL` is unset at build; findings show raw `suggested` (the "AI suggestion" label comes with S3 to S5); "Source pages" shows page IDs (links come with S3); `GET /plans/{id}` stub always returns the CLUP. Gaps for S3: no barangay name endpoint, no page text endpoint, nothing sets `findings.reviewed_at` yet.
