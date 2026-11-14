@@ -53,7 +53,11 @@ Change a line here only after telling the team. One line each: choice, because r
   unit tests and the demo smoke on every PR. #2, #3 and #4 start in parallel.
   #7, the closeout, blocks every ticket of S1 to S6.
 - **Contract files**: shared types, schema, mock data, root layout,
-  `package.json` and lockfile, env names. Paths: <listed by #7>.
+  `package.json` and lockfile, env names. Paths: `api/app/models.py`,
+  `api/app/main.py`, `api/app/db/migrations/`, `seed/fixtures/`,
+  `web/src/lib/api-types.ts` (generated), `web/src/app/layout.tsx`,
+  `web/package.json` + `web/package-lock.json`, `api/pyproject.toml` +
+  `api/uv.lock`, `.env.example`.
 - Every later ticket owns one folder, labelled `lane:<folder>` on GitHub.
   Edit outside your folder only in contract files, after telling the team.
 - Claim before starting: assign yourself on GitHub.
