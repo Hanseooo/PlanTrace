@@ -3,6 +3,7 @@ and GET /plans/{id}/ppas (S2-16), GET /barangays and GET /pages/{id} (S3-01, S3-
 the database. The PPA writes and confirm (S3-03 to S3-08) write it: 409 while a plan is
 `extracting` or `failed`, 422 naming a bad field."""
 
+import math
 from typing import Annotated, Any
 
 import psycopg
@@ -15,21 +16,12 @@ from app.models import Barangay, Page, Plan, Ppa, PpaInput
 
 router = APIRouter()
 
-SELECT_PLANS = """
-SELECT id, lgu_psgc, type, title, period_start, period_end, status, error
-FROM plans ORDER BY id
-"""
-SELECT_PLAN = """
-SELECT id, lgu_psgc, type, title, period_start, period_end, status, error
-FROM plans WHERE id = %s
-"""
-SELECT_PPAS = """
-SELECT id, plan_id, code, title, description, office, sector, barangays, cost,
-       year_start, year_end, page_id, status
-FROM ppas WHERE plan_id = %s ORDER BY id
-"""
+PLAN_COLUMNS = "id, lgu_psgc, type, title, period_start, period_end, status, error"
 PPA_COLUMNS = """id, plan_id, code, title, description, office, sector, barangays, cost,
        year_start, year_end, page_id, status"""
+SELECT_PLANS = f"SELECT {PLAN_COLUMNS} FROM plans ORDER BY id"
+SELECT_PLAN = f"SELECT {PLAN_COLUMNS} FROM plans WHERE id = %s"
+SELECT_PPAS = f"SELECT {PPA_COLUMNS} FROM ppas WHERE plan_id = %s ORDER BY id"
 SELECT_PPA = f"SELECT {PPA_COLUMNS} FROM ppas WHERE id = %s"
 INSERT_PPA = f"""
 INSERT INTO ppas (plan_id, code, title, description, office, sector, barangays, cost,
@@ -41,10 +33,7 @@ DELETE_PPA = "DELETE FROM ppas WHERE id = %s"
 SELECT_PAGE_PLAN = "SELECT plan_id FROM pages WHERE id = %s"
 COUNT_PPAS = "SELECT count(*) FROM ppas WHERE plan_id = %s"
 CONFIRM_PPAS = "UPDATE ppas SET status = 'confirmed' WHERE plan_id = %s AND status <> 'confirmed'"
-CONFIRM_PLAN = """
-UPDATE plans SET status = 'confirmed' WHERE id = %s
-RETURNING id, lgu_psgc, type, title, period_start, period_end, status, error
-"""
+CONFIRM_PLAN = f"UPDATE plans SET status = 'confirmed' WHERE id = %s RETURNING {PLAN_COLUMNS}"
 
 # The only columns a PATCH may SET: the SQL never takes a column name from the request.
 EDITABLE = (
@@ -148,6 +137,8 @@ def clean_fields(
             raise HTTPException(422, f"Barangay {unknown[0]} isn't one of the city's barangays")
         fields["barangays"] = codes
     cost = fields.get("cost")
+    if cost is not None and not math.isfinite(cost):
+        raise HTTPException(422, "Cost must be a number")
     if cost is not None and cost < 0:
         raise HTTPException(422, "Cost can't be below 0")
     for name, label in (("year_start", "Start year"), ("year_end", "End year")):

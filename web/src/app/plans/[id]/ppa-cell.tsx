@@ -26,6 +26,9 @@ const SECTORS: Sector[] = [
   "industrial",
 ];
 
+/** The one copy of a plan's PPA list query key. */
+export const ppasKey = (planId: number) => ["plans", String(planId), "ppas"];
+
 /** The city's barangays, for names in cells and the barangay editor (S3-10). */
 export function useBarangays() {
   return useQuery({
@@ -56,7 +59,8 @@ function toDraft(field: PpaField, value: Value): Draft {
 
 function parseYear(text: string, label: string): Parsed {
   if (text === "") return { ok: true, value: null };
-  if (!/^\d{4}$/.test(text))
+  // 1000 to 9999, as the server checks.
+  if (!/^[1-9]\d{3}$/.test(text))
     return { ok: false, error: `${label} must be 4 digits` };
   return { ok: true, value: Number(text) };
 }
@@ -123,13 +127,15 @@ function show(
 
 /**
  * One editable PPA cell (S3-09 to S3-11). It owns open, draft, save, cancel and
- * the in-cell error; `onSaveError` puts "Couldn't save: …" on the row.
+ * the in-cell error; `onSaveError` puts "Couldn't save <label>: …" on the row,
+ * one slot per cell, so another cell's save doesn't clear it.
  */
 export function PpaCell({
   ppa,
   field,
   label,
   rowName,
+  autoOpen = false,
   onSaveError,
 }: {
   ppa: Ppa;
@@ -138,18 +144,23 @@ export function PpaCell({
   label: string;
   /** The row's name for accessible names, e.g. "LCCAP-01". */
   rowName: string;
+  /** Open the editor on mount, e.g. the first cell of a row just added. */
+  autoOpen?: boolean;
   onSaveError: (message: string | null) => void;
 }) {
   const queryClient = useQueryClient();
   const barangays = useBarangays();
   const value = ppa[field] as Value;
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<Draft>("");
+  const [open, setOpen] = useState(autoOpen);
+  const [draft, setDraft] = useState<Draft>(() => toDraft(field, value));
   const [error, setError] = useState<string | null>(null);
   // Enter, Escape or a click on the cell are done; the blur that follows isn't.
   const done = useRef(false);
   const cellButton = useRef<HTMLButtonElement>(null);
   const refocus = useRef(false);
+  // A failed save takes focus back only after Enter; after a blur the user is
+  // already in another editor.
+  const savedViaKey = useRef(false);
   const name = `${label} for ${rowName}`;
 
   const save = useMutation({
@@ -157,14 +168,13 @@ export function PpaCell({
       apiPatch<Ppa>(`/ppas/${ppa.id}`, { [field]: next }),
     onSuccess: (updated) => {
       onSaveError(null);
-      queryClient.setQueryData<Ppa[]>(
-        ["plans", String(ppa.plan_id), "ppas"],
-        (rows) => rows?.map((r) => (r.id === updated.id ? updated : r)),
+      queryClient.setQueryData<Ppa[]>(ppasKey(ppa.plan_id), (rows) =>
+        rows?.map((r) => (r.id === updated.id ? updated : r)),
       );
     },
     onError: (e) => {
-      onSaveError(`Couldn't save: ${e.message}`);
-      cellButton.current?.focus();
+      onSaveError(`Couldn't save ${label}: ${e.message}`);
+      if (savedViaKey.current) cellButton.current?.focus();
     },
   });
 
@@ -199,13 +209,14 @@ export function PpaCell({
     done.current = true;
     refocus.current = viaKey;
     setOpen(false);
+    savedViaKey.current = viaKey;
     if (!same(parsed.value, value)) save.mutate(parsed.value);
   }
 
   // Leaving the editor saves, unless focus moved within it (e.g. a chip).
   function onBlur(e: React.FocusEvent<HTMLElement>) {
     const to = e.relatedTarget as HTMLElement | null;
-    if (to && to.closest(`[data-cell-editor="${name}"]`)) return;
+    if (to && to.closest(`[data-cell-editor="${CSS.escape(name)}"]`)) return;
     commit(false);
   }
 

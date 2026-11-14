@@ -132,12 +132,43 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   await expect(
     page.getByRole("button", { name: "Barangays for LCCAP-03" }),
   ).toHaveText("Barangay 10, Barangay 11");
+  // J3 add and delete (S3-13, S3-14): Add row opens the new row's first editor;
+  // Delete asks first, Cancel keeps the row and returns focus, Delete removes it.
+  const ppaRows = page.getByRole("table").getByRole("row");
+  await page.getByRole("button", { name: "Add row" }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Code for row 4" }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(ppaRows).toHaveCount(5);
+  const deleteRow = page.getByRole("button", { name: "Delete PPA row 4" });
+  await deleteRow.click();
+  const dialog = page.getByRole("alertdialog");
+  await expect(dialog).toContainText("Delete PPA row 4? This can't be undone.");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(deleteRow).toBeFocused();
+  await deleteRow.click();
+  await dialog.getByRole("button", { name: "Delete" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(ppaRows).toHaveCount(4);
+  // J3 confirm (S3-15): the badge replaces the button and the rows are confirmed.
+  await page.getByRole("button", { name: "Confirm plan" }).click();
+  await expect(page.getByText("Confirmed", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Confirm plan" })).toHaveCount(
+    0,
+  );
+  await expect(
+    page
+      .getByRole("row", { name: /LCCAP-01/ })
+      .getByRole("cell", { name: "confirmed", exact: true }),
+  ).toBeVisible();
   await page.getByRole("link", { name: "Back to plans" }).click();
   await expect(page).toHaveURL(/\/plans$/);
   await expect(
     planRows
       .filter({ has: page.getByRole("link", { name: "LCCAP 2026–2030" }) })
-      .getByRole("cell", { name: "Ready to confirm", exact: true }),
+      .getByRole("cell", { name: "Confirmed", exact: true }),
   ).toBeVisible();
 
   // J3: a confirmed plan's PPA table, with an in-app way back to the plans list.
@@ -149,6 +180,11 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   await expect(page).toHaveURL(/\/plans\/2$/);
   await expect(page.getByRole("heading", { name: "PPA table" })).toBeVisible();
   await expectShell(page);
+  // A confirmed plan shows only the badge (S3-15).
+  await expect(page.getByText("Confirmed", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Confirm plan" })).toHaveCount(
+    0,
+  );
   await expect(
     page.getByRole("button", { name: /^Title for / }).filter({
       hasText: "Socialized housing project, Barangay 9",
