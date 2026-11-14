@@ -124,6 +124,8 @@ def test_patch_null_and_blank_clear_a_field(
     ("body", "field"),
     [
         ({"cost": -1}, "Cost"),
+        ({"cost": float("inf")}, "Cost"),
+        ({"cost": float("nan")}, "Cost"),
         ({"year_start": 202}, "Start year"),
         ({"year_end": 2026}, "End year"),  # the stored year_start is 2027
         ({"barangays": ["9999999999"]}, "Barangay"),
