@@ -5,7 +5,10 @@ import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertDialog } from "@base-ui/react/alert-dialog";
+import { ArrowLeft, LoaderCircle, Plus, Trash2 } from "lucide-react";
+import { card } from "@/components/page-header";
 import { QueryStates } from "@/components/query-states";
+import { StatusBadge } from "@/components/status-badge";
 import { SourcePanel, usePage } from "@/components/source-panel";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PpaCell, ppasKey, type PpaField } from "./ppa-cell";
@@ -71,11 +74,18 @@ export default function PlanPage() {
   }, [status, planId, queryClient]);
 
   return (
-    <div className="flex flex-col items-start gap-4">
+    <div className="flex flex-col items-start gap-6">
       <Link href="/plans" className={buttonVariants({ variant: "outline" })}>
+        <ArrowLeft aria-hidden />
         Back to plans
       </Link>
-      <h1 className="text-2xl font-semibold">PPA table</h1>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-bold tracking-tight">PPA table</h1>
+        <p className="text-muted-foreground">
+          Each row is one program, project or activity (PPA) read from the plan.
+          Click any value to fix it; press Enter to save or Escape to undo.
+        </p>
+      </div>
       {isNotFound(plan.error) ? (
         <p role="alert">Plan not found.</p>
       ) : (
@@ -94,29 +104,47 @@ export default function PlanPage() {
 
 function PlanBody({ plan }: { plan: Plan }) {
   return (
-    <div className="flex w-full flex-col items-start gap-4">
-      <p className="text-muted-foreground">{plan.title}</p>
+    <div className="flex w-full flex-col items-start gap-5">
+      <p className="text-xl font-bold">{plan.title}</p>
       {plan.status === "extracting" && (
-        <p role="status">
-          Extracting PPAs. This takes about a minute. You can leave this page.
-        </p>
+        <div
+          className={`${card} flex items-center gap-3 border-primary/30 bg-secondary p-4`}
+        >
+          <LoaderCircle
+            aria-hidden
+            className="size-6 shrink-0 animate-spin text-primary"
+          />
+          <p role="status">
+            Extracting PPAs. This takes about a minute. You can leave this page.
+          </p>
+        </div>
       )}
       {plan.status === "failed" && <FailedPlan plan={plan} />}
       {plan.status === "ready" && (
-        <div className="flex flex-wrap items-center gap-3">
-          <p role="status" className="font-medium">
-            {STATUS_LABELS.ready}
-          </p>
+        <div
+          className={`${card} flex w-full flex-wrap items-center justify-between gap-4 border-warning/30 bg-warning-soft/60 p-4`}
+        >
+          <div className="flex flex-col gap-1">
+            <p role="status">
+              <StatusBadge tone="warning">{STATUS_LABELS.ready}</StatusBadge>
+            </p>
+            <p className="text-sm">
+              Read through the rows below and fix anything wrong. When they look
+              right, confirm the plan so the checks can use it.
+            </p>
+          </div>
           <ConfirmPlan planId={plan.id} />
         </div>
       )}
       {plan.status === "confirmed" && (
-        <p
-          role="status"
-          className="rounded-full border border-primary/40 bg-primary/10 px-3 py-0.5 text-sm font-medium"
-        >
-          Confirmed
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p role="status">
+            <StatusBadge tone="success">Confirmed</StatusBadge>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            This plan is used when you run checks on the Findings page.
+          </p>
+        </div>
       )}
       {(plan.status === "ready" || plan.status === "confirmed") && (
         <PpaTable planId={plan.id} />
@@ -146,6 +174,7 @@ function ConfirmPlan({ planId }: { planId: number }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button
+        size="lg"
         disabled={!ppas.data || noRows || confirm.isPending}
         aria-describedby={noRows ? "confirm-hint" : undefined}
         onClick={() => confirm.mutate()}
@@ -200,9 +229,9 @@ function FailedPlan({ plan }: { plan: Plan }) {
   return (
     <div
       role="alert"
-      className="flex flex-col items-start gap-2 rounded-lg border border-destructive/40 p-4"
+      className="flex flex-col items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4"
     >
-      <p className="font-medium">{STATUS_LABELS.failed}</p>
+      <StatusBadge tone="danger">{STATUS_LABELS.failed}</StatusBadge>
       {plan.error && <p>{plan.error}</p>}
       {file ? (
         <Button
@@ -289,6 +318,7 @@ function PpaTable({ planId }: { planId: number }) {
         disabled={add.isPending}
         onClick={() => add.mutate()}
       >
+        <Plus aria-hidden />
         {add.isPending ? "Adding…" : "Add row"}
       </Button>
       {add.isError && (
@@ -313,35 +343,40 @@ function PpaTable({ planId }: { planId: number }) {
     >
       {(data) => (
         <div className="flex w-full flex-col items-start gap-4 lg:flex-row">
-          <div className="flex w-full min-w-0 flex-1 flex-col items-start gap-3 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b text-muted-foreground">
-                <tr>
-                  {COLUMNS.map((c) => (
-                    <th key={c} className="py-2 pr-4 font-medium">
-                      {c}
-                    </th>
+          <div className="flex w-full min-w-0 flex-1 flex-col items-start gap-3">
+            <div className={`${card} w-full overflow-x-auto`}>
+              <table className="w-full text-left text-sm">
+                <thead className="border-b bg-muted/60 text-muted-foreground">
+                  <tr>
+                    {COLUMNS.map((c) => (
+                      <th
+                        key={c}
+                        className="px-3 py-3 font-bold whitespace-nowrap"
+                      >
+                        {c}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((ppa, i) => (
+                    <PpaRow
+                      key={ppa.id}
+                      ppa={ppa}
+                      rowName={ppa.code ?? ppa.title ?? `row ${i + 1}`}
+                      autoOpen={ppa.id === addedId}
+                      onOpenSource={(pageId, opener) =>
+                        setSource({ pageId, opener, ppaId: ppa.id })
+                      }
+                      onDeleted={() => {
+                        // S3-14: the panel closes with the row that opened it.
+                        if (source?.ppaId === ppa.id) setSource(null);
+                      }}
+                    />
                   ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((ppa, i) => (
-                  <PpaRow
-                    key={ppa.id}
-                    ppa={ppa}
-                    rowName={ppa.code ?? ppa.title ?? `row ${i + 1}`}
-                    autoOpen={ppa.id === addedId}
-                    onOpenSource={(pageId, opener) =>
-                      setSource({ pageId, opener, ppaId: ppa.id })
-                    }
-                    onDeleted={() => {
-                      // S3-14: the panel closes with the row that opened it.
-                      if (source?.ppaId === ppa.id) setSource(null);
-                    }}
-                  />
-                ))}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
             {addRow}
           </div>
           {source && (
@@ -380,9 +415,11 @@ function PpaRow({
   const saveError = errors.length ? errors.join(" ") : null;
   return (
     <>
-      <tr className={`align-top ${saveError ? "" : "border-b"}`}>
+      <tr
+        className={`align-top transition-colors hover:bg-muted/40 ${saveError ? "" : "border-b"}`}
+      >
         {FIELDS.map(({ field, label }) => (
-          <td key={field} className="py-2 pr-4">
+          <td key={field} className="px-3 py-2">
             <PpaCell
               ppa={ppa}
               field={field}
@@ -395,21 +432,31 @@ function PpaRow({
             />
           </td>
         ))}
-        <td className="py-2 pr-4">{ppa.status}</td>
-        <td className="py-2 pr-4">
+        <td className="px-3 py-2">
+          <span
+            className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold ${
+              ppa.status === "confirmed"
+                ? "bg-success-soft text-success"
+                : "bg-warning-soft text-warning"
+            }`}
+          >
+            {ppa.status}
+          </span>
+        </td>
+        <td className="px-3 py-2">
           {ppa.page_id === null ? (
             "—"
           ) : (
             <SourceButton pageId={ppa.page_id} onOpen={onOpenSource} />
           )}
         </td>
-        <td className="py-2">
+        <td className="px-3 py-2">
           <DeletePpa ppa={ppa} rowName={rowName} onDeleted={onDeleted} />
         </td>
       </tr>
       {saveError && (
         <tr className="border-b">
-          <td colSpan={COLUMNS.length} className="pb-2">
+          <td colSpan={COLUMNS.length} className="px-3 pb-2">
             <p role="alert" className="text-sm text-destructive">
               {saveError}
             </p>
@@ -454,13 +501,14 @@ function DeletePpa({
     >
       <AlertDialog.Trigger
         aria-label={what}
-        className={buttonVariants({ variant: "ghost", size: "sm" })}
+        className={buttonVariants({ variant: "destructive", size: "sm" })}
       >
+        <Trash2 aria-hidden />
         Delete
       </AlertDialog.Trigger>
       <AlertDialog.Portal>
         <AlertDialog.Backdrop className="fixed inset-0 z-40 bg-black/40" />
-        <AlertDialog.Popup className="fixed top-1/2 left-1/2 z-50 flex w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-lg border bg-background p-6 shadow-lg">
+        <AlertDialog.Popup className="fixed top-1/2 left-1/2 z-50 flex w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-xl border bg-card p-6 shadow-lg">
           <AlertDialog.Title className="text-lg font-semibold">
             {what}? This can&apos;t be undone.
           </AlertDialog.Title>

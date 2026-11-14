@@ -27,6 +27,10 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -49,24 +53,30 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Civic palette (ui-ux-pro-max "Accessible & Ethical"): slate surfaces,
+     one civic blue for actions, every text pair at 4.5:1 or better. */
+  --background: oklch(0.984 0.003 247.858);
+  --foreground: oklch(0.208 0.042 265.755);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.208 0.042 265.755);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.208 0.042 265.755);
+  --primary: oklch(0.5 0.134 242.749);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.951 0.026 236.824);
+  --secondary-foreground: oklch(0.391 0.09 240.876);
+  --muted: oklch(0.955 0.008 255.5);
+  --muted-foreground: oklch(0.446 0.043 257.281);
+  --accent: oklch(0.951 0.026 236.824);
+  --accent-foreground: oklch(0.391 0.09 240.876);
+  --destructive: oklch(0.505 0.213 27.518);
+  --success: oklch(0.448 0.119 151.328);
+  --success-soft: oklch(0.962 0.044 156.743);
+  --warning: oklch(0.473 0.137 46.201);
+  --warning-soft: oklch(0.962 0.059 95.617);
+  --border: oklch(0.904 0.015 255.5);
+  --input: oklch(0.8 0.02 255.5);
+  --ring: oklch(0.5 0.134 242.749);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -126,5 +136,24 @@
   }
   html {
     @apply font-sans;
+    font-size: 16px;
+  }
+  body {
+    line-height: 1.55;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  select {
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
