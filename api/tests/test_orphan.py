@@ -23,7 +23,7 @@ from app.db.seed import seed
 from app.extract import load_cache
 from app.main import app
 from app.models import CheckRunResult, Finding
-from tests.db import needs_db
+from tests.db import TEST_DATABASE_URL, needs_db
 
 Fake = Callable[[str, str, type[BaseModel]], str]
 REASON = "Both are farm-to-market roads in a barangay the CDP-03 program covers."
@@ -258,7 +258,8 @@ def test_run_accept_and_rerun_through_the_api(
     use(monkeypatch, answering("CDP-03"))
 
     def conn() -> Iterator[psycopg.Connection]:
-        with psycopg.connect(seeded.info.dsn) as c:
+        assert TEST_DATABASE_URL
+        with psycopg.connect(TEST_DATABASE_URL) as c:
             yield c
 
     app.dependency_overrides[get_conn] = conn
