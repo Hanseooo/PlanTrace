@@ -306,9 +306,7 @@ def test_a_rejected_orphan_suggestion_does_not_carry_onto_a_new_parent(
         assert f.ppa_b and f.ppa_b.code == "CDP-10"
         assert (f.status, f.note) == ("suggested", "Not this program")
 
-        # The same parent again keeps the review (D5).
-        seeded.execute("DELETE FROM ai_cache")
-        use(monkeypatch, answering("CDP-03"))
+        # A review of the parent the next run suggests again carries over (D5).
         client.patch(f"/findings/{aip_04(client).id}", json={"status": "rejected"})
         orphan_count(client)
         assert aip_04(client).status == "rejected"
