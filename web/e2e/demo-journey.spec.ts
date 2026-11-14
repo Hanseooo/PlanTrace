@@ -225,7 +225,10 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
     page.getByRole("button", { name: "Running checks…" }),
   ).toBeDisabled();
   releaseRun();
-  await expect(page.getByRole("button", { name: "Run checks" })).toBeEnabled();
+  // A run takes about 9 s on the deployed api (Render to the Supabase pooler).
+  await expect(page.getByRole("button", { name: "Run checks" })).toBeEnabled({
+    timeout: 30_000,
+  });
   await page.unroute(isRun);
   await expect(page.getByText(/^Last run /)).toBeVisible();
   // J3 confirmed the LCCAP, so: 3 duplicates, 2 orphans, 1 zone, 2 CCC conflicts.
