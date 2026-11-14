@@ -1,3 +1,4 @@
+import os  # deliberate F401 duplicate for #6 red check
 import os
 
 from fastapi import FastAPI
