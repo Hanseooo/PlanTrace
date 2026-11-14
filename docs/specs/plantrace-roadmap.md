@@ -129,10 +129,10 @@ Full steps: [master spec section 1](plantrace-spec.md#acceptance-journey-the-dem
 | Open | Blocks | Next evidence |
 |---|---|---|
 | Real CCC sheet layout and meaning | S5's export layout only (contained in `ccc_export.py`) | Mentor shows a real sheet |
-| Whether `api/app/plans/` stays in the data lane | S3 ticket lanes | Team decides at ticket 01 (ARCHITECTURE.md) |
+| Whether `api/app/plans/` stays in the data lane | S3 ticket lanes | Team decides at ticket 01 (ARCHITECTURE.md). S2 (#17) makes `GET /plans/{id}` and `GET /plans/{id}/ppas` real as lane:data; S3 keeps the writes |
 | Move the duplicate and zone SQL checks from the AI lane to the data lane, to unload the AI lane | S4 ticket lanes | Team decides before S4 tickets (lane change in ARCHITECTURE.md) |
 
-**Next:** write the S2 and S3 specs (`/han-to-spec`) and their tickets, in parallel by their lane owners.
+**Next:** write the S3 spec (`/han-to-spec`) and its tickets.
 
 ## Changes
 
@@ -141,3 +141,7 @@ Full steps: [master spec section 1](plantrace-spec.md#acceptance-journey-the-dem
 - 2026-11-14: S0 specced as [#1](https://github.com/Hanseooo/PlanTrace/issues/1). Team decisions: confirmed test seams (demo smoke, endpoint test, migrations on CI Postgres); `/chain` and `/ask` get no stubs, so S0's "every endpoint" means the MVP rows; api deploys on Render. Env contract gains `TEST_DATABASE_URL` (D7 guard).
 - 2026-11-14: S0 broken into #2 to #7, sub-issues of #1 with native blocking links. #7, the closeout, takes over "ticket 01"'s role as the gate for later slices.
 - 2026-11-15: S0 Complete. #2 to #6 merged in PR #8, CI green, deployed smoke green on Vercel and Render, demo database migrated (#7). Accepted open findings from the final review: the export link shows `undefined/ccc/export` when `NEXT_PUBLIC_API_URL` is unset at build; findings show raw `suggested` (the "AI suggestion" label comes with S3 to S5); "Source pages" shows page IDs (links come with S3); `GET /plans/{id}` stub always returns the CLUP. Gaps for S3: no barangay name endpoint, no page text endpoint, nothing sets `findings.reviewed_at` yet.
+- 2026-11-15: S1 specced as [#10](https://github.com/Hanseooo/PlanTrace/issues/10). Grilling: one `seed/city.json` source renders the PDFs with PyMuPDF and loads the DB; the seed always resets every table except `ai_cache`; D11 pair chosen; a seed pytest guards the answer key. S1 also makes `GET /plans` real, since S1 completes J1.
+- 2026-11-15: S1 broken into #11 to #14, sub-issues of #10 with native blocking links. #11 and #12 to Aaeyron, #13 to katto-1204, #14 (closeout, human) to Hanseooo. Ticket PRs are reviewed and merged by Hanseooo, not self-merged.
+- 2026-11-15: S2 specced as [#17](https://github.com/Hanseooo/PlanTrace/issues/17). Grilling: the model reads page text with page markers, not the PDF, so D13 is replaced (scanned PDFs fail with a message); the barangay list goes in the prompt so LCCAP-01 maps to `1199900012`; status and Retry live on `/plans/[id]`; new `POST /plans/{id}/retry` (contract); title derived from type and period; AC-07 (CLUP zones) deferred; S2 makes the two plan read routes real; 90 s timeout per provider. Edge cases: only valid output is cached, the cache key ignores the answering provider, a committed real LCCAP response primes CI, the api fails stuck `extracting` plans on startup. Team to be told about D13, AC-07, retry, LangChain and the startup hook before the contract PR merges.
+- 2026-11-15: S2 broken into #18 to #23, sub-issues of #17 with native blocking links: #18 `llm.py`, #19 contract and plan reads, #20 upload and extraction, #21 retry endpoint, #22 web form, status and Retry, #23 closeout (human). No owners assigned. Ticket PRs are reviewed and merged by Hanseooo.
