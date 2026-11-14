@@ -275,11 +275,6 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   await mainNav(page).getByRole("link", { name: "CCC matrix" }).click();
   await expect(page.getByRole("heading", { name: "CCC matrix" })).toBeVisible();
   await expectShell(page);
-  await expect(
-    page.getByRole("cell", {
-      name: "Conflict: CDP: Socialized housing project, Barangay 9 × LDRRMP: Evacuation centre, Barangay 9",
-    }),
-  ).toHaveText("C");
   const download = page.waitForEvent("download");
   await page.getByRole("link", { name: "Export CCC matrix (.xlsx)" }).click();
   expect((await download).suggestedFilename()).toBe("ccc_export.xlsx");

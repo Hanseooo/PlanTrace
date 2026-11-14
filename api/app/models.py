@@ -156,6 +156,7 @@ class CccPpa(BaseModel):
 
     id: int
     plan_type: PlanType
+    code: str  # empty when the PPA has none
     title: str | None
 
 
