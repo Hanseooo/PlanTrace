@@ -1,11 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
   async redirects() {
     return [{ source: "/", destination: "/plans", permanent: false }];
   },
-  partialPrefetching: true,
   turbopack: {
     rules: {
       "*.css": {

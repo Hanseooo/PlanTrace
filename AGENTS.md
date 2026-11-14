@@ -39,7 +39,7 @@ Change a line here only after telling the team. One line each: choice, because r
 - Lint: api: none yet: #2 adds it; web: `cd web && npm run lint`
 - Unit tests: none yet: #2 adds it
 - Migrate: none yet: #3 adds it
-- Demo smoke: `cd web && npm run smoke` (builds and starts the web app on :3000); against a deployed web app: `cd web && BASE_URL=<web url> npm run smoke`
+- Demo smoke: `cd web && npm run smoke` (builds and starts the web app on :3000); against a deployed web app: `cd web && BASE_URL=<web url> npm run smoke` (PowerShell: `cd web; $env:BASE_URL="<web url>"; npm run smoke`)
 
 ## Parallel work
 - S0, the **walking skeleton** (spec #1, tickets #2 to #7): the app deployed,

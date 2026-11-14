@@ -12,12 +12,17 @@ function collectConsoleErrors(page: Page): string[] {
   return errors;
 }
 
+const mainNav = (page: Page) =>
+  page.getByRole("banner").getByRole("navigation", { name: "Main" });
+
+// The nav and the label come from the root layout's header.
 async function expectShell(page: Page) {
-  const nav = page.getByRole("navigation", { name: "Main" });
-  await expect(nav.getByRole("link", { name: "Plans" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Findings" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "CCC matrix" })).toBeVisible();
-  await expect(page.getByText("Synthetic demo data")).toBeVisible();
+  for (const name of ["Plans", "Findings", "CCC matrix"]) {
+    await expect(mainNav(page).getByRole("link", { name })).toBeVisible();
+  }
+  await expect(
+    page.getByRole("banner").getByText("Synthetic demo data"),
+  ).toBeVisible();
 }
 
 test("demo journey: every screen shows the nav and the synthetic label", async ({
@@ -37,14 +42,15 @@ test("demo journey: every screen shows the nav and the synthetic label", async (
   await expectShell(page);
   await page.getByRole("link", { name: "Back to plans" }).click();
   await expect(page).toHaveURL(/\/plans$/);
+  await expect(page.getByRole("heading", { name: "Plans" })).toBeVisible();
 
   // J4-J7: findings, reached through the nav.
-  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Findings" }).click();
+  await mainNav(page).getByRole("link", { name: "Findings" }).click();
   await expect(page.getByRole("heading", { name: "Findings" })).toBeVisible();
   await expectShell(page);
 
   // J8-J9: the CCC matrix, reached through the nav.
-  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "CCC matrix" }).click();
+  await mainNav(page).getByRole("link", { name: "CCC matrix" }).click();
   await expect(page.getByRole("heading", { name: "CCC matrix" })).toBeVisible();
   await expectShell(page);
 
