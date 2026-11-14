@@ -124,8 +124,9 @@ def test_patch_null_and_blank_clear_a_field(
     ("body", "field"),
     [
         ({"cost": -1}, "Cost"),
-        ({"cost": float("inf")}, "Cost"),
-        ({"cost": float("nan")}, "Cost"),
+        # Raw text: httpx won't encode non-finite floats, but a client can send them.
+        ('{"cost": Infinity}', "Cost"),
+        ('{"cost": NaN}', "Cost"),
         ({"year_start": 202}, "Start year"),
         ({"year_end": 2026}, "End year"),  # the stored year_start is 2027
         ({"barangays": ["9999999999"]}, "Barangay"),
@@ -136,18 +137,25 @@ def test_patch_rejects_a_bad_field_and_keeps_the_row(
     seeded_client: TestClient,
     ready_plan: list[Ppa],
     empty_db: psycopg.Connection,
-    body: dict[str, Any],
+    body: dict[str, Any] | str,
     field: str,
 ) -> None:
     row = ready_plan[0]
     assert row.year_start == 2027
-    if body.get("page_id") == "other plan":
-        page = empty_db.execute(
-            "SELECT id FROM pages WHERE plan_id <> %s LIMIT 1", (AIP,)
-        ).fetchone()
-        assert page
-        body = {"page_id": page[0]}
-    response = seeded_client.patch(f"/ppas/{row.id}", json=body)
+    if isinstance(body, str):
+        response = seeded_client.patch(
+            f"/ppas/{row.id}",
+            content=body,
+            headers={"content-type": "application/json"},
+        )
+    else:
+        if body.get("page_id") == "other plan":
+            page = empty_db.execute(
+                "SELECT id FROM pages WHERE plan_id <> %s LIMIT 1", (AIP,)
+            ).fetchone()
+            assert page
+            body = {"page_id": page[0]}
+        response = seeded_client.patch(f"/ppas/{row.id}", json=body)
     assert response.status_code == 422, response.text
     assert response.json()["detail"].startswith(field)
     assert ppas_of(seeded_client, AIP)[0] == row
