@@ -1,5 +1,6 @@
 """S1-11, S2-16, S3-01, S3-02: the plan, barangay and page read routes read the database
 (D7: the seeded TEST_DATABASE_URL only).
+S3-03 to S3-08: the PPA writes and confirm write it.
 
 The seeded test uses the `empty_db` fixture (conftest.py), as test_seed does.
 """
@@ -7,6 +8,7 @@ The seeded test uses the `empty_db` fixture (conftest.py), as test_seed does.
 import json
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import psycopg
 import pytest
@@ -73,6 +75,159 @@ def test_list_ppas_returns_that_plans_ppas_by_id(seeded_client: TestClient) -> N
 @pytest.mark.parametrize("path", ["/plans/999", "/plans/999/ppas"])
 def test_unknown_plan_is_404(seeded_client: TestClient, path: str) -> None:
     assert seeded_client.get(path).status_code == 404
+
+
+# The seed confirms every plan; the write tests turn the AIP plan back to `ready` with drafts.
+AIP = 4
+CLUP = 1
+
+
+@pytest.fixture
+def ready_plan(seeded_client: TestClient, empty_db: psycopg.Connection) -> list[Ppa]:
+    empty_db.execute("UPDATE plans SET status = 'ready' WHERE id = %s", (AIP,))
+    empty_db.execute("UPDATE ppas SET status = 'draft' WHERE plan_id = %s", (AIP,))
+    return ppas_of(seeded_client, AIP)
+
+
+def ppas_of(client: TestClient, plan_id: int) -> list[Ppa]:
+    response = client.get(f"/plans/{plan_id}/ppas")
+    assert response.status_code == 200, response.text
+    return TypeAdapter(list[Ppa]).validate_python(response.json())
+
+
+@needs_db
+def test_patch_changes_only_the_fields_sent(
+    seeded_client: TestClient, ready_plan: list[Ppa]
+) -> None:
+    row = ready_plan[0]
+    response = seeded_client.patch(f"/ppas/{row.id}", json={"cost": 5000000})
+    assert response.status_code == 200, response.text
+    patched = Ppa.model_validate(response.json())
+    assert patched == row.model_copy(update={"cost": 5000000.0})
+    assert patched.status == "draft"
+    assert ppas_of(seeded_client, AIP)[0] == patched
+
+
+@needs_db
+def test_patch_null_and_blank_clear_a_field(
+    seeded_client: TestClient, ready_plan: list[Ppa]
+) -> None:
+    row = ready_plan[0]
+    assert seeded_client.patch(f"/ppas/{row.id}", json={"office": None}).json()["office"] is None
+    response = seeded_client.patch(f"/ppas/{row.id}", json={"title": "  "})
+    patched = Ppa.model_validate(response.json())
+    assert (patched.title, patched.office, patched.code) == (None, None, row.code)
+
+
+@needs_db
+@pytest.mark.parametrize(
+    ("body", "field"),
+    [
+        ({"cost": -1}, "Cost"),
+        ({"year_start": 202}, "Start year"),
+        ({"year_end": 2026}, "End year"),  # the stored year_start is 2027
+        ({"barangays": ["9999999999"]}, "Barangay"),
+        ({"page_id": "other plan"}, "Source page"),
+    ],
+)
+def test_patch_rejects_a_bad_field_and_keeps_the_row(
+    seeded_client: TestClient,
+    ready_plan: list[Ppa],
+    empty_db: psycopg.Connection,
+    body: dict[str, Any],
+    field: str,
+) -> None:
+    row = ready_plan[0]
+    assert row.year_start == 2027
+    if body.get("page_id") == "other plan":
+        page = empty_db.execute(
+            "SELECT id FROM pages WHERE plan_id <> %s LIMIT 1", (AIP,)
+        ).fetchone()
+        assert page
+        body = {"page_id": page[0]}
+    response = seeded_client.patch(f"/ppas/{row.id}", json=body)
+    assert response.status_code == 422, response.text
+    assert response.json()["detail"].startswith(field)
+    assert ppas_of(seeded_client, AIP)[0] == row
+
+
+@needs_db
+def test_post_adds_a_blank_row_with_the_plans_status(
+    seeded_client: TestClient, ready_plan: list[Ppa]
+) -> None:
+    draft = Ppa.model_validate(seeded_client.post(f"/plans/{AIP}/ppas", json={}).json())
+    assert draft.status == "draft"
+    assert (draft.plan_id, draft.title, draft.barangays, draft.cost) == (AIP, None, [], None)
+    assert ppas_of(seeded_client, AIP)[-1] == draft
+    response = seeded_client.post(f"/plans/{CLUP}/ppas", json={"title": "Added by hand"})
+    assert response.status_code == 200, response.text
+    assert (response.json()["status"], response.json()["title"]) == ("confirmed", "Added by hand")
+
+
+@needs_db
+def test_delete_removes_the_row(seeded_client: TestClient, ready_plan: list[Ppa]) -> None:
+    row = ready_plan[0]
+    assert seeded_client.delete(f"/ppas/{row.id}").status_code == 204
+    assert row.id not in [p.id for p in ppas_of(seeded_client, AIP)]
+    assert seeded_client.delete(f"/ppas/{row.id}").status_code == 404
+
+
+@needs_db
+def test_confirm_confirms_the_plan_and_every_row(
+    seeded_client: TestClient, ready_plan: list[Ppa]
+) -> None:
+    response = seeded_client.post(f"/plans/{AIP}/confirm")
+    assert response.status_code == 200, response.text
+    plan = Plan.model_validate(response.json())
+    assert plan.status == "confirmed"
+    assert {p.status for p in ppas_of(seeded_client, AIP)} == {"confirmed"}
+    again = seeded_client.post(f"/plans/{AIP}/confirm")
+    assert again.status_code == 200
+    assert Plan.model_validate(again.json()) == plan
+    added = seeded_client.post(f"/plans/{AIP}/ppas", json={}).json()
+    assert added["status"] == "confirmed"
+
+
+@needs_db
+def test_confirm_without_rows_is_409(seeded_client: TestClient, ready_plan: list[Ppa]) -> None:
+    for row in ready_plan:
+        assert seeded_client.delete(f"/ppas/{row.id}").status_code == 204
+    response = seeded_client.post(f"/plans/{AIP}/confirm")
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Add a row first"
+    assert seeded_client.get(f"/plans/{AIP}").json()["status"] == "ready"
+
+
+@needs_db
+@pytest.mark.parametrize("status", ["extracting", "failed"])
+def test_writes_on_a_busy_plan_are_409(
+    seeded_client: TestClient,
+    ready_plan: list[Ppa],
+    empty_db: psycopg.Connection,
+    status: str,
+) -> None:
+    empty_db.execute("UPDATE plans SET status = %s WHERE id = %s", (status, AIP))
+    row = ready_plan[0]
+    assert seeded_client.patch(f"/ppas/{row.id}", json={"cost": 1}).status_code == 409
+    assert seeded_client.post(f"/plans/{AIP}/ppas", json={}).status_code == 409
+    assert seeded_client.delete(f"/ppas/{row.id}").status_code == 409
+    assert seeded_client.post(f"/plans/{AIP}/confirm").status_code == 409
+    assert ppas_of(seeded_client, AIP) == ready_plan
+
+
+@needs_db
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("PATCH", "/ppas/999999"),
+        ("DELETE", "/ppas/999999"),
+        ("POST", "/plans/999/ppas"),
+        ("POST", "/plans/999/confirm"),
+    ],
+)
+def test_writes_on_unknown_ids_are_404(seeded_client: TestClient, method: str, path: str) -> None:
+    kwargs: dict[str, Any] = {} if method == "DELETE" or "confirm" in path else {"json": {}}
+    assert seeded_client.request(method, path, **kwargs).status_code == 404
 
 
 def test_list_plans_without_database_url_is_503(monkeypatch: pytest.MonkeyPatch) -> None:
