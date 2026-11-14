@@ -22,6 +22,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/plans/{plan_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Plan */
+        post: operations["retry_plan_plans__plan_id__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/plans/{plan_id}": {
         parameters: {
             query?: never;
@@ -355,6 +372,14 @@ export interface components {
             error: string | null;
         };
         /**
+         * PlanRetry
+         * @description Multipart body of POST /plans/{id}/retry: the same file again (S2-14, D2).
+         */
+        PlanRetry: {
+            /** File */
+            file: string;
+        };
+        /**
          * PlanUpload
          * @description Multipart body of POST /plans.
          */
@@ -485,6 +510,41 @@ export interface operations {
         requestBody: {
             content: {
                 "multipart/form-data": components["schemas"]["PlanUpload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Plan"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_plan_plans__plan_id__retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["PlanRetry"];
             };
         };
         responses: {

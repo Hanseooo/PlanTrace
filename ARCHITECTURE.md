@@ -29,7 +29,7 @@ The web app calls the API directly over HTTPS, with CORS. There is no Next.js pr
 | Types across languages | `openapi-typescript` from FastAPI's OpenAPI | Frontend and backend agree on the contract |
 | Database | Supabase as plain Postgres, `pg_trgm`, full-text search. No Supabase Auth or auto API | One shared database for dev and demo |
 | DB access | psycopg 3, SQL written by hand, numbered `.sql` migrations | Trigram similarity, `tsvector` and arrays are plain SQL. An ORM would need workarounds |
-| AI | Gemini (a current Flash model; check the model list for the ID) through LangChain `with_structured_output`, `.with_fallbacks([OpenRouter model])` | PDF input, JSON matching Pydantic models, fallback in two lines |
+| AI | Gemini (`gemini-flash-latest`, the current Flash model) through LangChain `with_structured_output`, then an OpenRouter model (`openai/gpt-4o-mini`) through `langchain-openai` on failure | Page text in (not the PDF), JSON matching Pydantic models, both providers behind one seam (`llm.py`) |
 | Files | PyMuPDF (page text), pandas/openpyxl (Excel in, CCC export out) | Page-level citations |
 | Deploy | Vercel (web, root `web/`), Render (api, root `api/`, free tier), both from `main` | Render's free tier sleeps: wake the api 2 minutes before the demo. Vercel needs `NEXT_PUBLIC_API_URL` before the build; Render's `CORS_ORIGINS` must list the Vercel origin |
 | Tooling | ruff and pyright (api), ESLint and `tsc` (web), pytest, Playwright | Run by CI on every PR |
@@ -84,12 +84,13 @@ A model change is a contract change: tell the team, regenerate the types, and up
 ## Key flows
 
 **Upload and extract (F1)**
-1. `POST /plans` saves the plan row with status `extracting` and returns at once.
-2. A FastAPI `BackgroundTask` reads each page's text with PyMuPDF into `pages`, sends the PDF to `llm.py`, and writes the PPAs (and zones for a CLUP) as `draft`.
-3. Status becomes `ready` (ready to confirm) or `failed` with a message.
-4. The web app polls `GET /plans/{id}` every 2 seconds with TanStack Query's `refetchInterval` until the status leaves `extracting`.
+1. `POST /plans` checks the file (`%PDF`, 10 MB), the period and that a city is seeded, saves the plan row with status `extracting` and title `"{type} {start}–{end}"`, and returns at once.
+2. A FastAPI `BackgroundTask` reads each page's text with PyMuPDF into `pages`, sends that text to `llm.py` under `=== page N ===` markers with the city's barangay names and codes (text in, not the PDF: S2-12), and writes the cleaned PPAs as `draft`. Zones for a CLUP upload are deferred (AC-07).
+3. Status becomes `ready` (ready to confirm) or `failed` with a message. A PDF with no text fails with "No text found. Scanned PDFs aren't supported."
+4. At startup, any plan still `extracting` becomes `failed` with "Extraction was interrupted. Retry." (S2-15).
+5. The web app polls `GET /plans/{id}` every 2 seconds with TanStack Query's `refetchInterval` until the status leaves `extracting`.
 
-The uploaded file is discarded after step 2. The demo fallback is a pre-extracted plan that is already `ready`.
+The uploaded file is discarded after step 2. The prompt and output model live in `extract/extraction.py`; `app.extract.load_cache` loads the committed LCCAP response under the same key (S2-19). The demo fallback is a pre-extracted plan that is already `ready`.
 
 **Checks (F3)**
 `POST /checks/run` reads only `confirmed` PPAs. Duplicate and zone checks are SQL. Orphan and CCC use SQL to pick candidate pairs, then `llm.py` for the suggestion or the verdict. Every finding stores `page_ids` and starts as `suggested`.
@@ -99,11 +100,13 @@ The uploaded file is discarded after step 2. The demo fallback is a pre-extracte
 
 ## The LLM seam
 
-`api/app/llm.py` is the only code that calls a model. Callers pass a prompt, an input and a Pydantic output model, and get a validated object back.
+`api/app/llm.py` is the only code that calls a model. Callers pass a connection, a prompt, an input string and a Pydantic output model to `call_llm`, and get a validated object back.
 
-- Gemini first, OpenRouter on failure, via LangChain `.with_fallbacks`.
-- Cache: key = hash of model, prompt and input, stored in `ai_cache`. A hit returns without a network call, so the demo replays offline and teammates share results.
-- Invalid JSON or a timeout raises one error type that callers turn into a `failed` status or a message.
+- Gemini first, OpenRouter on failure, each with a 90-second timeout. A missing API key counts as that provider failing. `llm.py` calls the two in order itself, not through `.with_fallbacks`, so the error can name both failures.
+- `llm.py` validates the raw output against the output model itself.
+- Cache: `cache_key()` hashes the primary model id, the prompt, the input and the output model's name. Rows live in `ai_cache`. The key ignores which provider answered, so a row primed while Gemini was down still hits. A hit returns without a network call, so the demo replays offline and teammates share results. The S2-19 loader imports `cache_key()` rather than copying it.
+- Only output that passed validation is cached, so a bad answer never replays. The row is written on the caller's connection, and the caller commits.
+- When every provider fails, times out or returns invalid output, `LLMError` is raised. Its message names each provider and its reason, for example "Gemini timed out after 90 s; OpenRouter returned invalid JSON.", and never contains a key or a stack trace. Callers turn it into a `failed` status or a message.
 
 ## Data model
 
@@ -127,6 +130,7 @@ Every row carries `lgu_psgc` through its plan. Office names, sectors and languag
 |---|---|---|
 | POST | `/plans` | Upload a file with type and period, start extraction |
 | GET | `/plans`, `/plans/{id}` | List plans, plan status |
+| POST | `/plans/{id}/retry` | Send the file of a `failed` plan again (multipart `file`) and restart extraction; 409 unless `failed` (S2-14) |
 | GET, PATCH, POST, DELETE | `/plans/{id}/ppas`, `/ppas/{id}` | Edit the PPA table |
 | POST | `/plans/{id}/confirm` | Confirm a plan |
 | POST | `/checks/run` | Run all 4 checks |
@@ -135,7 +139,7 @@ Every row carries `lgu_psgc` through its plan. Office names, sectors and languag
 | GET | `/chain` | Nodes and edges for the chain view (deferred) |
 | POST | `/ask` | Question in, cited answer out (deferred) |
 
-`GET /plans` reads the `plans` table (S1-11), so it needs `DATABASE_URL`: without it, or when the database is unreachable, it answers 503 and the plans screen shows its error state with Retry. This changes S0-07, under which the app started and answered without `DATABASE_URL`; the api still starts without it, and every other endpoint still serves `seed/fixtures/` until its slice lands. Routes get their connection from the `get_conn` dependency in `api/app/db/__init__.py`; tests override it with `TEST_DATABASE_URL` (D7).
+`GET /plans` reads the `plans` table (S1-11), so it needs `DATABASE_URL`: without it, or when the database is unreachable, it answers 503 and the plans screen shows its error state with Retry. This changes S0-07, under which the app started and answered without `DATABASE_URL`; the api still starts without it. `GET /plans/{id}` and `GET /plans/{id}/ppas` read the database too (S2-16) and answer 404 for an unknown plan. Every other endpoint still serves `seed/fixtures/` until its slice lands. Routes get their connection from the `get_conn` dependency in `api/app/db/__init__.py`; tests override it with `TEST_DATABASE_URL` (D7).
 
 Web routes: `/` redirects to `/plans`; `/plans` (plans list and upload form), `/plans/[id]` (a plan's PPA table), `/findings` (findings list and side-by-side detail), `/ccc` (CCC matrix and export link).
 

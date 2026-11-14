@@ -1,6 +1,7 @@
 """S0-06: every MVP endpoint answers with a body valid against its model.
 
-GET /plans reads the database since S1-11; tests/test_plans.py covers it.
+GET /plans (S1-11), GET /plans/{id} and GET /plans/{id}/ppas (S2-16) read the database;
+tests/test_plans.py covers them. POST /plans (S2-10) is covered by tests/test_extract.py.
 """
 
 from io import BytesIO
@@ -17,8 +18,6 @@ from app.models import CccMatrix, CheckRunResult, Finding, Plan, Ppa
 client = TestClient(app)
 
 CASES: list[tuple[str, str, dict[str, Any], Any]] = [
-    ("GET", "/plans/1", {}, Plan),
-    ("GET", "/plans/2/ppas", {}, list[Ppa]),
     ("POST", "/plans/2/ppas", {"json": {}}, Ppa),
     ("PATCH", "/ppas/201", {"json": {"cost": 1000}}, Ppa),
     ("POST", "/plans/2/confirm", {}, Plan),
@@ -38,16 +37,14 @@ def test_endpoint_body_matches_model(
     TypeAdapter(model).validate_python(response.json())
 
 
-def test_upload_returns_extracting_plan() -> None:
+def test_retry_returns_a_plan() -> None:
+    """Stub until #21: the retry route exists in the contract (S2-14)."""
     response = client.post(
-        "/plans",
-        files={"file": ("lccap.pdf", b"%PDF-1.4", "application/pdf")},
-        data={"type": "LCCAP", "period_start": "2026", "period_end": "2028"},
+        "/plans/5/retry", files={"file": ("lccap.pdf", b"%PDF-1.4", "application/pdf")}
     )
     assert response.status_code == 200, response.text
-    assert Plan.model_validate(response.json()).status == "extracting"
-    # The web client is generated from OpenAPI, so the upload must be advertised as multipart.
-    content = app.openapi()["paths"]["/plans"]["post"]["requestBody"]["content"]
+    Plan.model_validate(response.json())
+    content = app.openapi()["paths"]["/plans/{plan_id}/retry"]["post"]["requestBody"]["content"]
     assert list(content) == ["multipart/form-data"]
 
 

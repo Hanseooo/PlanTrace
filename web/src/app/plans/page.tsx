@@ -1,13 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QueryStates } from "@/components/query-states";
 import { Button } from "@/components/ui/button";
-import { apiGet, type Schemas } from "@/lib/api";
+import { apiGet, apiPostForm, type Schemas } from "@/lib/api";
+import {
+  FILE_RULE,
+  POLL_MS,
+  STATUS_LABELS,
+  isUploadablePdf,
+  keepFile,
+} from "@/lib/plan-upload";
+
+type PlanType = Schemas["Plan"]["type"];
 
 // Keyed by the generated union, so tsc fails if a plan type is missing.
-const PLAN_TYPE_OPTIONS: Record<Schemas["Plan"]["type"], true> = {
+const PLAN_TYPE_OPTIONS: Record<PlanType, true> = {
   CLUP: true,
   CDP: true,
   LDIP: true,
@@ -25,48 +36,15 @@ export default function PlansPage() {
   const plans = useQuery({
     queryKey: ["plans"],
     queryFn: () => apiGet<Schemas["Plan"][]>("/plans"),
+    // S2-06: keep the list fresh while any plan is extracting.
+    refetchInterval: (q) =>
+      q.state.data?.some((p) => p.status === "extracting") ? POLL_MS : false,
   });
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Plans</h1>
-
-      {/* Display only until upload lands (S2): every control is disabled. */}
-      <form aria-labelledby="upload-heading" className="rounded-lg border p-4">
-        <h2 id="upload-heading" className="mb-1 font-medium">
-          Upload a plan
-        </h2>
-        <p className="mb-3 text-sm text-muted-foreground">
-          Upload isn&apos;t available yet.
-        </p>
-        <fieldset disabled className="flex flex-wrap items-end gap-3">
-          <label className={field}>
-            PDF file
-            <input type="file" accept="application/pdf" className="text-sm" />
-          </label>
-          <label className={field}>
-            Plan type
-            <select className={input} defaultValue="">
-              <option value="" disabled>
-                Choose a type
-              </option>
-              {PLAN_TYPES.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
-          </label>
-          <label className={field}>
-            Start year
-            <input type="number" className={`${input} w-24`} />
-          </label>
-          <label className={field}>
-            End year
-            <input type="number" className={`${input} w-24`} />
-          </label>
-          <Button type="submit">Upload</Button>
-        </fieldset>
-      </form>
-
+      <UploadForm />
       <QueryStates
         query={plans}
         what="plans"
@@ -99,7 +77,7 @@ export default function PlansPage() {
                     {plan.period_start}–{plan.period_end}
                   </td>
                   <td className="py-2">
-                    {plan.status}
+                    {STATUS_LABELS[plan.status]}
                     {plan.error && (
                       <span className="block text-destructive">
                         {plan.error}
@@ -113,5 +91,140 @@ export default function PlansPage() {
         )}
       </QueryStates>
     </div>
+  );
+}
+
+/** S2-01 to S2-04: the upload form. Values stay put on every error. */
+function UploadForm() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [type, setType] = useState("");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+
+  const upload = useMutation({
+    mutationFn: (form: FormData) =>
+      apiPostForm<Schemas["Plan"]>("/plans", form),
+    onSuccess: (plan, form) => {
+      keepFile(plan.id, form.get("file") as File);
+      queryClient.setQueryData(["plans", String(plan.id)], plan);
+      void queryClient.invalidateQueries({ queryKey: ["plans"], exact: true });
+      router.push(`/plans/${plan.id}`);
+    },
+  });
+
+  const startYear = Number.parseInt(start, 10);
+  const endYear = Number.parseInt(end, 10);
+  const ready =
+    file !== null &&
+    type !== "" &&
+    Number.isInteger(startYear) &&
+    Number.isInteger(endYear) &&
+    startYear <= endYear;
+  // After success the page is leaving; keep the form locked until it does.
+  const busy = upload.isPending || upload.isSuccess;
+
+  function chooseFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = e.target.files?.[0] ?? null;
+    if (picked && !isUploadablePdf(picked)) {
+      e.target.value = "";
+      setFile(null);
+      setFileError(FILE_RULE);
+      return;
+    }
+    setFile(picked);
+    setFileError(null);
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!ready || busy) return;
+    const form = new FormData();
+    form.set("file", file);
+    form.set("type", type);
+    form.set("period_start", String(startYear));
+    form.set("period_end", String(endYear));
+    upload.mutate(form);
+  }
+
+  return (
+    <form
+      aria-labelledby="upload-heading"
+      className="rounded-lg border p-4"
+      onSubmit={submit}
+    >
+      <h2 id="upload-heading" className="mb-3 font-medium">
+        Upload a plan
+      </h2>
+      <fieldset disabled={busy} className="flex flex-wrap items-end gap-3">
+        <label className={field}>
+          PDF file
+          <input
+            type="file"
+            accept="application/pdf,.pdf"
+            className="text-sm"
+            onChange={chooseFile}
+            aria-describedby="upload-file-error"
+          />
+        </label>
+        <label className={field}>
+          Plan type
+          <select
+            className={input}
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          >
+            <option value="" disabled>
+              Choose a type
+            </option>
+            {PLAN_TYPES.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+        </label>
+        <label className={field}>
+          Start year
+          <input
+            type="number"
+            className={`${input} w-24`}
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+          />
+        </label>
+        <label className={field}>
+          End year
+          <input
+            type="number"
+            className={`${input} w-24`}
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+          />
+        </label>
+        <Button type="submit" disabled={!ready}>
+          {busy ? "Uploading…" : "Upload"}
+        </Button>
+      </fieldset>
+      <div id="upload-file-error" className="mt-2 text-sm">
+        {fileError && (
+          <p role="alert" className="text-destructive">
+            {fileError}
+          </p>
+        )}
+        {Number.isInteger(startYear) &&
+          Number.isInteger(endYear) &&
+          startYear > endYear && (
+            <p className="text-muted-foreground">
+              The start year must be no later than the end year.
+            </p>
+          )}
+        {upload.isError && (
+          <p role="alert" className="text-destructive">
+            Upload failed. {upload.error.message}
+          </p>
+        )}
+      </div>
+    </form>
   );
 }

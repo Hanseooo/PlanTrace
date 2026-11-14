@@ -59,7 +59,7 @@ Applies: SH-01, SH-02, SH-03, SH-07, SH-09
 - **AC-04** When extraction succeeds the status becomes "ready to confirm" and the plan's PPA table opens with draft rows.
 - **AC-05** Each extracted PPA has title, description, office, sector, barangays, cost, start year, end year and source page. Missing values are blank, not invented.
 - **AC-06** Every page's text is stored with its page number. The uploaded file is not kept.
-- **AC-07** A CLUP upload also extracts zones: barangay, zone type, hazard, and forbidden sectors, each with its source page.
+- **AC-07** *(Deferred 2026-11-15, S2 grilling Q6a: the demo never uploads a CLUP, the seed loads it.)* A CLUP upload also extracts zones: barangay, zone type, hazard, and forbidden sectors, each with its source page.
 - **AC-08** If Gemini fails, the same request goes to OpenRouter without any action from the planner.
 - **AC-09** If both providers fail, time out or return invalid JSON, the status becomes "failed" with a message saying which. A Retry button resends the same file (D2).
 
@@ -149,7 +149,7 @@ Applies: SH-03, SH-09
 | Upload a non-PDF (e.g. `.docx`, `.xlsx`) | Refused before upload with a message | AC-02, D1 |
 | Upload over the size limit | Refused before upload with a message naming the limit | AC-02, D8 |
 | Upload with type or period missing | Submit disabled | AC-01 |
-| PDF with no text layer (scanned) | Extracted anyway; the source panel shows "No text on this page" with the page number. The demo uses text PDFs only | D13 |
+| PDF with no text layer (scanned) | Fails with "No text found. Scanned PDFs aren't supported." The demo uses text PDFs only | D13 (replaced by S2-12) |
 | AI times out or returns invalid JSON, both providers | Status failed, message, Retry | AC-09, D2 |
 | Planner leaves the screen during extraction | Extraction continues; plans list shows status | AC-03 |
 | Page reloaded after a failed upload | Retry can't resend the file; planner picks it again | D2 |
@@ -217,7 +217,7 @@ All confirmed by the team on 2026-11-14 as recommended.
 | D10 | J2 fallback | Journey | Prime `ai_cache` with the LCCAP upload before the demo. A seed flag loads a pre-extracted LCCAP copy as "ready" if the live upload still fails |
 | D11 | The second CCC conflict pair | AC-39 | Data lane picks it while writing the plans and records it in the answer key. Doesn't block other work |
 | D12 | Overlapping findings and invalid citations | Edge cases | A pair can have both a duplicate and a CCC finding. An AI result citing a page ID it wasn't sent is treated as invalid output |
-| D13 | A scanned PDF with no text layer | Edge cases | Extract anyway; the source panel shows "No text on this page" with the page number. The demo uses text PDFs only |
+| D13 | A scanned PDF with no text layer | Edge cases | **Replaced 2026-11-15 by S2-12 (#17, grilling Q1):** the model reads page text, not the PDF, so a PDF with no text fails with "No text found. Scanned PDFs aren't supported." The demo uses text PDFs only |
 
 **Readiness:** Ready. All decisions confirmed 2026-11-14. D11 is delegated to the data lane.
 
@@ -228,7 +228,7 @@ All confirmed by the team on 2026-11-14 as recommended.
 | PRD F1 type, period, PPA fields | AC-01, AC-05 |
 | PRD F1 page text, file not kept | AC-06 |
 | PRD F1 background, polling, statuses | AC-03, AC-04 |
-| PRD F1 CLUP zones | AC-07 |
+| PRD F1 CLUP zones | AC-07 (deferred) |
 | PRD F1 failure states, retry, fallback | AC-02, AC-08, AC-09, D1, D2, D8 |
 | PRD F2 edit, add, delete, confirm, only confirmed checked | AC-10, AC-12, AC-14, AC-15 |
 | PRD F2 source page next to row | AC-13, SH-05 |
