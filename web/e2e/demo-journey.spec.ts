@@ -115,21 +115,84 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   await expect(page).toHaveURL(/\/plans$/);
   await expect(page.getByRole("heading", { name: "Plans" })).toBeVisible();
 
-  // J4-J7: findings, reached through the nav; J5's drainage duplicate side by side.
+  // J4-J7 (S4): findings, reached through the nav. Before any run, the screen says so.
+  // Accepting a parent changes later runs, so these steps stay before the CCC step.
   await mainNav(page).getByRole("link", { name: "Findings" }).click();
   await expect(page.getByRole("heading", { name: "Findings" })).toBeVisible();
   await expectShell(page);
-  const findingList = page.getByRole("list", { name: "Findings" });
-  await expect(findingList.getByRole("button")).toHaveCount(8);
+  await expect(page.getByText("Checks haven't been run yet.")).toBeVisible();
+  // J4: Run checks, disabled while the run is in flight. The run is held so the
+  // in-flight state can be seen.
+  let releaseRun!: () => void;
+  const runHeld = new Promise<void>((resolve) => (releaseRun = resolve));
+  const isRun = (url: URL) => url.pathname === "/checks/run";
+  await page.route(isRun, async (route) => {
+    await runHeld;
+    await route.continue();
+  });
+  await page.getByRole("button", { name: "Run checks" }).click();
+  await expect(
+    page.getByRole("button", { name: "Running checks…" }),
+  ).toBeDisabled();
+  releaseRun();
+  await expect(page.getByRole("button", { name: "Run checks" })).toBeEnabled();
+  await page.unroute(isRun);
+  await expect(page.getByText(/^Last run /)).toBeVisible();
+  // The LCCAP is still `ready` here (J3's confirm isn't in the smoke yet), so its
+  // row isn't checked: 2 duplicates, 2 orphans, 1 zone. This becomes 6 when #32
+  // confirms the LCCAP in J3, and 8 after S5 adds CCC.
+  const findingList = page.getByRole("region", { name: "Findings list" });
+  await expect(findingList.getByRole("button")).toHaveCount(5);
+
+  // J5: the drainage duplicate side by side, its sources, and the reject dialog.
   await findingList
     .getByRole("button", {
-      name: /Drainage improvement, Barangay 5 vs Drainage canal upgrading, Barangay 5/,
+      name: /Drainage improvement, Barangay 5 vs Drainage improvement works, Barangay 5/,
     })
     .click();
   const detail = page.getByRole("region", { name: "Finding detail" });
   await expect(detail).toContainText("₱12,000,000");
   await expect(detail).toContainText("₱9,500,000");
-  await expect(detail).toContainText("Source pages: 22, 32");
+  await expect(detail).toContainText("₱2,500,000");
+  await expect(detail).toContainText("2027 vs 2028");
+  const findingSource = detail
+    .getByRole("button", { name: /^Source page \d+$/ })
+    .first();
+  await findingSource.click();
+  const findingPanel = page.getByRole("complementary", { name: "Source page" });
+  await expect(findingPanel).toContainText(/CDP-02|LDRRMP-01/);
+  await page.keyboard.press("Escape");
+  await expect(findingPanel).toBeHidden();
+  await expect(findingSource).toBeFocused();
+  const reject = detail.getByRole("button", { name: "Reject" });
+  await reject.click();
+  const rejectDialog = page.getByRole("alertdialog", {
+    name: "Reject this finding?",
+  });
+  await expect(rejectDialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(rejectDialog).toBeHidden();
+  await expect(reject).toBeFocused();
+  await expect(detail).toContainText("AI suggestion");
+
+  // J6: the AIP-04 orphan's suggested parent; Accept parent confirms it.
+  await findingList
+    .getByRole("button", {
+      name: /Upland sitio road concreting → Farm-to-market roads program/,
+    })
+    .click();
+  await expect(detail).toContainText("Suggested parent");
+  await expect(detail).toContainText("AI suggestion");
+  await expect(detail).toContainText("Farm-to-market roads program");
+  await detail.getByRole("button", { name: "Accept parent" }).click();
+  await expect(detail.getByText("Confirmed", { exact: true })).toBeVisible();
+
+  // J7 (zone half): the Zone group for Barangay 9.
+  await expect(
+    findingList
+      .getByRole("region", { name: "Zone", exact: true })
+      .getByRole("region", { name: "Barangay 9", exact: true }),
+  ).toContainText("Socialized housing project, Barangay 9");
 
   // J8-J9: the CCC matrix, reached through the nav, and its export.
   await mainNav(page).getByRole("link", { name: "CCC matrix" }).click();
