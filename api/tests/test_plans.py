@@ -1,11 +1,11 @@
 """S1-11: GET /plans reads the plans table (D7: the seeded TEST_DATABASE_URL only).
 
-The seeded test drops and recreates the test database's public schema, as test_seed does.
+The seeded test uses the `empty_db` fixture (conftest.py), as test_seed does.
 """
 
 import json
-import os
 from collections.abc import Iterator
+from pathlib import Path
 
 import psycopg
 import pytest
@@ -17,23 +17,13 @@ from app.db.migrate import migrate
 from app.db.seed import SEED_DIR, seed
 from app.main import app
 from app.models import Plan
-
-TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
-
-needs_db = pytest.mark.skipif(
-    not TEST_DATABASE_URL,
-    reason="TEST_DATABASE_URL is unset; database tests skipped (D7: tests never use DATABASE_URL)",
-)
+from tests.db import TEST_DATABASE_URL, needs_db
 
 
 @pytest.fixture
-def seeded_client() -> Iterator[TestClient]:
-    assert TEST_DATABASE_URL
-    with psycopg.connect(TEST_DATABASE_URL, autocommit=True) as conn:
-        conn.execute("DROP SCHEMA public CASCADE")
-        conn.execute("CREATE SCHEMA public")
-        migrate(conn)
-        seed(conn)
+def seeded_client(empty_db: psycopg.Connection, tmp_path: Path) -> Iterator[TestClient]:
+    migrate(empty_db)
+    seed(empty_db, tmp_path)
 
     def test_conn() -> Iterator[psycopg.Connection]:
         assert TEST_DATABASE_URL

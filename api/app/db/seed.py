@@ -93,10 +93,10 @@ INSERT INTO links (child_ppa_id, parent_ppa_id, source, status)
 VALUES (%s, %s, 'manual', 'confirmed')
 """
 
-City = dict[str, Any]
+Json = dict[str, Any]
 
 
-def load_city() -> City:
+def load_city() -> Json:
     return json.loads(CITY_JSON.read_text(encoding="utf-8"))
 
 
@@ -108,7 +108,7 @@ def _sector_label(sector: str) -> str:
     return sector.replace("_", " ").capitalize()
 
 
-def _page_html(city: City, plan: City, page_index: int) -> str:
+def _page_html(city: Json, plan: Json, page_index: int) -> str:
     e = html.escape
     names = {b["psgc_code"]: b["name"] for b in city["barangays"]}
     page = plan["pages"][page_index]
@@ -145,7 +145,7 @@ def _page_html(city: City, plan: City, page_index: int) -> str:
     return "".join(parts)
 
 
-def render_pdf(city: City, plan: City) -> bytes:
+def render_pdf(city: Json, plan: Json) -> bytes:
     """One PDF page per page in city.json: title header, bordered table, footer."""
     buffer = io.BytesIO()
     writer = pymupdf.DocumentWriter(buffer)
@@ -176,7 +176,7 @@ def page_texts(pdf: bytes) -> list[str]:
         return [str(page.get_text(flags=TEXT_FLAGS)) for page in doc]
 
 
-def render_pdfs(city: City, pdf_dir: Path = PDF_DIR) -> dict[str, list[str]]:
+def render_pdfs(city: Json, pdf_dir: Path = PDF_DIR) -> dict[str, list[str]]:
     """Write every plan's PDF into `pdf_dir`. Returns each plan's page texts by type."""
     pdf_dir.mkdir(parents=True, exist_ok=True)
     texts: dict[str, list[str]] = {}
@@ -195,6 +195,8 @@ def seed(conn: psycopg.Connection, pdf_dir: Path = PDF_DIR) -> None:
 
     with conn.transaction():
         tables = [row[0] for row in conn.execute(TRUNCATE_TARGETS)]
+        if not tables:
+            raise RuntimeError("The database has no tables: run app.db.migrate first")
         conn.execute(
             sql.SQL("TRUNCATE {} RESTART IDENTITY CASCADE").format(
                 sql.SQL(", ").join(map(sql.Identifier, tables))
