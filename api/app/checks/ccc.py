@@ -23,10 +23,16 @@ The input gives PPA A and PPA B. Each reads "plan | code | title | description |
 barangays | years".
 
 Classify how the two projects relate:
-- Conflict: one project hinders or undermines the other, for example both claim the same \
-site or the same barangay's land for incompatible uses.
+- Conflict: one project works against the other's purpose. For example, one damages or \
+removes what the other protects, or one puts new homes or people where the other plans for \
+a hazard (an evacuation centre, early warning or flood works signal the hazard).
 - Compatible: both can go ahead without affecting each other.
-- Complementary: one supports or strengthens the other.
+- Complementary: one supports or strengthens the other, including an AIP project that \
+carries out part of another plan's project, or two projects doing related work in one place.
+
+Sharing a barangay, a sector or the same years is not a Conflict by itself: most pairs are \
+Compatible or Complementary. Choose Conflict only when you can name how one project harms \
+the other.
 
 Return:
 - verdict: Conflict, Compatible or Complementary.
