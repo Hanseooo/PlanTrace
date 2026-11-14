@@ -81,9 +81,18 @@ jobs:
         working-directory: web
         run: npm run typecheck
 
+      # After pytest, which drops the test schema. S1-12: the smoke's api reads the seeded city.
+      - name: Seed the test database
+        working-directory: api
+        run: |
+          uv run python -m app.db.migrate "$TEST_DATABASE_URL"
+          uv run python -m app.db.seed "$TEST_DATABASE_URL"
+
       # The Playwright config starts the api on :8000 and the web app on :3000.
       - name: Demo smoke
         working-directory: web
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
         run: npm run smoke
 
       - name: Upload Playwright results

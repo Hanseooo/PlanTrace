@@ -135,6 +135,8 @@ Every row carries `lgu_psgc` through its plan. Office names, sectors and languag
 | GET | `/chain` | Nodes and edges for the chain view (deferred) |
 | POST | `/ask` | Question in, cited answer out (deferred) |
 
+`GET /plans` reads the `plans` table (S1-11), so it needs `DATABASE_URL`: without it, or when the database is unreachable, it answers 503 and the plans screen shows its error state with Retry. This changes S0-07, under which the app started and answered without `DATABASE_URL`; the api still starts without it, and every other endpoint still serves `seed/fixtures/` until its slice lands. Routes get their connection from the `get_conn` dependency in `api/app/db/__init__.py`; tests override it with `TEST_DATABASE_URL` (D7).
+
 Web routes: `/` redirects to `/plans`; `/plans` (plans list and upload form), `/plans/[id]` (a plan's PPA table), `/findings` (findings list and side-by-side detail), `/ccc` (CCC matrix and export link).
 
 The schema is `api/app/db/migrations/001_init.sql` (#3); its check constraints use the `models.py` strings. `findings."check"` is a reserved word, so quote it in SQL. `pg_trgm` is enabled. The migrate command keeps applied file names in `schema_migrations`.

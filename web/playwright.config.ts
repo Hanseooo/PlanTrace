@@ -20,8 +20,11 @@ export default defineConfig({
     ? undefined
     : [
         {
+          // GET /plans reads DATABASE_URL (S1-11), inherited from this shell; CI sets
+          // it to the seeded TEST_DATABASE_URL. Readiness uses /openapi.json, which
+          // answers without a database.
           command: "uv run --directory ../api uvicorn app.main:app --port 8000",
-          url: `${LOCAL_API}/plans`,
+          url: `${LOCAL_API}/openapi.json`,
           env: { CORS_ORIGINS: LOCAL_WEB },
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,
