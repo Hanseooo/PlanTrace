@@ -54,6 +54,12 @@ class PlanUpload(BaseModel):
     period_end: int
 
 
+class PlanRetry(BaseModel):
+    """Multipart body of POST /plans/{id}/retry: the same file again (S2-14, D2)."""
+
+    file: UploadFile
+
+
 class Ppa(BaseModel):
     """One PPA row. Missing values are null, never invented (AC-05)."""
 
