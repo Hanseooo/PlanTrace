@@ -44,6 +44,9 @@ def test_upload_returns_extracting_plan() -> None:
     )
     assert response.status_code == 200, response.text
     assert Plan.model_validate(response.json()).status == "extracting"
+    # The web client is generated from OpenAPI, so the upload must be advertised as multipart.
+    content = app.openapi()["paths"]["/plans"]["post"]["requestBody"]["content"]
+    assert list(content) == ["multipart/form-data"]
 
 
 def test_delete_ppa_returns_no_content() -> None:

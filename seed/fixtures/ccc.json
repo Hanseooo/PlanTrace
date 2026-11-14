@@ -11,9 +11,39 @@
       "title": "Drainage improvement, Barangay 5"
     },
     {
+      "id": 203,
+      "plan_type": "CDP",
+      "title": "Farm-to-market road, Barangay 11"
+    },
+    {
+      "id": 204,
+      "plan_type": "CDP",
+      "title": "Barangay health station upgrade, Barangay 3"
+    },
+    {
+      "id": 205,
+      "plan_type": "CDP",
+      "title": "Level II water system, Barangay 7"
+    },
+    {
       "id": 206,
       "plan_type": "CDP",
       "title": "Rice production support program"
+    },
+    {
+      "id": 207,
+      "plan_type": "CDP",
+      "title": "Public market rehabilitation, Barangay 1"
+    },
+    {
+      "id": 208,
+      "plan_type": "CDP",
+      "title": "School building, Barangay 4"
+    },
+    {
+      "id": 209,
+      "plan_type": "CDP",
+      "title": "Skills training for fisherfolk families"
     },
     {
       "id": 210,
@@ -31,6 +61,11 @@
       "title": "Drainage canal upgrading, Barangay 5"
     },
     {
+      "id": 303,
+      "plan_type": "LDRRMP",
+      "title": "Community early warning system"
+    },
+    {
       "id": 304,
       "plan_type": "LDRRMP",
       "title": "River dike construction, Barangay 8"
@@ -39,6 +74,21 @@
       "id": 305,
       "plan_type": "LDRRMP",
       "title": "Retention pond, Barangay 11"
+    },
+    {
+      "id": 406,
+      "plan_type": "AIP",
+      "title": "Installation of early warning sirens"
+    },
+    {
+      "id": 408,
+      "plan_type": "AIP",
+      "title": "Street lighting, Barangay 2"
+    },
+    {
+      "id": 409,
+      "plan_type": "AIP",
+      "title": "Livelihood centre, Barangay 6"
     }
   ],
   "cells": [
