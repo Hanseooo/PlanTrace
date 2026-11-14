@@ -92,21 +92,19 @@ function MatrixTable({ matrix }: { matrix: Matrix }) {
                 {label(row)}
               </th>
               {matrix.ppas.map((col) => {
+                // Status handling (AC-33) and the cell detail (AC-34) come with S5.
                 const cell = cells.get(`${row.id}-${col.id}`);
-                // AC-33: a rejected verdict shows blank.
-                const shown = cell && cell.status !== "rejected" ? cell : null;
                 return (
                   <td
                     key={col.id}
                     aria-label={
-                      shown
-                        ? `${shown.verdict}: ${label(row)} × ${label(col)}`
+                      cell
+                        ? `${cell.verdict}: ${label(row)} × ${label(col)}`
                         : undefined
                     }
-                    title={shown?.reason}
                     className="h-8 w-12 border text-center"
                   >
-                    {shown && VERDICT_SHORT[shown.verdict]}
+                    {cell && VERDICT_SHORT[cell.verdict]}
                   </td>
                 );
               })}

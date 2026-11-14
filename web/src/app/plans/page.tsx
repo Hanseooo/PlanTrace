@@ -6,15 +6,17 @@ import { QueryStates } from "@/components/query-states";
 import { Button } from "@/components/ui/button";
 import { apiGet, type Schemas } from "@/lib/api";
 
-const PLAN_TYPES = [
-  "CLUP",
-  "CDP",
-  "LDIP",
-  "AIP",
-  "LDRRMP",
-  "LCCAP",
-  "Other",
-] as const satisfies readonly Schemas["Plan"]["type"][];
+// Keyed by the generated union, so tsc fails if a plan type is missing.
+const PLAN_TYPE_OPTIONS: Record<Schemas["Plan"]["type"], true> = {
+  CLUP: true,
+  CDP: true,
+  LDIP: true,
+  AIP: true,
+  LDRRMP: true,
+  LCCAP: true,
+  Other: true,
+};
+const PLAN_TYPES = Object.keys(PLAN_TYPE_OPTIONS);
 
 const field = "flex flex-col gap-1 text-sm";
 const input = "h-8 rounded-lg border bg-background px-2";

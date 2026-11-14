@@ -26,8 +26,9 @@ async function expectShell(page: Page) {
   ).toBeVisible();
 }
 
-test("demo journey: every screen shows the nav, the synthetic label and its data", async ({
+test("demo journey: every screen shows the nav, the label, its data and its states", async ({
   page,
+  baseURL,
 }) => {
   const consoleErrors = collectConsoleErrors(page);
 
@@ -89,13 +90,9 @@ test("demo journey: every screen shows the nav, the synthetic label and its data
   expect((await download).suggestedFilename()).toMatch(/\.xlsx$/);
 
   expect(consoleErrors).toEqual([]);
-});
 
-test("RS-01: a screen shows loading, then error with Retry, then empty", async ({
-  page,
-  baseURL,
-}) => {
-  // Hold, then fail, then empty every api call; let the web app's own requests through.
+  // RS-01 states, last because the aborted calls log console errors:
+  // hold, then fail, then empty every api call; let the web app's own requests through.
   const webOrigin = new URL(baseURL!).origin;
   let release!: () => void;
   const held = new Promise<void>((resolve) => (release = resolve));
