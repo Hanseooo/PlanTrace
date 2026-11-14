@@ -2,7 +2,7 @@
 
 # PlanTrace architecture
 
-2026-11-14. Status: planned. No code exists yet. Ticket 01 (walking skeleton) creates the folders, commands and contract files named here. If the code and this file disagree, the code wins: fix this file in the same PR.
+2026-11-14. Status: walking skeleton in progress. `api/` serves fixture stubs (#2); the rest is planned. Ticket 01 (walking skeleton) creates the folders, commands and contract files named here. If the code and this file disagree, the code wins: fix this file in the same PR.
 
 Product scope and the demo journey are in [PRD.md](PRD.md). How to write the code is in [CODING_STANDARDS.md](CODING_STANDARDS.md).
 
@@ -55,10 +55,11 @@ plantrace/
       main.py             app, CORS, router mounting (contract file)
       models.py           Pydantic models for the API and the AI output (contract file)
       llm.py              the LLM seam (lane:ai)
-      extract/            lane:ai. Upload, page text, PPA and zone extraction
-      checks/             lane:ai. Duplicate, orphan, CCC, zone; findings routes
+      fixtures.py         loads and validates a `seed/fixtures/` file for a stub route
+      extract/            lane:ai. Upload (`POST /plans`), page text, PPA and zone extraction
+      checks/             lane:ai. Duplicate, orphan, CCC, zone; `/checks/run`, `/findings`, `/ccc` routes
         ccc_export.py     the CCC export seam: the Excel layout lives only here
-      plans/              lane:data. Plan list, PPA table edits, confirm
+      plans/              lane:data. Plan list and status, PPA table edits, confirm
       db/                 lane:data, schema owner. Connection, migrations/NNN_name.sql
   seed/                   lane:data
     plans/                synthetic PDFs for the 4 plans and the LCCAP excerpt
@@ -66,7 +67,7 @@ plantrace/
     expected_findings.json the answer key for PRD section 4
 ```
 
-`api/app/plans/` going to the data lane is a fill-in, not agreed. Move it at ticket 01 if the team splits differently.
+`api/app/plans/` stays in the data lane (team decision on #1, 2026-11-14). Each lane folder has a `routes.py` with one `APIRouter` that `main.py` mounts.
 
 ## Contract
 
@@ -78,7 +79,7 @@ A model change is a contract change: tell the team, regenerate the types, and up
 
 **Mock data.** From ticket 01, every endpoint exists. Until its real query lands, an endpoint returns the matching file from `seed/fixtures/`. The web app has no mock mode. It always calls the API.
 
-**Env names** (contract; ticket 01 confirms them in `.env.example`): `DATABASE_URL`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `CORS_ORIGINS` (api); `NEXT_PUBLIC_API_URL` (web).
+**Env names** (contract; listed in `.env.example`): `DATABASE_URL`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `CORS_ORIGINS` (comma-separated origins), `TEST_DATABASE_URL` (pytest only, D7) (api); `NEXT_PUBLIC_API_URL` (web).
 
 ## Key flows
 
@@ -118,7 +119,7 @@ The uploaded file is discarded after step 2. The demo fallback is a pre-extracte
 | `ai_cache` | key, response, created_at |
 | `questions` | id, text, answer, cited_page_ids[], created_at (deferred with F7) |
 
-Every row carries `lgu_psgc` through its plan. Office names, sectors and languages are data, not code. `plans.status` values and `error` are proposed here; the schema owner settles them at ticket 01.
+Every row carries `lgu_psgc` through its plan. Office names, sectors and languages are data, not code. `plans.status` values are settled in `api/app/models.py` (#2): `extracting`, `ready`, `confirmed`, `failed`. "Uploading" is web-only (AC-03). Sector is the D3 list in `models.py`: `housing`, `drainage`, `flood_control`, `roads`, `evacuation`, `agriculture`, `water_supply`, `health`, `education`, `livelihood`, `commercial`, `industrial`.
 
 ## API
 

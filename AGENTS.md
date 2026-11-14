@@ -33,11 +33,15 @@ Change a line here only after telling the team. One line each: choice, because r
   - Add a Python service: the core needs a Python-only library.
 
 ## Commands (use exactly)
-- Install: none yet: #2 (api) and #4 (web) add it (assumed: npm in `web/`, `uv sync` in `api/`)
-- Dev: none yet: #2 (api) and #4 (web) add it
-- Typecheck: none yet: #2 (api) and #4 (web) add it
-- Lint: none yet: #2 (api) and #4 (web) add it
-- Unit tests: none yet: #2 adds it
+- Install (api): `cd api && uv sync`
+- Install (web): none yet: #4 adds it
+- Dev (api): `cd api && uv run uvicorn app.main:app --reload` (port 8000; set `CORS_ORIGINS` to the web origin)
+- Dev (web): none yet: #4 adds it
+- Typecheck (api): `cd api && uv run pyright`
+- Typecheck (web): none yet: #4 adds it
+- Lint (api): `cd api && uv run ruff check . && uv run ruff format --check .`
+- Lint (web): none yet: #4 adds it
+- Unit tests (api): `cd api && uv run pytest`
 - Migrate: none yet: #3 adds it
 - Demo smoke: none yet: #4 adds it
 
