@@ -1,5 +1,6 @@
 """Plan list, PPA table edits, confirm (lane:data). GET /plans (S1-11), GET /plans/{id}
-and GET /plans/{id}/ppas (S2-16) read the database. The writes are stubs until S3:
+and GET /plans/{id}/ppas (S2-16), GET /barangays and GET /pages/{id} (S3-01, S3-02) read
+the database. The writes are stubs until S3:
 they ignore path IDs and don't persist until the real queries land (SH-01)."""
 
 from typing import Annotated
@@ -10,7 +11,7 @@ from psycopg.rows import class_row
 
 from app.db import get_conn
 from app.fixtures import load_fixture
-from app.models import Plan, Ppa, PpaInput
+from app.models import Barangay, Page, Plan, Ppa, PpaInput
 
 router = APIRouter()
 
@@ -27,6 +28,10 @@ SELECT id, plan_id, code, title, description, office, sector, barangays, cost,
        year_start, year_end, page_id, status
 FROM ppas WHERE plan_id = %s ORDER BY id
 """
+
+# The one copy of the barangay query; extract/routes.py imports it for the model input.
+SELECT_BARANGAYS = "SELECT psgc_code, name FROM lgus WHERE level = 'barangay' ORDER BY psgc_code"
+SELECT_PAGE = "SELECT id, plan_id, page_no, text FROM pages WHERE id = %s"
 
 Conn = Annotated[psycopg.Connection, Depends(get_conn)]
 
@@ -57,6 +62,21 @@ def list_ppas(plan_id: int, conn: Conn) -> list[Ppa]:
     # psycopg reads numeric as Decimal; Ppa's float field converts it.
     with conn.cursor(row_factory=class_row(Ppa)) as cur:
         return cur.execute(SELECT_PPAS, (plan_id,)).fetchall()
+
+
+@router.get("/barangays")
+def list_barangays(conn: Conn) -> list[Barangay]:
+    with conn.cursor(row_factory=class_row(Barangay)) as cur:
+        return cur.execute(SELECT_BARANGAYS).fetchall()
+
+
+@router.get("/pages/{page_id}")
+def get_page(page_id: int, conn: Conn) -> Page:
+    with conn.cursor(row_factory=class_row(Page)) as cur:
+        page = cur.execute(SELECT_PAGE, (page_id,)).fetchone()
+    if page is None:
+        raise HTTPException(status_code=404, detail="Page not found")
+    return page
 
 
 @router.post("/plans/{plan_id}/ppas")

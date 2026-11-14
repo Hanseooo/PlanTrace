@@ -20,7 +20,7 @@ from app.extract.extraction import (
     read_pages,
 )
 from app.models import Plan, PlanRetry, PlanUpload
-from app.plans.routes import fetch_plan
+from app.plans.routes import SELECT_BARANGAYS, fetch_plan
 
 router = APIRouter()
 
@@ -29,7 +29,6 @@ MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 INTERRUPTED = "Extraction was interrupted. Retry."
 
 SELECT_CITY = "SELECT psgc_code FROM lgus WHERE level = 'city' LIMIT 1"
-SELECT_BARANGAYS = "SELECT psgc_code, name FROM lgus WHERE level = 'barangay' ORDER BY psgc_code"
 INSERT_PLAN = """
 INSERT INTO plans (lgu_psgc, type, title, period_start, period_end, status)
 VALUES (%s, %s, %s, %s, %s, 'extracting')

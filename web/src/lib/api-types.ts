@@ -74,6 +74,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/barangays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Barangays */
+        get: operations["list_barangays_barangays_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pages/{page_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Page */
+        get: operations["get_page_pages__page_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ppas/{ppa_id}": {
         parameters: {
             query?: never;
@@ -198,6 +232,16 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * Barangay
+         * @description One of the city's barangays, for the barangay picker and names in cells (S3-01).
+         */
+        Barangay: {
+            /** Psgc Code */
+            psgc_code: string;
+            /** Name */
+            name: string;
+        };
         /**
          * CccCell
          * @description One candidate pair. Pairs not listed were not candidates and show blank.
@@ -345,6 +389,20 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * Page
+         * @description One page of an uploaded plan, for the source panel (S3-02).
+         */
+        Page: {
+            /** Id */
+            id: number;
+            /** Plan Id */
+            plan_id: number;
+            /** Page No */
+            page_no: number;
+            /** Text */
+            text: string;
         };
         /** Plan */
         Plan: {
@@ -652,6 +710,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Ppa"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_barangays_barangays_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Barangay"][];
+                };
+            };
+        };
+    };
+    get_page_pages__page_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                page_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page"];
                 };
             };
             /** @description Validation Error */

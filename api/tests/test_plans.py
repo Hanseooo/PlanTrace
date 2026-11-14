@@ -1,4 +1,5 @@
-"""S1-11, S2-16: the plan read routes read the database (D7: the seeded TEST_DATABASE_URL only).
+"""S1-11, S2-16, S3-01, S3-02: the plan, barangay and page read routes read the database
+(D7: the seeded TEST_DATABASE_URL only).
 
 The seeded test uses the `empty_db` fixture (conftest.py), as test_seed does.
 """
@@ -16,7 +17,7 @@ from app.db import get_conn
 from app.db.migrate import migrate
 from app.db.seed import SEED_DIR, seed
 from app.main import app
-from app.models import Plan, Ppa
+from app.models import Barangay, Page, Plan, Ppa
 from tests.db import TEST_DATABASE_URL, needs_db
 
 
@@ -79,3 +80,57 @@ def test_list_plans_without_database_url_is_503(monkeypatch: pytest.MonkeyPatch)
     response = TestClient(app).get("/plans")
     assert response.status_code == 503
     assert "DATABASE_URL" in response.json()["detail"]
+
+
+@needs_db
+def test_list_barangays_returns_the_12_barangays_by_code(seeded_client: TestClient) -> None:
+    response = seeded_client.get("/barangays")
+    assert response.status_code == 200, response.text
+    barangays = TypeAdapter(list[Barangay]).validate_python(response.json())
+    codes = [b.psgc_code for b in barangays]
+    assert len(barangays) == 12
+    assert codes[0] == "1199900001"
+    assert codes == sorted(codes)
+    assert "1199900000" not in codes  # the city row
+    assert all(b.name for b in barangays)
+
+
+@needs_db
+def test_get_page_returns_a_ppas_source_page(seeded_client: TestClient) -> None:
+    ppas = seeded_client.get("/plans/2/ppas").json()
+    page_id = next(p["page_id"] for p in ppas if p["code"] == "CDP-01")
+    assert TEST_DATABASE_URL
+    with psycopg.connect(TEST_DATABASE_URL) as conn:
+        row = conn.execute(
+            "SELECT plan_id, page_no, text FROM pages WHERE id = %s", (page_id,)
+        ).fetchone()
+    assert row
+
+    response = seeded_client.get(f"/pages/{page_id}")
+    assert response.status_code == 200, response.text
+    page = Page.model_validate(response.json())
+    assert (page.id, page.plan_id, page.page_no, page.text) == (page_id, 2, row[1], row[2])
+    assert "housing" in page.text.lower()
+
+
+@needs_db
+def test_unknown_page_is_404(seeded_client: TestClient) -> None:
+    response = seeded_client.get("/pages/999999")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Page not found"
+
+
+@pytest.mark.parametrize("path", ["/barangays", "/pages/1"])
+def test_new_reads_without_database_url_are_503(monkeypatch: pytest.MonkeyPatch, path: str) -> None:
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    assert TestClient(app).get(path).status_code == 503
+
+
+@pytest.mark.parametrize("path", ["/barangays", "/pages/1"])
+def test_new_reads_with_database_unreachable_are_503(
+    monkeypatch: pytest.MonkeyPatch, path: str
+) -> None:
+    monkeypatch.setenv("DATABASE_URL", "postgresql://nobody@127.0.0.1:1/none")
+    response = TestClient(app).get(path)
+    assert response.status_code == 503
+    assert "reach" in response.json()["detail"]

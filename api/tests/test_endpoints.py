@@ -1,6 +1,7 @@
 """S0-06: every MVP endpoint answers with a body valid against its model.
 
-GET /plans (S1-11), GET /plans/{id} and GET /plans/{id}/ppas (S2-16) read the database;
+GET /plans (S1-11), GET /plans/{id}, GET /plans/{id}/ppas (S2-16), GET /barangays and
+GET /pages/{id} (S3-01, S3-02) read the database;
 tests/test_plans.py covers them. POST /plans (S2-10) is covered by tests/test_extract.py.
 """
 

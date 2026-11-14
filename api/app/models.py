@@ -60,6 +60,22 @@ class PlanRetry(BaseModel):
     file: UploadFile
 
 
+class Barangay(BaseModel):
+    """One of the city's barangays, for the barangay picker and names in cells (S3-01)."""
+
+    psgc_code: str
+    name: str
+
+
+class Page(BaseModel):
+    """One page of an uploaded plan, for the source panel (S3-02)."""
+
+    id: int
+    plan_id: int
+    page_no: int
+    text: str
+
+
 class Ppa(BaseModel):
     """One PPA row. Missing values are null, never invented (AC-05)."""
 
