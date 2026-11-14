@@ -4,6 +4,7 @@ A change here is a contract change: tell the team, regenerate web/src/lib/api-ty
 and update seed/fixtures/ in the same PR (ARCHITECTURE.md "Contract").
 """
 
+from datetime import datetime
 from typing import Literal
 
 from fastapi import UploadFile
@@ -129,6 +130,7 @@ class Finding(BaseModel):
     status: FindingStatus
     note: str | None
     created_by: FindingCreatedBy
+    barangay: str | None  # PSGC code the finding is grouped under (AC-26)
 
 
 class FindingUpdate(BaseModel):
@@ -145,6 +147,7 @@ class CheckCount(BaseModel):
 
 
 class CheckRunResult(BaseModel):
+    ran_at: datetime
     counts: list[CheckCount]
 
 

@@ -46,7 +46,8 @@
     ],
     "status": "suggested",
     "note": null,
-    "created_by": "rule"
+    "created_by": "rule",
+    "barangay": "1199900005"
   },
   {
     "id": 2,
@@ -97,7 +98,8 @@
     ],
     "status": "suggested",
     "note": null,
-    "created_by": "rule"
+    "created_by": "rule",
+    "barangay": "1199900005"
   },
   {
     "id": 3,
@@ -146,7 +148,8 @@
     ],
     "status": "suggested",
     "note": null,
-    "created_by": "rule"
+    "created_by": "rule",
+    "barangay": "1199900008"
   },
   {
     "id": 4,
@@ -195,7 +198,8 @@
     ],
     "status": "suggested",
     "note": null,
-    "created_by": "ai"
+    "created_by": "ai",
+    "barangay": "1199900002"
   },
   {
     "id": 5,
@@ -245,7 +249,8 @@
     ],
     "status": "suggested",
     "note": null,
-    "created_by": "ai"
+    "created_by": "ai",
+    "barangay": "1199900006"
   },
   {
     "id": 6,
@@ -277,7 +282,8 @@
     ],
     "status": "suggested",
     "note": null,
-    "created_by": "rule"
+    "created_by": "rule",
+    "barangay": "1199900009"
   },
   {
     "id": 7,
@@ -327,7 +333,8 @@
     ],
     "status": "suggested",
     "note": null,
-    "created_by": "ai"
+    "created_by": "ai",
+    "barangay": "1199900009"
   },
   {
     "id": 8,
@@ -378,6 +385,7 @@
     ],
     "status": "suggested",
     "note": null,
-    "created_by": "ai"
+    "created_by": "ai",
+    "barangay": "1199900011"
   }
 ]
