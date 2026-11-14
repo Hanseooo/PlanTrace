@@ -91,6 +91,47 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   await page.keyboard.press("Escape");
   await expect(panel).toBeHidden();
   await expect(sourceButton).toBeFocused();
+  // J3 edit (S3-09 to S3-11): a wrong cost stays in the cell and Escape restores
+  // it without a request; an office edit saves on Enter and survives a reload.
+  let patches = 0;
+  page.on("request", (r) => {
+    if (r.method() === "PATCH") patches += 1;
+  });
+  const cost = page.getByRole("button", { name: "Cost for LCCAP-01" });
+  await expect(cost).toHaveText("₱3,000,000");
+  await cost.click();
+  const costInput = page.getByRole("textbox", { name: "Cost for LCCAP-01" });
+  await expect(costInput).toBeFocused();
+  await costInput.fill("-1");
+  await costInput.press("Enter");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Cost can't be below 0" }),
+  ).toBeVisible();
+  await costInput.press("Escape");
+  await expect(cost).toHaveText("₱3,000,000");
+  await expect(cost).toBeFocused();
+  const office = page.getByRole("button", { name: "Office for LCCAP-01" });
+  await office.click();
+  const officeInput = page.getByRole("textbox", {
+    name: "Office for LCCAP-01",
+  });
+  await expect(officeInput).toBeFocused();
+  await officeInput.fill("City Environment Office");
+  const saved = page.waitForResponse(
+    (r) => r.request().method() === "PATCH" && r.url().includes("/ppas/"),
+  );
+  await officeInput.press("Enter");
+  expect((await saved).ok()).toBe(true);
+  await expect(office).toHaveText("City Environment Office");
+  expect(patches).toBe(1);
+  await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Office for LCCAP-01" }),
+  ).toHaveText("City Environment Office");
+  // Barangay cells show names, not PSGC codes.
+  await expect(
+    page.getByRole("button", { name: "Barangays for LCCAP-03" }),
+  ).toHaveText("Barangay 10, Barangay 11");
   await page.getByRole("link", { name: "Back to plans" }).click();
   await expect(page).toHaveURL(/\/plans$/);
   await expect(
@@ -109,7 +150,9 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   await expect(page.getByRole("heading", { name: "PPA table" })).toBeVisible();
   await expectShell(page);
   await expect(
-    page.getByRole("cell", { name: "Socialized housing project, Barangay 9" }),
+    page.getByRole("button", { name: /^Title for / }).filter({
+      hasText: "Socialized housing project, Barangay 9",
+    }),
   ).toBeVisible();
   await page.getByRole("link", { name: "Back to plans" }).click();
   await expect(page).toHaveURL(/\/plans$/);
