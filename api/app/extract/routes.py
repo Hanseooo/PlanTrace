@@ -1,5 +1,6 @@
 """Upload and extraction (lane:ai). POST /plans checks the upload, saves an `extracting`
-plan and extracts in a background task (S2-10, S2-11). The retry is a stub until #21."""
+plan and extracts in a background task (S2-10, S2-11). POST /plans/{id}/retry runs that
+task again on a failed plan under the same id (S2-14)."""
 
 from collections.abc import Callable
 from typing import Annotated
@@ -18,8 +19,8 @@ from app.extract.extraction import (
     model_input,
     read_pages,
 )
-from app.fixtures import load_fixture
 from app.models import Plan, PlanRetry, PlanUpload
+from app.plans.routes import fetch_plan
 
 router = APIRouter()
 
@@ -41,6 +42,12 @@ INSERT INTO ppas (plan_id, code, title, description, office, sector, barangays, 
 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'draft')
 """
 SET_STATUS = "UPDATE plans SET status = %s, error = %s WHERE id = %s"
+DELETE_PPAS = "DELETE FROM ppas WHERE plan_id = %s"
+DELETE_PAGES = "DELETE FROM pages WHERE plan_id = %s"
+RESET_FOR_RETRY = """
+UPDATE plans SET status = 'extracting', error = NULL WHERE id = %s
+RETURNING id, lgu_psgc, type, title, period_start, period_end, status, error
+"""
 RESET_INTERRUPTED = "UPDATE plans SET status = 'failed', error = %s WHERE status = 'extracting'"
 
 Conn = Annotated[psycopg.Connection, Depends(get_conn)]
@@ -152,5 +159,22 @@ def upload_plan(
 
 
 @router.post("/plans/{plan_id}/retry")
-def retry_plan(plan_id: int, body: Annotated[PlanRetry, File()]) -> Plan:
-    return load_fixture("plan_upload.json", Plan)
+def retry_plan(
+    plan_id: int,
+    body: Annotated[PlanRetry, File()],
+    conn: Conn,
+    tasks: BackgroundTasks,
+    connector: Annotated[Connector, Depends(get_connector)],
+) -> Plan:
+    pdf = check_pdf(body)
+    if fetch_plan(conn, plan_id).status != "failed":
+        raise HTTPException(409, "Only a failed plan can be retried")
+
+    conn.execute(DELETE_PPAS, (plan_id,))  # first: ppas.page_id references pages
+    conn.execute(DELETE_PAGES, (plan_id,))
+    with conn.cursor(row_factory=class_row(Plan)) as cur:
+        plan = cur.execute(RESET_FOR_RETRY, (plan_id,)).fetchone()
+    assert plan
+    conn.commit()  # before the task starts: it writes the plan on its own connection
+    tasks.add_task(extract_plan, plan.id, pdf, connector)
+    return plan

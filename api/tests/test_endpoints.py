@@ -37,13 +37,8 @@ def test_endpoint_body_matches_model(
     TypeAdapter(model).validate_python(response.json())
 
 
-def test_retry_returns_a_plan() -> None:
-    """Stub until #21: the retry route exists in the contract (S2-14)."""
-    response = client.post(
-        "/plans/5/retry", files={"file": ("lccap.pdf", b"%PDF-1.4", "application/pdf")}
-    )
-    assert response.status_code == 200, response.text
-    Plan.model_validate(response.json())
+def test_retry_is_advertised_as_multipart() -> None:
+    """The retry's behaviour is tested in test_extract.py against the database (S2-14)."""
     content = app.openapi()["paths"]["/plans/{plan_id}/retry"]["post"]["requestBody"]["content"]
     assert list(content) == ["multipart/form-data"]
 
