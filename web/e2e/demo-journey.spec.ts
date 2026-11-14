@@ -294,7 +294,7 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   await expect(cccBarangay9).toContainText(
     "Socialized housing project, Barangay 9",
   );
-  await expect(cccBarangay9).toContainText("Evacuation centre, Barangay 9");
+  await expect(cccBarangay9).toContainText("Evacuation centre construction");
   await expect(cccBarangay9).toContainText("Conflict");
 
   // J8-J9: the CCC matrix, reached through the nav, and its export.
@@ -303,7 +303,7 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   await expectShell(page);
   // J8: the named cell shows C; Enter opens its detail, Escape returns focus to it.
   const conflictCell = page.getByRole("button", {
-    name: "Conflict, AI suggestion: CDP CDP-01: Socialized housing project, Barangay 9 × LDRRMP LDRRMP-02: Evacuation centre, Barangay 9",
+    name: "Conflict, AI suggestion: CDP CDP-01: Socialized housing project, Barangay 9 × LDRRMP LDRRMP-02: Evacuation centre construction",
   });
   await expect(conflictCell).toHaveText("C");
   await conflictCell.focus();

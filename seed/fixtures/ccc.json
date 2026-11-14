@@ -3,91 +3,109 @@
     {
       "id": 201,
       "plan_type": "CDP",
+      "code": "CDP-01",
       "title": "Socialized housing project, Barangay 9"
     },
     {
       "id": 202,
       "plan_type": "CDP",
+      "code": "CDP-02",
       "title": "Drainage improvement, Barangay 5"
     },
     {
       "id": 203,
       "plan_type": "CDP",
+      "code": "CDP-03",
       "title": "Farm-to-market road, Barangay 11"
     },
     {
       "id": 204,
       "plan_type": "CDP",
+      "code": "CDP-04",
       "title": "Barangay health station upgrade, Barangay 3"
     },
     {
       "id": 205,
       "plan_type": "CDP",
+      "code": "CDP-05",
       "title": "Level II water system, Barangay 7"
     },
     {
       "id": 206,
       "plan_type": "CDP",
+      "code": "CDP-06",
       "title": "Rice production support program"
     },
     {
       "id": 207,
       "plan_type": "CDP",
+      "code": "CDP-07",
       "title": "Public market rehabilitation, Barangay 1"
     },
     {
       "id": 208,
       "plan_type": "CDP",
+      "code": "CDP-08",
       "title": "School building, Barangay 4"
     },
     {
       "id": 209,
       "plan_type": "CDP",
+      "code": "CDP-09",
       "title": "Skills training for fisherfolk families"
     },
     {
       "id": 210,
       "plan_type": "CDP",
+      "code": "CDP-10",
       "title": "Flood control dike, Barangay 8"
     },
     {
       "id": 301,
       "plan_type": "LDRRMP",
+      "code": "LDRRMP-01",
       "title": "Evacuation centre, Barangay 9"
     },
     {
       "id": 302,
       "plan_type": "LDRRMP",
+      "code": "LDRRMP-02",
       "title": "Drainage canal upgrading, Barangay 5"
     },
     {
       "id": 303,
       "plan_type": "LDRRMP",
+      "code": "LDRRMP-03",
       "title": "Community early warning system"
     },
     {
       "id": 304,
       "plan_type": "LDRRMP",
+      "code": "LDRRMP-04",
       "title": "River dike construction, Barangay 8"
     },
     {
       "id": 305,
       "plan_type": "LDRRMP",
+      "code": "LDRRMP-05",
       "title": "Retention pond, Barangay 11"
     },
     {
       "id": 406,
       "plan_type": "AIP",
+      "code": "AIP-06",
       "title": "Installation of early warning sirens"
     },
     {
       "id": 408,
       "plan_type": "AIP",
+      "code": "AIP-08",
       "title": "Street lighting, Barangay 2"
     },
     {
       "id": 409,
       "plan_type": "AIP",
+      "code": "AIP-09",
       "title": "Livelihood centre, Barangay 6"
     }
   ],

@@ -1,0 +1,345 @@
+[
+  {
+    "input": "PPA A:\nAIP | AIP-01 | Canal upgrade, first segment | 2027 works on the first 600 m of the main canal | drainage | Barangay 5 | 2027\n\nPPA B:\nCDP | CDP-02 | Drainage improvement, Barangay 5 | Upgrade of the main drainage canal along the national road | drainage | Barangay 5 | 2027\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "Both projects involve drainage improvements in Barangay 5 and can proceed simultaneously; the canal upgrade enhances the overall drainage capacity, while the other project focuses on a specific segment along the national road."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-02 | Birthing room fit-out | Equipment purchase and minor civil works for 2027 | health | Barangay 3 | 2027\n\nPPA B:\nCDP | CDP-04 | Health station upgrade | Birthing room and equipment for the health station | health | Barangay 3 | 2027\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "Both projects are focused on enhancing health services in Barangay 3 in 2027. The fit-out of a birthing room in PPA A will provide the infrastructure needed for the health station upgrade in PPA B, making them mutually supportive."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-03 | Concreting of the access lane to the public market | 2027 package of 1.2 km concrete paving | roads | Barangay 11 | 2027\n\nPPA B:\nCDP | CDP-03 | Farm-to-market roads program | Concreting of farm roads linking agricultural barangays to the public market | roads | Barangay 6, Barangay 7, Barangay 10, Barangay 11 | 2026-2031\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "PPA A focuses on improving access to the public market through concrete paving, while PPA B enhances connectivity for agricultural barangays to the same market. Together, they improve overall access and support the economic activities around the public market."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-03 | Concreting of the access lane to the public market | 2027 package of 1.2 km concrete paving | roads | Barangay 11 | 2027\n\nPPA B:\nLCCAP | LCCAP-03 | Climate-smart rice seed distribution | Drought- and flood-tolerant rice seed for lowland farms | agriculture | Barangay 10, Barangay 11 | 2026-2028\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects can go ahead without affecting each other, as PPA A focuses on improving road access to the public market while PPA B distributes climate-smart rice seed to farmers in Barangay 10 and Barangay 11."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-04 | Upland sitio road concreting | 1.5 km concrete paving from the sitio to the provincial road | roads | Barangay 6 | 2027\n\nPPA B:\nCDP | CDP-03 | Farm-to-market roads program | Concreting of farm roads linking agricultural barangays to the public market | roads | Barangay 6, Barangay 7, Barangay 10, Barangay 11 | 2026-2031\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects are focused on improving road infrastructure in Barangay 6, but they serve different purposes; PPA A concentrates on connecting a sitio to the provincial road while PPA B aims to enhance farm-to-market roads. The timelines also overlap, but their functions do not conflict."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-04 | Upland sitio road concreting | 1.5 km concrete paving from the sitio to the provincial road | roads | Barangay 6 | 2027\n\nPPA B:\nCDP | CDP-10 | Level III water system expansion | Transmission line and house connections from the upland spring source | water_supply | Barangay 6, Barangay 7 | 2026-2029\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on the concreting of a road in Barangay 6, while PPA B involves the expansion of a water system that requires house connections in Barangay 6 and 7. Both projects can proceed without interfering with each other's objectives."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-05 | Gravel lane rehabilitation to the rice mill | Regravelling and side ditches for 2 km of lane | roads | Barangay 10 | 2027\n\nPPA B:\nCDP | CDP-03 | Farm-to-market roads program | Concreting of farm roads linking agricultural barangays to the public market | roads | Barangay 6, Barangay 7, Barangay 10, Barangay 11 | 2026-2031\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects focus on improvements in the roads sector but target different areas and timelines, with PPA A focusing on gravel lane rehabilitation in Barangay 10 in 2027, while PPA B is concerned with the construction of farm-to-market roads from 2026 to 2031 involving multiple barangays including Barangay 10."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-05 | Gravel lane rehabilitation to the rice mill | Regravelling and side ditches for 2 km of lane | roads | Barangay 10 | 2027\n\nPPA B:\nCDP | CDP-09 | Community disaster preparedness program | Drills, hazard maps and response plans for the upland farming barangays | evacuation | Barangay 7, Barangay 10 | 2026-2031\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on improving a gravel lane in Barangay 10, while PPA B is concerned with community disaster preparedness in multiple barangays, including Barangay 10. The improvement of infrastructure can coexist with disaster preparedness initiatives without conflicting, allowing for both to proceed as planned."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-05 | Gravel lane rehabilitation to the rice mill | Regravelling and side ditches for 2 km of lane | roads | Barangay 10 | 2027\n\nPPA B:\nLCCAP | LCCAP-03 | Climate-smart rice seed distribution | Drought- and flood-tolerant rice seed for lowland farms | agriculture | Barangay 10, Barangay 11 | 2026-2028\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects can proceed without affecting each other; the gravel lane rehabilitation focuses on improving transportation access for the rice mill, while the climate-smart rice seed distribution enhances agricultural resilience in the same barangay."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-05 | Gravel lane rehabilitation to the rice mill | Regravelling and side ditches for 2 km of lane | roads | Barangay 10 | 2027\n\nPPA B:\nLDRRMP | LDRRMP-04 | Flood early warning system installation | Sirens and automated rain gauges along the upper river | flood_control | Barangay 7, Barangay 10 | 2026-2027\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on rehabilitating a gravel lane in Barangay 10, while PPA B involves installing a flood early warning system that includes Barangay 10. Neither project interferes with the other, as one improves transportation access and the other enhances flood preparedness."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-06 | Construction of four classrooms | 2027 tranche: ground floor of the school building | education | Barangay 1 | 2027\n\nPPA B:\nCDP | CDP-08 | Elementary school building | Two-storey, eight-classroom building for the central elementary school | education | Barangay 1 | 2026-2027\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "Both projects aim to improve educational facilities in Barangay 1, with PPA A providing additional classrooms to support the existing school structure proposed in PPA B."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-07 | Flood early warning system, upper river | Purchase and installation of sirens and rain gauges in 2027 | flood_control | Barangay 7, Barangay 10 | 2027\n\nPPA B:\nCDP | CDP-03 | Farm-to-market roads program | Concreting of farm roads linking agricultural barangays to the public market | roads | Barangay 6, Barangay 7, Barangay 10, Barangay 11 | 2026-2031\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on flood early warning systems, while PPA B is about improving farm-to-market roads. The two projects serve different purposes and can coexist without negatively impacting each other."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-07 | Flood early warning system, upper river | Purchase and installation of sirens and rain gauges in 2027 | flood_control | Barangay 7, Barangay 10 | 2027\n\nPPA B:\nCDP | CDP-06 | Coastal mangrove rehabilitation | Replanting of coastal mangroves as a natural buffer against storm surge | flood_control | Barangay 12 | 2026-2028\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on a flood early warning system in specific barangays, while PPA B involves coastal mangrove rehabilitation in a different barangay. Since they target different locations and do not interfere with each other's objectives, they can proceed without conflict."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-07 | Flood early warning system, upper river | Purchase and installation of sirens and rain gauges in 2027 | flood_control | Barangay 7, Barangay 10 | 2027\n\nPPA B:\nCDP | CDP-09 | Community disaster preparedness program | Drills, hazard maps and response plans for the upland farming barangays | evacuation | Barangay 7, Barangay 10 | 2026-2031\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "The flood early warning system supports the community disaster preparedness program by providing essential information for drills and response plans, enhancing overall preparedness in Barangay 7 and Barangay 10."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-07 | Flood early warning system, upper river | Purchase and installation of sirens and rain gauges in 2027 | flood_control | Barangay 7, Barangay 10 | 2027\n\nPPA B:\nCDP | CDP-10 | Level III water system expansion | Transmission line and house connections from the upland spring source | water_supply | Barangay 6, Barangay 7 | 2026-2029\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on a flood early warning system to enhance flood control, while PPA B is about expanding the water supply system. Both projects can coexist without interfering with each other, as they address different needs within barangay areas."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-07 | Flood early warning system, upper river | Purchase and installation of sirens and rain gauges in 2027 | flood_control | Barangay 7, Barangay 10 | 2027\n\nPPA B:\nLCCAP | LCCAP-01 | Mangrove rehabilitation along the coast | Replanting of 20 hectares of coastal mangroves | flood_control | Barangay 12 | 2026-2028\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on installing a flood early warning system in upper river barangays, while PPA B involves mangrove rehabilitation along the coast in a different barangay. Since they address different geographical areas and aspects of flood control, they can both be implemented without interfering with each other."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-07 | Flood early warning system, upper river | Purchase and installation of sirens and rain gauges in 2027 | flood_control | Barangay 7, Barangay 10 | 2027\n\nPPA B:\nLCCAP | LCCAP-02 | Rainwater harvesting for farms | Rainwater collectors for upland farms | water_supply | Barangay 7 | 2027-2029\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects aim to enhance the community's resilience to flooding but serve different functions; PPA A focuses on flood early warning while PPA B promotes water collection for agriculture. Their implementation in the same barangay and year does not conflict, as they address different aspects of water management."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-07 | Flood early warning system, upper river | Purchase and installation of sirens and rain gauges in 2027 | flood_control | Barangay 7, Barangay 10 | 2027\n\nPPA B:\nLCCAP | LCCAP-03 | Climate-smart rice seed distribution | Drought- and flood-tolerant rice seed for lowland farms | agriculture | Barangay 10, Barangay 11 | 2026-2028\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on installing a flood early warning system while PPA B distributes climate-smart rice seeds. These projects can coexist without interfering with each other, as one is geared towards disaster preparedness and the other towards agricultural resilience."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-07 | Flood early warning system, upper river | Purchase and installation of sirens and rain gauges in 2027 | flood_control | Barangay 7, Barangay 10 | 2027\n\nPPA B:\nLDRRMP | LDRRMP-03 | Riverbank slope stabilization, Barangay 2 | Gabions and slope protection along the eroding riverbank | flood_control | Barangay 2 | 2026-2028\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on a flood early warning system in Barangay 7 and Barangay 10 for 2027, while PPA B is about riverbank slope stabilization in Barangay 2, running from 2026 to 2028. Since they target different areas and timeframes, they can proceed without impacting each other."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-07 | Flood early warning system, upper river | Purchase and installation of sirens and rain gauges in 2027 | flood_control | Barangay 7, Barangay 10 | 2027\n\nPPA B:\nLDRRMP | LDRRMP-04 | Flood early warning system installation | Sirens and automated rain gauges along the upper river | flood_control | Barangay 7, Barangay 10 | 2026-2027\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "Both projects aim to enhance the flood early warning system in the same area and timeline, with PPA A focusing on purchasing and installing additional equipment while PPA B undertakes the installation of sirens and automated rain gauges. They support each other's efforts towards better flood risk management."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-08 | Transmission pipe laying, phase 1 | 2027 laying of the first 3 km of pipe from the spring | water_supply | Barangay 6 | 2027\n\nPPA B:\nCDP | CDP-03 | Farm-to-market roads program | Concreting of farm roads linking agricultural barangays to the public market | roads | Barangay 6, Barangay 7, Barangay 10, Barangay 11 | 2026-2031\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "The transmission pipe laying project focuses on water supply infrastructure, while the farm-to-market roads program is aimed at improving transport for agricultural goods. They can coexist in Barangay 6 without interfering with each other's objectives."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-08 | Transmission pipe laying, phase 1 | 2027 laying of the first 3 km of pipe from the spring | water_supply | Barangay 6 | 2027\n\nPPA B:\nCDP | CDP-10 | Level III water system expansion | Transmission line and house connections from the upland spring source | water_supply | Barangay 6, Barangay 7 | 2026-2029\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "PPA A involves laying the first segment of the transmission pipe, while PPA B focuses on expanding the water system with connections from the same source. Together, they enhance the overall water supply infrastructure in Barangay 6 and neighboring areas."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-08 | Transmission pipe laying, phase 1 | 2027 laying of the first 3 km of pipe from the spring | water_supply | Barangay 6 | 2027\n\nPPA B:\nLCCAP | LCCAP-02 | Rainwater harvesting for farms | Rainwater collectors for upland farms | water_supply | Barangay 7 | 2027-2029\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects focus on enhancing water supply but are located in different barangays, with PPA A in Barangay 6 and PPA B in Barangay 7. Since they address water supply needs in separate areas, they can proceed without affecting each other."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-09 | Wet section stall replacement | 2027 replacement of 40 stalls in the wet section | commercial | Barangay 4 | 2027\n\nPPA B:\nCDP | CDP-07 | Public market modernization | New stalls, wet section drainage and solid waste area at the public market | commercial | Barangay 4 | 2027-2028\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "PPA A's project of replacing old stalls in the wet section supports PPA B's modernization efforts at the public market, including new stalls and improved drainage. Together, they enhance the commercial infrastructure of Barangay 4."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-09 | Wet section stall replacement | 2027 replacement of 40 stalls in the wet section | commercial | Barangay 4 | 2027\n\nPPA B:\nLDRRMP | LDRRMP-05 | Relief goods warehouse | Prepositioned food packs and supplies for 1,000 families | evacuation | Barangay 4 | 2027\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects are scheduled for the same year and share Barangay 4 but serve different purposes; one focuses on commercial stall replacement while the other establishes a relief goods warehouse for emergency response, allowing them to coexist without interfering with each other."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-10 | Seedling nursery for coastal planting | 2027 nursery of 10,000 propagules | flood_control | Barangay 12 | 2027\n\nPPA B:\nCDP | CDP-06 | Coastal mangrove rehabilitation | Replanting of coastal mangroves as a natural buffer against storm surge | flood_control | Barangay 12 | 2026-2028\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "PPA A, which involves establishing a seedling nursery for coastal planting, supports PPA B's goal of replanting coastal mangroves by providing the necessary propagules. Together, they enhance flood control measures in Barangay 12."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-10 | Seedling nursery for coastal planting | 2027 nursery of 10,000 propagules | flood_control | Barangay 12 | 2027\n\nPPA B:\nLCCAP | LCCAP-01 | Mangrove rehabilitation along the coast | Replanting of 20 hectares of coastal mangroves | flood_control | Barangay 12 | 2026-2028\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "PPA A's seedling nursery supports PPA B's mangrove rehabilitation by providing the necessary propagules for planting. Both projects focus on flood control in Barangay 12 and complement each other in their efforts to enhance coastal resilience."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-10 | Seedling nursery for coastal planting | 2027 nursery of 10,000 propagules | flood_control | Barangay 12 | 2027\n\nPPA B:\nLDRRMP | LDRRMP-03 | Riverbank slope stabilization, Barangay 2 | Gabions and slope protection along the eroding riverbank | flood_control | Barangay 2 | 2026-2028\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on establishing a seedling nursery for coastal planting, while PPA B addresses riverbank slope stabilization. They operate in different barangays and timeframes, and do not interfere with each other's objectives."
+    }
+  },
+  {
+    "input": "PPA A:\nAIP | AIP-10 | Seedling nursery for coastal planting | 2027 nursery of 10,000 propagules | flood_control | Barangay 12 | 2027\n\nPPA B:\nLDRRMP | LDRRMP-04 | Flood early warning system installation | Sirens and automated rain gauges along the upper river | flood_control | Barangay 7, Barangay 10 | 2026-2027\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects focus on flood control but target different aspects; PPA A involves establishing a seedling nursery for coastal planting to enhance coastal resilience, while PPA B is about installing an early warning system for floods in different barangays. Their implementation in separate locations and timeframes allows both to proceed without interference."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-01 | Socialized housing project, Barangay 9 | 120 housing units for informal settler families | housing | Barangay 9 | 2027-2028\n\nPPA B:\nLDRRMP | LDRRMP-02 | Evacuation centre construction | Two-storey evacuation centre for 300 families | evacuation | Barangay 9 | 2026-2027\n",
+    "answer": {
+      "verdict": "Conflict",
+      "reason": "The socialized housing project in Barangay 9 will lead to the permanent settlement of families in an area designated for an evacuation center, which is specifically meant for temporary shelter during emergencies. This undermines the evacuation center's purpose and capacity."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-03 | Farm-to-market roads program | Concreting of farm roads linking agricultural barangays to the public market | roads | Barangay 6, Barangay 7, Barangay 10, Barangay 11 | 2026-2031\n\nPPA B:\nLCCAP | LCCAP-02 | Rainwater harvesting for farms | Rainwater collectors for upland farms | water_supply | Barangay 7 | 2027-2029\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "PPA A focuses on improving farm-to-market roads, which can enhance access to the rainwater harvesting systems implemented by PPA B. Both projects support agricultural development in Barangay 7 and work together to improve farm productivity."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-03 | Farm-to-market roads program | Concreting of farm roads linking agricultural barangays to the public market | roads | Barangay 6, Barangay 7, Barangay 10, Barangay 11 | 2026-2031\n\nPPA B:\nLCCAP | LCCAP-03 | Climate-smart rice seed distribution | Drought- and flood-tolerant rice seed for lowland farms | agriculture | Barangay 10, Barangay 11 | 2026-2028\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "Both projects support agricultural development in the same barangays; the farm-to-market roads program enhances accessibility for farmers to markets, while the climate-smart rice seed distribution provides essential resources to improve farming resilience."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-03 | Farm-to-market roads program | Concreting of farm roads linking agricultural barangays to the public market | roads | Barangay 6, Barangay 7, Barangay 10, Barangay 11 | 2026-2031\n\nPPA B:\nLDRRMP | LDRRMP-04 | Flood early warning system installation | Sirens and automated rain gauges along the upper river | flood_control | Barangay 7, Barangay 10 | 2026-2027\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both PPA A and PPA B focus on different aspects of community development: one enhances agricultural connectivity through road improvements while the other aims to implement a flood early warning system. Their purposes do not conflict, allowing them to coexist without negative impacts on each other."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-05 | Quarry and aggregates extraction, Barangay 2 | Sand and gravel extraction from the river channel to supply city construction projects | industrial | Barangay 2 | 2027-2029\n\nPPA B:\nLDRRMP | LDRRMP-03 | Riverbank slope stabilization, Barangay 2 | Gabions and slope protection along the eroding riverbank | flood_control | Barangay 2 | 2026-2028\n",
+    "answer": {
+      "verdict": "Conflict",
+      "reason": "PPA A involves sand and gravel extraction from the river channel, which can destabilize the riverbanks and counteract the purpose of PPA B, which aims to stabilize those same banks to prevent erosion and flooding."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-06 | Coastal mangrove rehabilitation | Replanting of coastal mangroves as a natural buffer against storm surge | flood_control | Barangay 12 | 2026-2028\n\nPPA B:\nLCCAP | LCCAP-01 | Mangrove rehabilitation along the coast | Replanting of 20 hectares of coastal mangroves | flood_control | Barangay 12 | 2026-2028\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "Both projects aim to rehabilitate coastal mangroves in Barangay 12 during the same years, which will enhance the flood control measures by reinforcing the natural buffer against storm surges."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-06 | Coastal mangrove rehabilitation | Replanting of coastal mangroves as a natural buffer against storm surge | flood_control | Barangay 12 | 2026-2028\n\nPPA B:\nLDRRMP | LDRRMP-03 | Riverbank slope stabilization, Barangay 2 | Gabions and slope protection along the eroding riverbank | flood_control | Barangay 2 | 2026-2028\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on coastal mangrove rehabilitation in Barangay 12, while PPA B targets riverbank slope stabilization in Barangay 2. Since they address flood control in different barangays, they can proceed without impeding each other's goals."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-06 | Coastal mangrove rehabilitation | Replanting of coastal mangroves as a natural buffer against storm surge | flood_control | Barangay 12 | 2026-2028\n\nPPA B:\nLDRRMP | LDRRMP-04 | Flood early warning system installation | Sirens and automated rain gauges along the upper river | flood_control | Barangay 7, Barangay 10 | 2026-2027\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects aim to enhance flood control but focus on different aspects; PPA A focuses on replanting mangroves for storm surge protection in Barangay 12, while PPA B targets early warning installations in Barangay 7 and Barangay 10, which do not overlap or conflict with each other."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-07 | Public market modernization | New stalls, wet section drainage and solid waste area at the public market | commercial | Barangay 4 | 2027-2028\n\nPPA B:\nLDRRMP | LDRRMP-05 | Relief goods warehouse | Prepositioned food packs and supplies for 1,000 families | evacuation | Barangay 4 | 2027\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects exist in the same barangay and timeline but serve different purposes; the public market modernization focuses on commercial development while the relief goods warehouse provides essential supplies for emergencies."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-09 | Community disaster preparedness program | Drills, hazard maps and response plans for the upland farming barangays | evacuation | Barangay 7, Barangay 10 | 2026-2031\n\nPPA B:\nLCCAP | LCCAP-02 | Rainwater harvesting for farms | Rainwater collectors for upland farms | water_supply | Barangay 7 | 2027-2029\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects focus on upland farming in Barangay 7, with PPA A concentrating on disaster preparedness and PPA B on rainwater harvesting. They do not interfere with each other's purposes and can be implemented simultaneously."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-09 | Community disaster preparedness program | Drills, hazard maps and response plans for the upland farming barangays | evacuation | Barangay 7, Barangay 10 | 2026-2031\n\nPPA B:\nLCCAP | LCCAP-03 | Climate-smart rice seed distribution | Drought- and flood-tolerant rice seed for lowland farms | agriculture | Barangay 10, Barangay 11 | 2026-2028\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on disaster preparedness for upland farming barangays, while PPA B provides climate-smart rice seed for lowland farms. Their objectives cater to different farming areas and hazards, allowing both projects to coexist without interfering with each other's goals."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-09 | Community disaster preparedness program | Drills, hazard maps and response plans for the upland farming barangays | evacuation | Barangay 7, Barangay 10 | 2026-2031\n\nPPA B:\nLDRRMP | LDRRMP-02 | Evacuation centre construction | Two-storey evacuation centre for 300 families | evacuation | Barangay 9 | 2026-2027\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects focus on improving evacuation capabilities; PPA A enhances preparedness through drills and planning while PPA B constructs an evacuation center. Since they address different aspects of disaster management in different barangays, they can coexist without conflict."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-09 | Community disaster preparedness program | Drills, hazard maps and response plans for the upland farming barangays | evacuation | Barangay 7, Barangay 10 | 2026-2031\n\nPPA B:\nLDRRMP | LDRRMP-04 | Flood early warning system installation | Sirens and automated rain gauges along the upper river | flood_control | Barangay 7, Barangay 10 | 2026-2027\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "PPA A and PPA B both focus on disaster preparedness and flood management in the same barangays. PPA A enhances the community's readiness through drills and planning, while PPA B provides an early warning system that supports the community's overall preparedness efforts."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-09 | Community disaster preparedness program | Drills, hazard maps and response plans for the upland farming barangays | evacuation | Barangay 7, Barangay 10 | 2026-2031\n\nPPA B:\nLDRRMP | LDRRMP-05 | Relief goods warehouse | Prepositioned food packs and supplies for 1,000 families | evacuation | Barangay 4 | 2027\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on disaster preparedness training and plans for upland farming barangays, while PPA B provides a relief goods warehouse for a different barangay. Since they target different areas and activities, they can coexist without affecting each other's goals."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-10 | Level III water system expansion | Transmission line and house connections from the upland spring source | water_supply | Barangay 6, Barangay 7 | 2026-2029\n\nPPA B:\nLCCAP | LCCAP-02 | Rainwater harvesting for farms | Rainwater collectors for upland farms | water_supply | Barangay 7 | 2027-2029\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "Both projects enhance the water supply in Barangay 7, with PPA A expanding the existing water system and PPA B implementing rainwater harvesting, which can work synergistically to improve overall water access."
+    }
+  },
+  {
+    "input": "PPA A:\nCDP | CDP-10 | Level III water system expansion | Transmission line and house connections from the upland spring source | water_supply | Barangay 6, Barangay 7 | 2026-2029\n\nPPA B:\nLDRRMP | LDRRMP-04 | Flood early warning system installation | Sirens and automated rain gauges along the upper river | flood_control | Barangay 7, Barangay 10 | 2026-2027\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects focus on different aspects of community improvement; PPA A aims to expand water supply infrastructure while PPA B enhances flood monitoring and response capabilities. They can coexist in Barangay 7 without interfering with each other's objectives."
+    }
+  },
+  {
+    "input": "PPA A:\nLCCAP | LCCAP-01 | Mangrove rehabilitation along the coast | Replanting of 20 hectares of coastal mangroves | flood_control | Barangay 12 | 2026-2028\n\nPPA B:\nLDRRMP | LDRRMP-03 | Riverbank slope stabilization, Barangay 2 | Gabions and slope protection along the eroding riverbank | flood_control | Barangay 2 | 2026-2028\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "Both projects focus on flood control but are located in different barangays, with PPA A aiming to rehabilitate mangroves in Barangay 12 and PPA B working on riverbank stabilization in Barangay 2. Their efforts do not interfere with each other and can coexist."
+    }
+  },
+  {
+    "input": "PPA A:\nLCCAP | LCCAP-01 | Mangrove rehabilitation along the coast | Replanting of 20 hectares of coastal mangroves | flood_control | Barangay 12 | 2026-2028\n\nPPA B:\nLDRRMP | LDRRMP-04 | Flood early warning system installation | Sirens and automated rain gauges along the upper river | flood_control | Barangay 7, Barangay 10 | 2026-2027\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on mangrove rehabilitation for flood control, while PPA B implements a flood early warning system in different barangays. Both projects can proceed without affecting each other since they target different areas and aspects of flood control."
+    }
+  },
+  {
+    "input": "PPA A:\nLCCAP | LCCAP-02 | Rainwater harvesting for farms | Rainwater collectors for upland farms | water_supply | Barangay 7 | 2027-2029\n\nPPA B:\nLDRRMP | LDRRMP-04 | Flood early warning system installation | Sirens and automated rain gauges along the upper river | flood_control | Barangay 7, Barangay 10 | 2026-2027\n",
+    "answer": {
+      "verdict": "Complementary",
+      "reason": "The rainwater harvesting project supports the flood early warning system by promoting effective water management in upland farms, which can help mitigate the impacts of flooding. Both projects are in Barangay 7 and work towards managing water resources."
+    }
+  },
+  {
+    "input": "PPA A:\nLCCAP | LCCAP-03 | Climate-smart rice seed distribution | Drought- and flood-tolerant rice seed for lowland farms | agriculture | Barangay 10, Barangay 11 | 2026-2028\n\nPPA B:\nLDRRMP | LDRRMP-04 | Flood early warning system installation | Sirens and automated rain gauges along the upper river | flood_control | Barangay 7, Barangay 10 | 2026-2027\n",
+    "answer": {
+      "verdict": "Compatible",
+      "reason": "PPA A focuses on distributing climate-smart rice seeds to enhance agricultural resilience, while PPA B installs a flood early warning system to improve flood control. As they target different sectors (agriculture vs. flood control) and operate in partially overlapping barangays without conflicting outcomes, they can coexist effectively."
+    }
+  }
+]

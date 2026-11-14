@@ -1,6 +1,6 @@
 """Checks, findings and the CCC matrix. Wiring only: each route calls one function in a
 lane-owned file (S4-SH-02). rules.py, findings.py and ccc_export.py are lane:data;
-orphan.py and run.py are lane:ai, and S5 adds ccc.py. Change this file only through the
+orphan.py, ccc.py and run.py are lane:ai. Change this file only through the
 contract."""
 
 from typing import Annotated
