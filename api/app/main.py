@@ -1,9 +1,11 @@
+import logging
 import os
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.checks import routes as checks
 from app.extract import routes as extract
@@ -21,6 +23,26 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 # One schema name per model, so web/src/lib/api-types.ts stays stable.
 app = FastAPI(title="PlanTrace API", separate_input_output_schemas=False, lifespan=lifespan)
+
+logger = logging.getLogger("plantrace")
+
+# The message the web app shows for an unexpected error; it adds the final full stop.
+UNEXPECTED_ERROR = "The PlanTrace API hit an unexpected error; try again"
+
+
+@app.middleware("http")
+async def unexpected_errors_as_json(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    """An unhandled error becomes a JSON 500 here, inside CORSMiddleware (added after this,
+    so it wraps it), so the answer keeps its CORS headers. Without this the browser blocks
+    the 500 and the web app can only say the API is unreachable. The traceback is logged."""
+    try:
+        return await call_next(request)
+    except Exception:
+        logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+        return JSONResponse({"detail": UNEXPECTED_ERROR}, status_code=500)
+
 
 app.add_middleware(
     CORSMiddleware,
