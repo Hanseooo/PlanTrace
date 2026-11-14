@@ -20,7 +20,7 @@ Structure, seams and contract: [ARCHITECTURE.md](ARCHITECTURE.md). How to write 
    slices S0 to S6. Per slice: `/han-to-spec` writes a short slice spec that
    cites the master spec's AC IDs, then `/han-to-tickets`. S0, the walking
    skeleton, is spec #1 with tickets #2 to #7 (Parallel work).
-4. Each person claims a ticket, branches, and runs `/stint #<n>`.
+4. Each person claims a ticket, branches, and runs `/implement #<n>`.
 
 ## Decisions
 Change a line here only after telling the team. One line each: choice, because reason.
@@ -87,11 +87,15 @@ Change a line here only after telling the team. One line each: choice, because r
   demo smoke, which covers its UI components and glue code.
 
 ## Review
-- Every ticket: one `/code-review` pass after `/stint`'s commit step, before
-  the branch is pushed.
-- Shared or System-wide blast radius, as the ticket's Blast radius field says:
-  `/stint`'s second `/code-review` pass too, over the first pass's fixes,
-  also before the push.
+Reviews cost tokens. Cap: two `/code-review` runs per slice.
+- Mandatory: one `/code-review` after a slice's last implementation ticket
+  lands, over the whole slice against its spec. A second pass, over the first
+  pass's fixes, only when those fixes were more than trivial.
+- Per ticket: no review by default. This overrides the review step at the end
+  of `/implement`. Review a single ticket only when needed: it is High
+  complexity or System-wide and other tickets build on it. That run counts
+  toward the cap.
+- Findings past the cap are listed in the PR, not fixed.
 
 ## Code
 - Smallest thing that works: does it need to exist → platform or stdlib →
