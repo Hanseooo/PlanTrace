@@ -237,7 +237,7 @@ export function PpaCell({
           }
           aria-disabled={save.isPending}
           onClick={() => !save.isPending && start()}
-          className={`-mx-1 min-h-7 w-full rounded px-1 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none aria-disabled:opacity-70 ${
+          className={`-mx-1 min-h-8 w-full cursor-pointer rounded border border-transparent px-1.5 py-1 text-left transition-colors hover:border-primary/40 hover:bg-secondary/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none aria-disabled:opacity-70 ${
             field === "cost" ? "tabular-nums" : ""
           }`}
         >

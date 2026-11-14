@@ -10,6 +10,14 @@ export const STATUS_LABELS: Record<PlanStatus, string> = {
   confirmed: "Confirmed",
 };
 
+/** The badge colour per status, shared like the labels. */
+export const STATUS_TONES = {
+  extracting: "busy",
+  ready: "warning",
+  failed: "danger",
+  confirmed: "success",
+} as const satisfies Record<PlanStatus, string>;
+
 /** Poll every 2 s while extracting, else stop (S2-05, S2-06). */
 export const POLL_MS = 2000;
 

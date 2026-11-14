@@ -4,13 +4,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FileUp, ListChecks, SquarePen, Upload } from "lucide-react";
+import { PageHeader, card } from "@/components/page-header";
 import { QueryStates } from "@/components/query-states";
+import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { apiGet, apiPostForm, type Schemas } from "@/lib/api";
 import {
   FILE_RULE,
   POLL_MS,
   STATUS_LABELS,
+  STATUS_TONES,
   isUploadablePdf,
   keepFile,
 } from "@/lib/plan-upload";
@@ -29,8 +33,29 @@ const PLAN_TYPE_OPTIONS: Record<PlanType, true> = {
 };
 const PLAN_TYPES = Object.keys(PLAN_TYPE_OPTIONS);
 
-const field = "flex flex-col gap-1 text-sm";
-const input = "h-8 rounded-lg border bg-background px-2";
+const field = "flex flex-col gap-1.5 text-sm font-medium";
+const hint = "text-xs font-normal text-muted-foreground";
+const input =
+  "h-10 rounded-lg border border-input bg-background px-3 text-base font-normal outline-none focus-visible:ring-3 focus-visible:ring-ring/40";
+
+// The whole job in three steps, so a first-time user knows where they are.
+const STEPS = [
+  {
+    icon: FileUp,
+    title: "1. Upload a plan",
+    body: "Add a plan as a PDF. PlanTrace reads it and lists its programs, projects and activities (PPAs).",
+  },
+  {
+    icon: SquarePen,
+    title: "2. Check and confirm",
+    body: "Open the plan, fix anything read wrong, then press Confirm plan.",
+  },
+  {
+    icon: ListChecks,
+    title: "3. Review findings",
+    body: "Go to Findings and press Run checks to spot repeated projects and projects that don't connect.",
+  },
+] as const;
 
 export default function PlansPage() {
   const plans = useQuery({
@@ -42,8 +67,27 @@ export default function PlansPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Plans</h1>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Plans"
+        description="Every plan the city has added. Upload a new one, or open a plan to check its PPAs."
+      />
+      <ol
+        aria-label="How PlanTrace works"
+        className="grid gap-3 md:grid-cols-3"
+      >
+        {STEPS.map(({ icon: Icon, title, body }) => (
+          <li key={title} className={`${card} flex gap-3 p-4`}>
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+              <Icon aria-hidden className="size-5" />
+            </span>
+            <div className="flex flex-col gap-0.5">
+              <p className="font-bold">{title}</p>
+              <p className="text-sm text-muted-foreground">{body}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
       <UploadForm />
       <QueryStates
         query={plans}
@@ -52,42 +96,53 @@ export default function PlansPage() {
         empty="No plans yet. Upload your first plan with the form above."
       >
         {(data) => (
-          <table className="w-full text-left text-sm">
-            <thead className="border-b text-muted-foreground">
-              <tr>
-                <th className="py-2 pr-4 font-medium">Type</th>
-                <th className="py-2 pr-4 font-medium">Title</th>
-                <th className="py-2 pr-4 font-medium">Period</th>
-                <th className="py-2 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((plan) => (
-                <tr key={plan.id} className="border-b">
-                  <td className="py-2 pr-4">{plan.type}</td>
-                  <td className="py-2 pr-4">
-                    <Link
-                      href={`/plans/${plan.id}`}
-                      className="underline-offset-4 hover:underline"
-                    >
-                      {plan.title}
-                    </Link>
-                  </td>
-                  <td className="py-2 pr-4">
-                    {plan.period_start}–{plan.period_end}
-                  </td>
-                  <td className="py-2">
-                    {STATUS_LABELS[plan.status]}
-                    {plan.error && (
-                      <span className="block text-destructive">
-                        {plan.error}
-                      </span>
-                    )}
-                  </td>
+          <div className={`${card} overflow-x-auto`}>
+            <table className="w-full text-left">
+              <thead className="border-b bg-muted/60 text-sm text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-bold">Type</th>
+                  <th className="px-4 py-3 font-bold">Title</th>
+                  <th className="px-4 py-3 font-bold">Period</th>
+                  <th className="px-4 py-3 font-bold">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.map((plan) => (
+                  <tr
+                    key={plan.id}
+                    className="border-b transition-colors last:border-b-0 hover:bg-muted/40"
+                  >
+                    <td className="px-4 py-3">
+                      <span className="rounded-md bg-secondary px-2 py-0.5 text-sm font-bold text-secondary-foreground">
+                        {plan.type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/plans/${plan.id}`}
+                        className="font-medium text-primary underline-offset-4 hover:underline"
+                      >
+                        {plan.title}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {plan.period_start}–{plan.period_end}
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge tone={STATUS_TONES[plan.status]}>
+                        {STATUS_LABELS[plan.status]}
+                      </StatusBadge>
+                      {plan.error && (
+                        <span className="mt-1 block text-sm text-destructive">
+                          {plan.error}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </QueryStates>
     </div>
@@ -152,22 +207,36 @@ function UploadForm() {
   return (
     <form
       aria-labelledby="upload-heading"
-      className="rounded-lg border p-4"
+      className={`${card} p-5`}
       onSubmit={submit}
     >
-      <h2 id="upload-heading" className="mb-3 font-medium">
+      <h2
+        id="upload-heading"
+        className="flex items-center gap-2 text-xl font-bold"
+      >
+        <Upload aria-hidden className="size-5 text-primary" />
         Upload a plan
       </h2>
-      <fieldset disabled={busy} className="flex flex-wrap items-end gap-3">
+      <p className="mt-1 mb-4 text-sm text-muted-foreground">
+        Fill in all four fields. The Upload button turns on once they are all
+        filled in.
+      </p>
+      <fieldset
+        disabled={busy}
+        className="flex flex-wrap items-start gap-x-5 gap-y-4"
+      >
         <label className={field}>
           PDF file
           <input
             type="file"
             accept="application/pdf,.pdf"
-            className="text-sm"
+            className="text-sm font-normal file:mr-3 file:h-10 file:cursor-pointer file:rounded-lg file:border file:border-input file:bg-secondary file:px-3 file:font-medium file:text-secondary-foreground"
             onChange={chooseFile}
-            aria-describedby="upload-file-error"
+            aria-describedby="upload-file-hint upload-file-error"
           />
+          <span id="upload-file-hint" className={hint}>
+            {FILE_RULE}
+          </span>
         </label>
         <label className={field}>
           Plan type
@@ -175,6 +244,7 @@ function UploadForm() {
             className={input}
             value={type}
             onChange={(e) => setType(e.target.value)}
+            aria-describedby="upload-type-hint"
           >
             <option value="" disabled>
               Choose a type
@@ -183,6 +253,9 @@ function UploadForm() {
               <option key={t}>{t}</option>
             ))}
           </select>
+          <span id="upload-type-hint" className={hint}>
+            For example CDP or AIP
+          </span>
         </label>
         <label className={field}>
           Start year
@@ -191,6 +264,8 @@ function UploadForm() {
             className={`${input} w-24`}
             value={start}
             onChange={(e) => setStart(e.target.value)}
+            placeholder="2026"
+            aria-describedby="upload-years-hint"
           />
         </label>
         <label className={field}>
@@ -200,9 +275,14 @@ function UploadForm() {
             className={`${input} w-24`}
             value={end}
             onChange={(e) => setEnd(e.target.value)}
+            placeholder="2030"
+            aria-describedby="upload-years-hint"
           />
+          <span id="upload-years-hint" className={hint}>
+            The years the plan covers
+          </span>
         </label>
-        <Button type="submit" disabled={!ready}>
+        <Button type="submit" size="lg" disabled={!ready} className="mt-6">
           {busy ? "Uploading…" : "Upload"}
         </Button>
       </fieldset>

@@ -2,10 +2,18 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MousePointerClick, Play } from "lucide-react";
+import { PageHeader, card } from "@/components/page-header";
 import { QueryStates } from "@/components/query-states";
+import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { apiGet, apiPost, type Schemas } from "@/lib/api";
-import { CHECK_LABELS, FindingDetail, STATUS_LABELS } from "./finding-detail";
+import {
+  CHECK_LABELS,
+  FindingDetail,
+  STATUS_LABELS,
+  STATUS_TONES,
+} from "./finding-detail";
 
 type Finding = Schemas["Finding"];
 type CheckRun = Schemas["CheckRunResult"];
@@ -14,6 +22,16 @@ type CheckRun = Schemas["CheckRunResult"];
 const CHECK_ORDER: Finding["check"][] = ["duplicate", "orphan", "zone"];
 
 const NO_BARANGAY = "No barangay";
+
+// What each check looks for, in plain words.
+const CHECK_HELP: Record<Finding["check"], string> = {
+  duplicate:
+    "The same project appears in two plans, so it may be funded twice.",
+  orphan:
+    "A project in the investment program that isn't linked to any bigger plan goal.",
+  zone: "A project placed where the land use plan doesn't allow that kind of use.",
+  ccc: "Two projects in the same place that may work against each other.",
+};
 
 const ranAt = new Intl.DateTimeFormat("en-PH", {
   dateStyle: "medium",
@@ -43,14 +61,18 @@ export default function FindingsPage() {
   });
 
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Findings</h1>
-      <div className="flex flex-wrap items-center gap-3">
-        <Button disabled={run.isPending} onClick={() => run.mutate()}>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Findings"
+        description="PlanTrace compares your confirmed plans and lists anything that doesn't line up. Review each one: confirm it if it's a real problem, or reject it if it isn't."
+      />
+      <div className={`${card} flex flex-wrap items-center gap-4 p-4`}>
+        <Button size="lg" disabled={run.isPending} onClick={() => run.mutate()}>
+          <Play aria-hidden />
           {run.isPending ? "Running checks…" : "Run checks"}
         </Button>
         {latest.data && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground">
             Last run {ranAt.format(new Date(latest.data.ran_at))}
           </p>
         )}
@@ -122,9 +144,12 @@ function FindingsBody({ counts }: { counts: CheckRun["counts"] }) {
                 barangayName={barangayName}
               />
             ) : (
-              <p className="text-muted-foreground">
-                Select a finding to compare its PPAs side by side.
-              </p>
+              <div
+                className={`${card} flex flex-col items-center gap-2 border-dashed p-10 text-center text-muted-foreground`}
+              >
+                <MousePointerClick aria-hidden className="size-8" />
+                <p>Select a finding to compare its PPAs side by side.</p>
+              </div>
             )}
           </div>
         );
@@ -157,21 +182,33 @@ function CheckGroup({
   const unit = check === "duplicate" ? "pairs" : "PPAs";
 
   return (
-    <section aria-label={CHECK_LABELS[check]} className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">
-        {CHECK_LABELS[check]}{" "}
-        <span className="text-sm font-normal text-muted-foreground">
-          {count?.found ?? findings.length} found
-        </span>
-      </h2>
+    <section
+      aria-label={CHECK_LABELS[check]}
+      className={`${card} flex flex-col gap-3 p-4`}
+    >
+      <div className="flex flex-col gap-1">
+        <h2 className="flex items-center gap-2 text-lg font-bold">
+          {CHECK_LABELS[check]}{" "}
+          <span
+            className={`rounded-full px-2 py-0.5 text-sm font-bold ${
+              (count?.found ?? findings.length) > 0
+                ? "bg-warning-soft text-warning"
+                : "bg-success-soft text-success"
+            }`}
+          >
+            {count?.found ?? findings.length} found
+          </span>
+        </h2>
+        <p className="text-sm text-muted-foreground">{CHECK_HELP[check]}</p>
+      </div>
       {findings.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-success">
           No issues found for this check. {count?.checked ?? 0} {unit} checked.
         </p>
       ) : (
         [...groups].map(([name, items]) => (
           <section key={name} aria-label={name} className="flex flex-col gap-1">
-            <h3 className="text-sm font-medium text-muted-foreground">
+            <h3 className="text-xs font-bold tracking-wide text-muted-foreground uppercase">
               {name}
             </h3>
             <ul className="flex flex-col gap-1">
@@ -181,12 +218,15 @@ function CheckGroup({
                     type="button"
                     aria-pressed={f.id === selectedId}
                     onClick={() => onSelect(f.id)}
-                    className="w-full rounded-lg border p-2 text-left text-sm hover:bg-muted aria-pressed:border-primary aria-pressed:bg-muted"
+                    className="flex w-full cursor-pointer flex-col items-start gap-1.5 rounded-lg border bg-background p-3 text-left text-sm transition-colors outline-none hover:border-primary/40 hover:bg-secondary/50 focus-visible:ring-3 focus-visible:ring-ring/40 aria-pressed:border-primary aria-pressed:bg-secondary aria-pressed:ring-1 aria-pressed:ring-primary"
                   >
-                    <span className="block">{itemTitle(f)}</span>
-                    <span className="block text-muted-foreground">
+                    <span className="block font-medium">{itemTitle(f)}</span>
+                    <StatusBadge
+                      tone={STATUS_TONES[f.status]}
+                      className="text-xs"
+                    >
                       {STATUS_LABELS[f.status]}
-                    </span>
+                    </StatusBadge>
                   </button>
                 </li>
               ))}

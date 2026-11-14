@@ -14,6 +14,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Check, Lightbulb, X } from "lucide-react";
+import { card } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { apiPatch, pesos, years, type Schemas } from "@/lib/api";
 
@@ -34,6 +37,12 @@ export const STATUS_LABELS: Record<Finding["status"], string> = {
   confirmed: "Confirmed",
   rejected: "Rejected",
 };
+
+export const STATUS_TONES = {
+  suggested: "info",
+  confirmed: "success",
+  rejected: "neutral",
+} as const satisfies Record<Finding["status"], string>;
 
 /** S4-18 to S4-20: both PPAs side by side, the reason, sources, review actions. */
 export function FindingDetail({
@@ -66,16 +75,16 @@ export function FindingDetail({
     <div className="flex w-full flex-col items-start gap-4 lg:flex-row">
       <section
         aria-label="Finding detail"
-        className="flex w-full min-w-0 flex-1 flex-col gap-4"
+        className={`${card} flex w-full min-w-0 flex-1 flex-col gap-5 p-5`}
       >
-        <div className="flex flex-wrap items-baseline gap-3">
-          <h2 className="text-lg font-semibold">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-xl font-bold">
             {CHECK_LABELS[finding.check]} finding
             {finding.verdict && `: ${finding.verdict}`}
           </h2>
-          <span className="rounded-md bg-muted px-2 py-0.5 text-sm">
+          <StatusBadge tone={STATUS_TONES[finding.status]}>
             {STATUS_LABELS[finding.status]}
-          </span>
+          </StatusBadge>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <PpaCard ppa={ppa_a} barangayName={barangayName} />
@@ -105,9 +114,9 @@ export function FindingDetail({
           )}
         </div>
         {finding.check === "duplicate" && ppa_b && (
-          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-lg bg-muted/60 p-3">
             <dt className="text-muted-foreground">Cost difference</dt>
-            <dd>
+            <dd className="font-bold">
               {ppa_a.cost === null || ppa_b.cost === null
                 ? "not stated"
                 : pesos.format(Math.abs(ppa_a.cost - ppa_b.cost))}
@@ -119,7 +128,16 @@ export function FindingDetail({
             </dd>
           </dl>
         )}
-        <p>{finding.reason}</p>
+        <div className="flex gap-3 rounded-lg border border-primary/20 bg-secondary/60 p-4">
+          <Lightbulb
+            aria-hidden
+            className="mt-0.5 size-5 shrink-0 text-primary"
+          />
+          <div className="flex flex-col gap-0.5">
+            <p className="text-sm font-bold">Why this was flagged</p>
+            <p>{finding.reason}</p>
+          </div>
+        </div>
         <NoteEditor
           note={finding.note}
           saving={update.isPending}
@@ -137,50 +155,59 @@ export function FindingDetail({
                 />
               ))}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            disabled={update.isPending}
-            onClick={() => update.mutate({ status: "confirmed" })}
-          >
-            {acceptsParent
-              ? pendingStatus === "confirmed"
-                ? "Accepting…"
-                : "Accept parent"
-              : pendingStatus === "confirmed"
-                ? "Confirming…"
-                : "Confirm"}
-          </Button>
-          <AlertDialog open={rejecting} onOpenChange={setRejecting}>
-            <AlertDialogTrigger
-              render={<Button variant="destructive" />}
+        <div className="flex flex-col gap-2 border-t pt-4">
+          <p className="text-sm text-muted-foreground">
+            Is this a real problem? Confirm it to keep it on the list, or reject
+            it if it is a false alarm.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="lg"
               disabled={update.isPending}
+              onClick={() => update.mutate({ status: "confirmed" })}
             >
-              {pendingStatus === "rejected" ? "Rejecting…" : "Reject"}
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Reject this finding?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {acceptsParent
-                    ? "An accepted parent link is rejected too. "
-                    : ""}
-                  You can confirm it again later.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  variant="destructive"
-                  onClick={() => {
-                    setRejecting(false);
-                    update.mutate({ status: "rejected" });
-                  }}
-                >
-                  Reject
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+              <Check aria-hidden />
+              {acceptsParent
+                ? pendingStatus === "confirmed"
+                  ? "Accepting…"
+                  : "Accept parent"
+                : pendingStatus === "confirmed"
+                  ? "Confirming…"
+                  : "Confirm"}
+            </Button>
+            <AlertDialog open={rejecting} onOpenChange={setRejecting}>
+              <AlertDialogTrigger
+                render={<Button variant="destructive" size="lg" />}
+                disabled={update.isPending}
+              >
+                <X aria-hidden />
+                {pendingStatus === "rejected" ? "Rejecting…" : "Reject"}
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reject this finding?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {acceptsParent
+                      ? "An accepted parent link is rejected too. "
+                      : ""}
+                    You can confirm it again later.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    onClick={() => {
+                      setRejecting(false);
+                      update.mutate({ status: "rejected" });
+                    }}
+                  >
+                    Reject
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
         {update.isError && (
           <p role="alert" className="text-sm text-destructive">
@@ -286,7 +313,9 @@ function SourceButton({
       variant="link"
       size="sm"
       className="h-auto px-0"
-      aria-label={pageNo === undefined ? "Source page" : `Source page ${pageNo}`}
+      aria-label={
+        pageNo === undefined ? "Source page" : `Source page ${pageNo}`
+      }
       onClick={(e) => onOpen(pageId, e.currentTarget)}
     >
       {pageNo === undefined ? "p. …" : `p. ${pageNo}`}
@@ -312,13 +341,15 @@ function PpaCard({
     ["Years", years(ppa.year_start, ppa.year_end)],
   ];
   return (
-    <div className="flex flex-col gap-2 rounded-lg border p-3 text-sm">
-      {heading && <h3 className="font-medium">{heading}</h3>}
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+    <div className="flex flex-col gap-2 rounded-lg border bg-background p-4">
+      {heading && <h3 className="font-bold">{heading}</h3>}
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
         {rows.map(([label, value]) => (
           <div key={label} className="contents">
-            <dt className="text-muted-foreground">{label}</dt>
-            <dd>{value}</dd>
+            <dt className="text-sm text-muted-foreground">{label}</dt>
+            <dd className={label === "Title" ? "font-bold" : undefined}>
+              {value}
+            </dd>
           </div>
         ))}
       </dl>
