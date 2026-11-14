@@ -168,7 +168,7 @@ def clean_fields(
 
 @router.post("/plans/{plan_id}/ppas")
 def add_ppa(plan_id: int, body: PpaInput, conn: Conn) -> Ppa:
-    """S3-03: a confirmed plan's new rows start confirmed (D6)."""
+    # S3-03: a confirmed plan's new rows start confirmed (D6).
     plan = writable_plan(conn, plan_id)
     f = clean_fields(conn, plan_id, body.model_dump(), None)
     status = "confirmed" if plan.status == "confirmed" else "draft"
@@ -182,7 +182,7 @@ def add_ppa(plan_id: int, body: PpaInput, conn: Conn) -> Ppa:
 
 @router.patch("/ppas/{ppa_id}")
 def update_ppa(ppa_id: int, body: PpaInput, conn: Conn) -> Ppa:
-    """S3-04: only the fields sent change; null clears one; the status is kept."""
+    # S3-04: only the fields sent change; null clears one; the status is kept.
     stored = fetch_ppa(conn, ppa_id)
     writable_plan(conn, stored.plan_id)
     fields = clean_fields(conn, stored.plan_id, body.model_dump(exclude_unset=True), stored)
@@ -202,7 +202,7 @@ def update_ppa(ppa_id: int, body: PpaInput, conn: Conn) -> Ppa:
 
 @router.delete("/ppas/{ppa_id}", status_code=204)
 def delete_ppa(ppa_id: int, conn: Conn) -> Response:
-    """S3-05."""
+    # S3-05.
     writable_plan(conn, fetch_ppa(conn, ppa_id).plan_id)
     conn.execute(DELETE_PPA, (ppa_id,))
     conn.commit()
@@ -211,7 +211,7 @@ def delete_ppa(ppa_id: int, conn: Conn) -> Response:
 
 @router.post("/plans/{plan_id}/confirm")
 def confirm_plan(plan_id: int, conn: Conn) -> Plan:
-    """S3-08: the plan and all its rows in one transaction; a confirmed plan is unchanged."""
+    # S3-08: the plan and all its rows in one transaction; a confirmed plan is unchanged.
     plan = writable_plan(conn, plan_id)
     if plan.status == "confirmed":
         return plan
