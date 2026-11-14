@@ -1,13 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { QueryStates } from "@/components/query-states";
-import { buttonVariants } from "@/components/ui/button";
+import { RunChecks, useLatestRun } from "@/components/run-checks";
+import { SourcePanel } from "@/components/source-panel";
+import { Button } from "@/components/ui/button";
 import { API_URL, apiGet, type Schemas } from "@/lib/api";
+import { SourceButton, STATUS_LABELS } from "../findings/finding-detail";
 
 type Matrix = Schemas["CccMatrix"];
 type Cell = Schemas["CccCell"];
+type Ppa = Matrix["ppas"][number];
 
 // AC-33 cell labels.
 const VERDICT_SHORT: Record<Cell["verdict"], string> = {
@@ -16,102 +21,262 @@ const VERDICT_SHORT: Record<Cell["verdict"], string> = {
   Complementary: "Cp",
 };
 
+/**
+ * S5-11: "<plan type> <code>: <title>". CccPpa carries no code yet, so the code
+ * shows once the api sends one (#52); until then the label is "<plan type>: <title>".
+ */
+function ppaLabel(p: Ppa): string {
+  const code = "code" in p && typeof p.code === "string" ? ` ${p.code}` : "";
+  return `${p.plan_type}${code}: ${p.title ?? "Untitled PPA"}`;
+}
+
+/** S5-13: fetch the workbook and save it; a link can't show pending or error. */
+async function downloadExport() {
+  if (!API_URL) throw new Error("NEXT_PUBLIC_API_URL is not set.");
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/ccc/export`);
+  } catch {
+    throw new Error("Can't reach the PlanTrace API. Check that it is running.");
+  }
+  if (!res.ok) throw new Error(`The PlanTrace API answered ${res.status}.`);
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "ccc_export.xlsx";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function CccPage() {
-  const matrix = useQuery({
-    queryKey: ["ccc"],
-    queryFn: () => apiGet<Matrix>("/ccc"),
-  });
+  const latest = useLatestRun();
+  const exporting = useMutation({ mutationFn: downloadExport });
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-4">
         <h1 className="text-2xl font-semibold">CCC matrix</h1>
-        <a
-          href={`${API_URL}/ccc/export`}
-          download
-          className={buttonVariants({ variant: "outline" })}
+        <Button
+          variant="outline"
+          disabled={exporting.isPending}
+          onClick={() => exporting.mutate()}
         >
-          Export CCC matrix (.xlsx)
-        </a>
-      </div>
-      <QueryStates
-        query={matrix}
-        what="the CCC matrix"
-        isEmpty={(data) => data.ppas.length === 0}
-        empty={
-          <p>
-            Checks haven&apos;t been run yet, so the matrix is empty. Run checks
-            from{" "}
-            <Link href="/findings" className="underline underline-offset-4">
-              Findings
-            </Link>
-            .
+          {exporting.isPending ? "Exporting…" : "Export CCC matrix (.xlsx)"}
+        </Button>
+        {exporting.isError && (
+          <p role="alert" className="text-sm text-destructive">
+            Couldn&apos;t export: {exporting.error.message}
           </p>
-        }
+        )}
+      </div>
+      <RunChecks />
+      <QueryStates
+        query={latest}
+        what="the last run"
+        isEmpty={(data) => data === null}
+        empty="Checks haven't been run yet."
       >
-        {(data) => <MatrixTable matrix={data} />}
+        {() => <MatrixSection />}
       </QueryStates>
     </div>
   );
 }
 
-function MatrixTable({ matrix }: { matrix: Matrix }) {
-  // A pair is listed once; show it in both triangles.
+function MatrixSection() {
+  const matrix = useQuery({
+    queryKey: ["ccc"],
+    queryFn: () => apiGet<Matrix>("/ccc"),
+  });
+  return (
+    <QueryStates
+      query={matrix}
+      what="the CCC matrix"
+      isEmpty={(data) => data.ppas.length === 0}
+      empty={
+        <p>
+          No confirmed PPAs to compare. Confirm a plan on{" "}
+          <Link href="/plans" className="underline underline-offset-4">
+            Plans
+          </Link>
+          .
+        </p>
+      }
+    >
+      {(data) => <MatrixGrid matrix={data} />}
+    </QueryStates>
+  );
+}
+
+function MatrixGrid({ matrix }: { matrix: Matrix }) {
+  const [open, setOpen] = useState<{
+    cell: Cell;
+    opener: HTMLElement;
+  } | null>(null);
+  const [source, setSource] = useState<{
+    pageId: number;
+    opener: HTMLElement;
+  } | null>(null);
+
+  // A pair is listed once; show it in both triangles. Rejected cells stay blank (AC-33).
   const cells = new Map<string, Cell>();
   for (const c of matrix.cells) {
+    if (c.status === "rejected") continue;
     cells.set(`${c.ppa_a}-${c.ppa_b}`, c);
     cells.set(`${c.ppa_b}-${c.ppa_a}`, c);
   }
-  const label = (p: Matrix["ppas"][number]) =>
-    `${p.plan_type}: ${p.title ?? "Untitled PPA"}`;
+  const byId = new Map(matrix.ppas.map((p) => [p.id, p]));
+
+  function close() {
+    open?.opener.focus();
+    setOpen(null);
+    setSource(null);
+  }
 
   return (
-    <div className="w-full overflow-x-auto">
-      <table className="border-collapse text-xs">
-        <thead>
-          <tr>
-            <td />
-            {matrix.ppas.map((col) => (
-              <th
-                key={col.id}
-                scope="col"
-                className="w-12 max-w-12 border p-1 align-bottom font-medium [writing-mode:vertical-rl]"
-              >
-                {label(col)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {matrix.ppas.map((row) => (
-            <tr key={row.id}>
-              <th
-                scope="row"
-                className="max-w-64 border p-1 text-left font-medium"
-              >
-                {label(row)}
-              </th>
-              {matrix.ppas.map((col) => {
-                // Status handling (AC-33) and the cell detail (AC-34) come with S5.
-                const cell = cells.get(`${row.id}-${col.id}`);
-                return (
-                  <td
+    <div
+      className="flex flex-col gap-3"
+      onKeyDown={(e) => {
+        // The source panel stops its own Escape, so this runs once it is closed.
+        if (e.key === "Escape" && open) close();
+      }}
+    >
+      <p className="text-sm text-muted-foreground">
+        C conflict, Cm compatible, Cp complementary.{" "}
+        <span className="rounded border border-dashed border-foreground px-1">
+          Dashed border
+        </span>
+        : AI suggestion
+      </p>
+      <div className="flex flex-col items-start gap-4 lg:flex-row">
+        <div className="max-w-full min-w-0 flex-1 overflow-x-auto">
+          <table className="border-collapse text-xs">
+            <thead>
+              <tr>
+                <td className="sticky left-0 bg-background" />
+                {matrix.ppas.map((col) => (
+                  <th
                     key={col.id}
-                    aria-label={
-                      cell
-                        ? `${cell.verdict}: ${label(row)} × ${label(col)}`
-                        : undefined
-                    }
-                    className="h-8 w-12 border text-center"
+                    scope="col"
+                    aria-label={ppaLabel(col)}
+                    title={ppaLabel(col)}
+                    className="w-10 border p-1 align-bottom font-medium"
                   >
-                    {cell && VERDICT_SHORT[cell.verdict]}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                    <span className="block max-h-40 overflow-hidden text-ellipsis whitespace-nowrap [writing-mode:vertical-rl]">
+                      {ppaLabel(col)}
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {matrix.ppas.map((row) => (
+                <tr key={row.id}>
+                  <th
+                    scope="row"
+                    title={ppaLabel(row)}
+                    className="sticky left-0 z-10 w-64 max-w-64 truncate border bg-background p-1 text-left font-medium"
+                  >
+                    {ppaLabel(row)}
+                  </th>
+                  {matrix.ppas.map((col) => {
+                    if (row.id === col.id) {
+                      return (
+                        <td key={col.id} className="h-8 border bg-muted" />
+                      );
+                    }
+                    const cell = cells.get(`${row.id}-${col.id}`);
+                    return (
+                      <td
+                        key={col.id}
+                        className="h-8 w-10 border p-0 text-center"
+                      >
+                        {cell && (
+                          <button
+                            type="button"
+                            aria-label={`${cell.verdict}${cell.status === "suggested" ? ", AI suggestion" : ""}: ${ppaLabel(row)} × ${ppaLabel(col)}`}
+                            aria-pressed={open?.cell === cell}
+                            onClick={(e) => {
+                              setSource(null);
+                              setOpen({ cell, opener: e.currentTarget });
+                            }}
+                            className={`h-full w-full hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring aria-pressed:bg-muted ${cell.status === "suggested" ? "border border-dashed border-foreground" : ""}`}
+                          >
+                            {VERDICT_SHORT[cell.verdict]}
+                          </button>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {open && (
+          <CellDetail
+            key={`${open.cell.ppa_a}-${open.cell.ppa_b}`}
+            cell={open.cell}
+            a={byId.get(open.cell.ppa_a)}
+            b={byId.get(open.cell.ppa_b)}
+            onClose={close}
+            onOpenSource={(pageId, opener) => setSource({ pageId, opener })}
+          />
+        )}
+        {open && source && (
+          <SourcePanel
+            pageId={source.pageId}
+            returnFocusTo={source.opener}
+            onClose={() => setSource(null)}
+          />
+        )}
+      </div>
     </div>
+  );
+}
+
+/** S5-12: a cell's labels, verdict, reason and sources. Read-only. */
+function CellDetail({
+  cell,
+  a,
+  b,
+  onClose,
+  onOpenSource,
+}: {
+  cell: Cell;
+  a: Ppa | undefined;
+  b: Ppa | undefined;
+  onClose: () => void;
+  onOpenSource: (pageId: number, opener: HTMLElement) => void;
+}) {
+  return (
+    <section
+      aria-label="Cell detail"
+      className="flex w-full flex-col gap-3 rounded-lg border p-4 text-sm lg:w-96 lg:shrink-0"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <h2 className="text-lg font-semibold">{cell.verdict}</h2>
+        <Button variant="outline" size="sm" onClick={onClose}>
+          Close
+        </Button>
+      </div>
+      <p className="text-muted-foreground">{STATUS_LABELS[cell.status]}</p>
+      <ul className="flex flex-col gap-1">
+        <li>{a ? ppaLabel(a) : "Unknown PPA"}</li>
+        <li>{b ? ppaLabel(b) : "Unknown PPA"}</li>
+      </ul>
+      <p>{cell.reason}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-muted-foreground">Sources</span>
+        {cell.page_ids.length === 0
+          ? "No source page"
+          : cell.page_ids.map((pageId) => (
+              <SourceButton
+                key={pageId}
+                pageId={pageId}
+                onOpen={onOpenSource}
+              />
+            ))}
+      </div>
+    </section>
   );
 }

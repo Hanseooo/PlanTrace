@@ -272,7 +272,7 @@ function NoteEditor({
 }
 
 /** The page number comes from the page, so the button fetches it (as on the plan page). */
-function SourceButton({
+export function SourceButton({
   pageId,
   onOpen,
 }: {
