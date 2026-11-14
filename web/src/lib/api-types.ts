@@ -302,6 +302,8 @@ export interface components {
              * @enum {string}
              */
             plan_type: "CLUP" | "CDP" | "LDIP" | "AIP" | "LDRRMP" | "LCCAP" | "Other";
+            /** Code */
+            code: string;
             /** Title */
             title: string | null;
         };

@@ -9,6 +9,9 @@ from psycopg.rows import class_row
 from psycopg.types.json import Jsonb
 
 from app.models import (
+    CccCell,
+    CccMatrix,
+    CccPpa,
     CccVerdict,
     CheckCount,
     CheckName,
@@ -46,6 +49,7 @@ class OldReview:
     status: FindingStatus
     note: str | None
     reviewed_at: datetime | None
+    verdict: CccVerdict | None
     # Both PPAs unchanged since the review: the status and reviewed_at carry over.
     unchanged: bool
 
@@ -53,6 +57,7 @@ class OldReview:
 # D5: kept only when reviewed and both PPAs were last updated before the review.
 SELECT_OLD_REVIEWS = """
 SELECT f."check", f.ppa_a, f.ppa_b, f.barangay, f.status, f.note, f.reviewed_at,
+       f.verdict,
        coalesce(f.reviewed_at > pa.updated_at
                 AND (pb.id IS NULL OR f.reviewed_at > pb.updated_at), false) AS unchanged
 FROM findings f
@@ -70,7 +75,24 @@ SELECT_LATEST_RUN = "SELECT ran_at, counts FROM check_runs ORDER BY id DESC LIMI
 
 FINDING_COLUMNS = """id, "check", ppa_a, ppa_b, verdict, reason, page_ids, status, note,
        created_by, barangay"""
-SELECT_FINDINGS = f'SELECT {FINDING_COLUMNS} FROM findings ORDER BY "check", barangay, id'
+# S5-07: a CCC finding of any other verdict feeds only the matrix.
+SELECT_FINDINGS = f"""
+SELECT {FINDING_COLUMNS} FROM findings
+WHERE "check" <> 'ccc' OR verdict = 'Conflict'
+ORDER BY "check", barangay, id
+"""
+# S5-08: every confirmed PPA of a confirmed plan, and every stored CCC verdict.
+SELECT_CCC_PPAS = """
+SELECT p.id, pl.type AS plan_type, coalesce(p.code, '') AS code, p.title
+FROM ppas p JOIN plans pl ON pl.id = p.plan_id
+WHERE p.status = 'confirmed' AND pl.status = 'confirmed'
+ORDER BY pl.type, p.code, p.id
+"""
+SELECT_CCC_CELLS = """
+SELECT ppa_a, ppa_b, verdict, status, reason, page_ids
+FROM findings WHERE "check" = 'ccc' AND verdict IS NOT NULL AND ppa_b IS NOT NULL
+ORDER BY id
+"""
 SELECT_FINDING = f"SELECT {FINDING_COLUMNS} FROM findings WHERE id = %s"
 SELECT_FINDING_PPAS = """
 SELECT p.id, p.plan_id, p.code, p.title, p.description, p.office, p.sector, p.barangays,
@@ -140,7 +162,13 @@ def store_run(
             status, reviewed_at = "suggested", None
             # An orphan matches on ppa_a, so its note carries, but a review of one suggested
             # parent says nothing about another: the status carries only for the same ppa_b.
-            if review and review.unchanged and review.ppa_b == f.ppa_b:
+            # S5-06: a CCC review also needs the same verdict; its note carries regardless.
+            if (
+                review
+                and review.unchanged
+                and review.ppa_b == f.ppa_b
+                and review.verdict == f.verdict
+            ):
                 status, reviewed_at = review.status, review.reviewed_at
             conn.execute(
                 INSERT_FINDING,
@@ -218,3 +246,12 @@ def latest_run(conn: psycopg.Connection) -> CheckRunResult | None:
     """The newest check_runs row, or None before any run (S4-11)."""
     with conn.cursor(row_factory=class_row(CheckRunResult)) as cur:
         return cur.execute(SELECT_LATEST_RUN).fetchone()
+
+
+def ccc_matrix(conn: psycopg.Connection) -> CccMatrix:
+    """The CCC matrix the screen and the export both read (S5-08, S5-SH-01)."""
+    with conn.cursor(row_factory=class_row(CccPpa)) as cur:
+        ppas = cur.execute(SELECT_CCC_PPAS).fetchall()
+    with conn.cursor(row_factory=class_row(CccCell)) as cur:
+        cells = cur.execute(SELECT_CCC_CELLS).fetchall()
+    return CccMatrix(ppas=ppas, cells=cells)

@@ -1,18 +1,16 @@
 """Checks, findings and the CCC matrix. Wiring only: each route calls one function in a
-lane-owned file (S4-SH-02). rules.py and findings.py are lane:data; orphan.py and run.py
-are lane:ai, and S5 adds ccc.py. Change this file only through the contract.
-
-The /ccc stubs ignore path IDs until S5 lands the real queries (SH-01)."""
+lane-owned file (S4-SH-02). rules.py, findings.py and ccc_export.py are lane:data;
+orphan.py and run.py are lane:ai, and S5 adds ccc.py. Change this file only through the
+contract."""
 
 from typing import Annotated
 
 import psycopg
 from fastapi import APIRouter, Depends
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
 
-from app.checks import findings, run
+from app.checks import ccc_export, findings, run
 from app.db import get_conn
-from app.fixtures import FIXTURES_DIR, load_fixture
 from app.models import CccMatrix, CheckRunResult, Finding, FindingUpdate
 
 router = APIRouter()
@@ -43,18 +41,18 @@ def update_finding(finding_id: int, body: FindingUpdate, conn: Conn) -> Finding:
 
 
 @router.get("/ccc")
-def get_ccc() -> CccMatrix:
-    return load_fixture("ccc.json", CccMatrix)
+def get_ccc(conn: Conn) -> CccMatrix:
+    return findings.ccc_matrix(conn)
 
 
 @router.get(
     "/ccc/export",
-    response_class=FileResponse,
+    response_class=Response,
     responses={200: {"content": {XLSX_MEDIA_TYPE: {}}}},
 )
-def export_ccc() -> FileResponse:
-    return FileResponse(
-        FIXTURES_DIR / "ccc_export.xlsx",
+def export_ccc(conn: Conn) -> Response:
+    return Response(
+        ccc_export.export(conn),
         media_type=XLSX_MEDIA_TYPE,
-        filename="ccc_export.xlsx",
+        headers={"Content-Disposition": 'attachment; filename="ccc_export.xlsx"'},
     )

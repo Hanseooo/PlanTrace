@@ -98,10 +98,10 @@ A model change is a contract change: tell the team, regenerate the types, and up
 The uploaded file is discarded after step 2. The prompt and output model live in `extract/extraction.py`; `app.extract.load_cache` loads the committed LCCAP response under the same key (S2-19), and the committed orphan answers in `seed/ai_cache/orphans.json` under the keys the run computes (S4-15). The demo fallback is a pre-extracted plan that is already `ready`.
 
 **Checks (F3)**
-`POST /checks/run` reads only `confirmed` PPAs. Duplicate and zone checks are SQL. Orphan and CCC use SQL to pick candidate pairs, then `llm.py` for the suggestion or the verdict. Every finding stores `page_ids` and starts as `suggested`.
+`POST /checks/run` reads only `confirmed` PPAs. Duplicate and zone checks are SQL. Orphan and CCC use SQL to pick candidate pairs, then `llm.py` for the suggestion or the verdict. Every finding stores `page_ids` and starts as `suggested`. CCC stores every verdict; `GET /findings` lists only Conflicts, and `GET /ccc` reads all of them.
 
 **CCC export (F5)**
-`GET /ccc/export` calls `checks/ccc_export.py`. The real CCC sheet layout is unknown (PRD F5), so the layout changes in that one file.
+`GET /ccc/export` calls `checks/ccc_export.py`, which reads the same `findings.ccc_matrix` query as `GET /ccc` and builds two sheets, "CCC matrix" and "Pairs". The real CCC sheet layout is unknown (PRD F5), so the layout changes in that one file.
 
 ## The LLM seam
 
