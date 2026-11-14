@@ -8,6 +8,9 @@ const LOCAL_API = "http://localhost:8000";
 
 export default defineConfig({
   testDir: "./e2e",
+  // One test walks the whole journey: against the deployed app J1 to J7 took 28.7s,
+  // past the 30s default (S4 closeout).
+  timeout: 120_000,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
