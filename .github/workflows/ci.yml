@@ -1,4 +1,4 @@
-# S0-11: every check on every PR and every push to main. Needs no secrets.
+# #6 (spec #1 S0-11): every check on every PR and every push to main. Needs no secrets.
 name: CI
 
 on:
@@ -28,7 +28,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # uv installs the Python that api/.python-version names.
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
@@ -40,6 +39,7 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      # uv sync downloads the Python that api/.python-version names.
       - name: Install (api)
         working-directory: api
         run: uv sync
@@ -57,11 +57,13 @@ jobs:
         run: uv run pyright
 
       # The database tests skip when TEST_DATABASE_URL is unset; here a skip is a failure.
+      # shell: bash adds pipefail, so a failing pytest fails the step despite tee.
       - name: Unit tests (api)
         working-directory: api
+        shell: bash
         run: |
           uv run pytest -rs | tee pytest.log
-          if grep -qi skipped pytest.log; then echo "::error::pytest skipped tests"; exit 1; fi
+          if grep -qE '[0-9]+ skipped' pytest.log; then echo "::error::pytest skipped tests"; exit 1; fi
 
       - name: Install (web)
         working-directory: web
