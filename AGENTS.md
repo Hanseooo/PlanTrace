@@ -8,6 +8,7 @@ for what that rehearsal breaks merge.
 This repo serves one **demo journey**: the steps a judge sees, defined as the
 acceptance journey in the spec. A working demo outranks maintainability.
 Product scope and the demo script: [PRD.md](PRD.md).
+Structure, seams and contract: [ARCHITECTURE.md](ARCHITECTURE.md). How to write code: [CODING_STANDARDS.md](CODING_STANDARDS.md).
 
 ## Kickoff
 1. `/han-grill`: pick the problem from the shortlist and the backend by the
@@ -72,3 +73,14 @@ Change a line here only after telling the team. One line each: choice, because r
   way back.
 - Done means it works in the deployed app.
 - Secrets: read only `.env.example`; keep keys out of code, logs and chat.
+
+## Agent skills
+
+### Issue tracker
+GitHub Issues on Hanseooo/PlanTrace, through the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+The five default labels, plus `lane:web`, `lane:ai`, `lane:data`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+Single-context: `GLOSSARY.md` and `docs/adr/` at the root. See `docs/agents/domain.md`.
