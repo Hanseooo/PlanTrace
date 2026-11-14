@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Atkinson_Hyperlegible, Geist_Mono } from "next/font/google";
-import { Route } from "lucide-react";
-import { MainNav } from "@/components/main-nav";
+import {
+  Atkinson_Hyperlegible,
+  Geist_Mono,
+  Instrument_Serif,
+  Plus_Jakarta_Sans,
+} from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -12,6 +14,21 @@ const bodyFont = Atkinson_Hyperlegible({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ["400", "700"],
+});
+
+// Headings, big numbers and the landing page.
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+});
+
+// The landing headline's one script letter.
+const instrument = Instrument_Serif({
+  variable: "--font-instrument",
+  subsets: ["latin"],
+  weight: "400",
+  style: "italic",
 });
 
 const geistMono = Geist_Mono({
@@ -28,36 +45,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${bodyFont.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${bodyFont.variable} ${jakarta.variable} ${instrument.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <Providers>
-          <header className="border-b bg-card">
-            <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-3">
-              <Link
-                href="/plans"
-                className="flex items-center gap-2 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-              >
-                <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Route aria-hidden className="size-5" />
-                </span>
-                <span className="flex flex-col leading-tight">
-                  <span className="text-lg font-bold">PlanTrace</span>
-                  <span className="text-xs text-muted-foreground">
-                    City of Sampaguita
-                  </span>
-                </span>
-              </Link>
-              <MainNav />
-              <p className="ml-auto rounded-full border border-warning/30 bg-warning-soft px-3 py-1 text-sm font-medium text-warning">
-                Synthetic demo data
-              </p>
-            </div>
-          </header>
-          <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
-            {children}
-          </main>
-        </Providers>
+      <body className="flex min-h-full flex-col">
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

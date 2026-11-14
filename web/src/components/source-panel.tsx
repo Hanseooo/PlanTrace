@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { FileText, X } from "lucide-react";
 import { QueryStates } from "@/components/query-states";
 import { Button } from "@/components/ui/button";
 import { apiGet, type Schemas } from "@/lib/api";
@@ -58,13 +59,13 @@ function PageText({
   return (
     <p
       ref={box}
-      className="relative max-h-[70vh] overflow-y-auto text-sm whitespace-pre-wrap"
+      className="relative max-h-[65vh] overflow-y-auto rounded-2xl bg-muted/50 p-4 text-sm leading-relaxed whitespace-pre-wrap"
     >
       {parts.map((p, i) =>
         p.match ? (
           <mark
             key={i}
-            className="rounded-sm bg-warning-soft px-0.5 font-bold text-foreground ring-1 ring-warning/40"
+            className="rounded-md bg-warning-soft px-1 font-bold text-foreground ring-1 ring-warning/40"
           >
             {p.text}
           </mark>
@@ -118,16 +119,31 @@ export function SourcePanel({
           close();
         }
       }}
-      className="flex w-full flex-col gap-3 rounded-lg border p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring lg:sticky lg:top-4 lg:w-96 lg:shrink-0"
+      className="flex w-full animate-fade-up flex-col gap-4 rounded-3xl border border-border/70 bg-card p-5 shadow-lift outline-none focus-visible:ring-3 focus-visible:ring-ring/40 lg:sticky lg:top-28 lg:w-96 lg:shrink-0"
     >
-      <div className="flex items-start justify-between gap-2">
-        <h2 className="text-lg font-semibold">
-          {page.data ? `Page ${page.data.page_no}` : "Source page"}
-        </h2>
-        <Button variant="outline" size="sm" onClick={close}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <span className="flex size-10 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground">
+            <FileText aria-hidden className="size-5" />
+          </span>
+          <div className="flex flex-col">
+            <span className="text-xs font-bold tracking-wide text-muted-foreground uppercase">
+              Source
+            </span>
+            <h2 className="text-lg leading-tight font-bold">
+              {page.data ? `Page ${page.data.page_no}` : "Source page"}
+            </h2>
+          </div>
+        </div>
+        <Button variant="outline" size="sm" className="rounded-full" onClick={close}>
+          <X aria-hidden />
           Close
         </Button>
       </div>
+      <p className="text-xs text-muted-foreground">
+        The text PlanTrace read. Marked words belong to this PPA. Press Escape to
+        close.
+      </p>
       <QueryStates
         query={page}
         what="the page"

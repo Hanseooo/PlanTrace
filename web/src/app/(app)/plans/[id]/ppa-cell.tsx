@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Combobox } from "@base-ui/react/combobox";
+import { toast } from "@/components/toast";
 import { apiGet, apiPatch, pesos, type Schemas } from "@/lib/api";
 
 type Ppa = Schemas["Ppa"];
@@ -174,6 +175,7 @@ export function PpaCell({
     },
     onError: (e) => {
       onSaveError(`Couldn't save ${label}: ${e.message}`);
+      toast.error(`Couldn't save ${label}`, e.message);
       if (savedViaKey.current) cellButton.current?.focus();
     },
   });
@@ -237,7 +239,7 @@ export function PpaCell({
           }
           aria-disabled={save.isPending}
           onClick={() => !save.isPending && start()}
-          className={`-mx-1 min-h-8 w-full cursor-pointer rounded border border-transparent px-1.5 py-1 text-left transition-colors hover:border-primary/40 hover:bg-secondary/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none aria-disabled:opacity-70 ${
+          className={`-mx-1 min-h-9 w-full cursor-pointer rounded-lg border border-transparent px-2 py-1.5 text-left transition-colors duration-150 hover:border-primary/40 hover:bg-secondary/60 focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none aria-disabled:opacity-70 ${
             field === "cost" ? "tabular-nums" : ""
           }`}
         >
@@ -266,7 +268,7 @@ export function PpaCell({
     }
   };
   const inputClass =
-    "w-full min-w-24 rounded border border-input bg-background px-1 py-0.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
+    "w-full min-w-24 rounded-lg border border-primary/50 bg-background px-2 py-1.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/30 aria-invalid:border-destructive aria-invalid:ring-destructive/20";
   const errorId = `${ppa.id}-${field}-error`;
   const common = {
     "aria-label": name,
@@ -431,7 +433,7 @@ function BarangayEditor({
       >
         <Combobox.Chips
           ref={chipsRef}
-          className="flex min-w-56 flex-wrap items-center gap-1 rounded border border-input bg-background p-1 focus-within:ring-2 focus-within:ring-ring"
+          className="flex min-w-56 flex-wrap items-center gap-1 rounded-lg border border-primary/50 bg-background p-1 focus-within:ring-3 focus-within:ring-ring/30"
         >
           <Combobox.Value>
             {(value: Barangay[]) => (
@@ -440,7 +442,7 @@ function BarangayEditor({
                   <Combobox.Chip
                     key={b.psgc_code}
                     aria-label={b.name}
-                    className="flex items-center gap-1 rounded bg-muted px-1.5 text-xs"
+                    className="flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs font-bold text-secondary-foreground"
                   >
                     {b.name}
                     <Combobox.ChipRemove
@@ -468,7 +470,7 @@ function BarangayEditor({
             className="z-50"
             data-cell-editor={name}
           >
-            <Combobox.Popup className="max-h-64 min-w-56 overflow-y-auto rounded-lg border bg-popover p-1 text-sm text-popover-foreground shadow-md">
+            <Combobox.Popup className="max-h-64 min-w-56 overflow-y-auto rounded-2xl border bg-popover p-1.5 text-sm text-popover-foreground shadow-lift">
               <Combobox.Empty className="px-2 py-1 text-muted-foreground empty:hidden">
                 No barangay matches.
               </Combobox.Empty>
@@ -477,7 +479,7 @@ function BarangayEditor({
                   <Combobox.Item
                     key={b.psgc_code}
                     value={b}
-                    className="flex cursor-default items-center gap-2 rounded px-2 py-1 data-highlighted:bg-muted"
+                    className="flex cursor-default items-center gap-2 rounded-lg px-2 py-1.5 data-highlighted:bg-secondary data-highlighted:text-secondary-foreground"
                   >
                     <Combobox.ItemIndicator className="w-3">
                       ✓
