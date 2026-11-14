@@ -33,13 +33,13 @@ Change a line here only after telling the team. One line each: choice, because r
   - Add a Python service: the core needs a Python-only library.
 
 ## Commands (use exactly)
-- Install: none yet: #2 (api) and #4 (web) add it (assumed: npm in `web/`, `uv sync` in `api/`)
-- Dev: none yet: #2 (api) and #4 (web) add it
-- Typecheck: none yet: #2 (api) and #4 (web) add it
-- Lint: none yet: #2 (api) and #4 (web) add it
+- Install: api: none yet: #2 adds it (assumed: `uv sync` in `api/`); web: `cd web && npm ci && npx playwright install chromium`
+- Dev: api: none yet: #2 adds it; web: `cd web && npm run dev` (http://localhost:3000)
+- Typecheck: api: none yet: #2 adds it; web: `cd web && npm run typecheck`
+- Lint: api: none yet: #2 adds it; web: `cd web && npm run lint`
 - Unit tests: none yet: #2 adds it
 - Migrate: none yet: #3 adds it
-- Demo smoke: none yet: #4 adds it
+- Demo smoke: `cd web && npm run smoke` (builds and starts the web app on :3000); against a deployed web app: `cd web && BASE_URL=<web url> npm run smoke`
 
 ## Parallel work
 - S0, the **walking skeleton** (spec #1, tickets #2 to #7): the app deployed,
