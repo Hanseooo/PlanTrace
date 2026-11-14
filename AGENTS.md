@@ -41,9 +41,10 @@ Change a line here only after telling the team. One line each: choice, because r
 - Typecheck (web): `cd web && npm run typecheck`
 - Lint (api): `cd api && uv run ruff check . && uv run ruff format --check .`
 - Lint (web): `cd web && npm run lint`
+- Generate API types: `cd web && npm run gen:types` (needs `uv sync` in `api/`; writes `web/src/lib/api-types.ts`, never edit it by hand)
 - Unit tests (api): `cd api && uv run pytest`
 - Migrate: none yet: #3 adds it
-- Demo smoke: `cd web && npm run smoke` (builds and starts the web app on :3000); against a deployed web app: `cd web && BASE_URL=<web url> npm run smoke` (PowerShell: `cd web; $env:BASE_URL="<web url>"; npm run smoke`)
+- Demo smoke: `cd web && npm run smoke` (starts the api on :8000 and builds and starts the web app on :3000 against it); against a deployed web app: `cd web && BASE_URL=<web url> npm run smoke` (PowerShell: `cd web; $env:BASE_URL="<web url>"; npm run smoke`)
 
 ## Parallel work
 - S0, the **walking skeleton** (spec #1, tickets #2 to #7): the app deployed,

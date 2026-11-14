@@ -73,7 +73,7 @@ plantrace/
 
 1. Pydantic models in `api/app/models.py` define every request, response and AI output.
 2. FastAPI publishes them as OpenAPI.
-3. `openapi-typescript` generates `web/src/lib/api-types.ts`. Ticket 01 adds the command.
+3. `openapi-typescript` generates `web/src/lib/api-types.ts`: `cd web && npm run gen:types`.
 
 A model change is a contract change: tell the team, regenerate the types, and update `seed/fixtures/` in the same PR.
 
