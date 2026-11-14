@@ -3,10 +3,11 @@
 GET /plans (S1-11), GET /plans/{id}, GET /plans/{id}/ppas (S2-16), GET /barangays and
 GET /pages/{id} (S3-01, S3-02) read the database, as do the PPA writes and confirm (S3-03 to
 S3-08); tests/test_plans.py covers them. POST /plans (S2-10) is covered by
-tests/test_extract.py.
+tests/test_extract.py. POST /checks/run, GET /checks/latest, GET /findings and
+PATCH /findings/{id} (S4-08 to S4-11) are covered by tests/test_checks.py.
 
-The checks and findings routes take a connection (S4-03) but their stubs ignore it, so
-these tests hand them none. Remove a case here once its real query lands.
+The /ccc stubs take no connection, so these tests hand the app none. Remove a case here
+once its real query lands.
 """
 
 from collections.abc import Iterator
@@ -20,7 +21,7 @@ from pydantic import TypeAdapter
 
 from app.db import get_conn
 from app.main import app
-from app.models import CccMatrix, CheckRunResult, Finding
+from app.models import CccMatrix
 
 client = TestClient(app)
 
@@ -35,10 +36,6 @@ def no_database() -> Iterator[None]:
 
 
 CASES: list[tuple[str, str, dict[str, Any], Any]] = [
-    ("POST", "/checks/run", {}, CheckRunResult),
-    ("GET", "/checks/latest", {}, CheckRunResult | None),
-    ("GET", "/findings", {}, list[Finding]),
-    ("PATCH", "/findings/1", {"json": {"status": "confirmed"}}, Finding),
     ("GET", "/ccc", {}, CccMatrix),
 ]
 
@@ -56,14 +53,6 @@ def test_retry_is_advertised_as_multipart() -> None:
     """The retry's behaviour is tested in test_extract.py against the database (S2-14)."""
     content = app.openapi()["paths"]["/plans/{plan_id}/retry"]["post"]["requestBody"]["content"]
     assert list(content) == ["multipart/form-data"]
-
-
-def test_fixtures_show_the_sampaguita_journey() -> None:
-    findings = client.get("/findings").json()
-    assert len(findings) == 8
-    assert {f["check"] for f in findings} == {"duplicate", "orphan", "ccc", "zone"}
-    counts = client.post("/checks/run").json()["counts"]
-    assert sum(c["found"] for c in counts) == 8
 
 
 def test_ccc_export_is_an_xlsx() -> None:
