@@ -1,5 +1,5 @@
-"""S2-10 to S2-12, S2-15, S2-19: POST /plans and its background task, against the seeded
-TEST_DATABASE_URL (D7) with seed/ai_cache/lccap.json loaded.
+"""S2-10 to S2-12, S2-14, S2-15, S2-19: POST /plans, its background task and the retry,
+against the seeded TEST_DATABASE_URL (D7) with seed/ai_cache/lccap.json loaded.
 
 Providers are fakes that raise, so no test reaches the network: the LCCAP upload passes
 only through the committed cache row. TestClient runs the background task before the
@@ -73,6 +73,17 @@ def seeded(db: psycopg.Connection, tmp_path: Path) -> psycopg.Connection:
 def upload(pdf: bytes = LCCAP, name: str = "lccap.pdf", **form: str) -> Any:
     files = {"file": (name, pdf, "application/pdf")}
     return TestClient(app).post("/plans", files=files, data={**FORM, **form})
+
+
+def retry(plan_id: int, pdf: bytes = LCCAP, name: str = "lccap.pdf") -> Any:
+    files = {"file": (name, pdf, "application/pdf")}
+    return TestClient(app).post(f"/plans/{plan_id}/retry", files=files)
+
+
+def ppa_count(conn: psycopg.Connection, plan_id: int) -> int:
+    row = conn.execute("SELECT count(*) FROM ppas WHERE plan_id = %s", (plan_id,)).fetchone()
+    assert row
+    return row[0]
 
 
 def plan_count(conn: psycopg.Connection) -> int:
@@ -195,3 +206,53 @@ def test_startup_fails_a_plan_left_extracting(seeded: psycopg.Connection) -> Non
     assert (plan.status, plan.error) == ("failed", INTERRUPTED)
     others = seeded.execute("SELECT DISTINCT status FROM plans WHERE id <> 4").fetchall()
     assert others == [("confirmed",)]
+
+
+@needs_db
+def test_retry_on_a_ready_plan_is_409_and_changes_nothing(seeded: psycopg.Connection) -> None:
+    plan = Plan.model_validate(upload().json())
+    client = TestClient(app)
+    before = client.get(f"/plans/{plan.id}").json()
+    response = retry(plan.id)
+    assert response.status_code == 409, response.text
+    assert client.get(f"/plans/{plan.id}").json() == before
+    assert ppa_count(seeded, plan.id) == 3
+
+
+@needs_db
+def test_retry_on_a_failed_plan_extracts_again_under_the_same_id(
+    seeded: psycopg.Connection,
+) -> None:
+    plan = Plan.model_validate(upload().json())
+    seeded.execute("UPDATE plans SET status = 'failed', error = 'boom' WHERE id = %s", (plan.id,))
+
+    response = retry(plan.id)
+    assert response.status_code == 200, response.text
+    retried = Plan.model_validate(response.json())
+    assert (retried.id, retried.status, retried.error) == (plan.id, "extracting", None)
+
+    final = Plan.model_validate(TestClient(app).get(f"/plans/{plan.id}").json())
+    assert (final.status, final.error) == ("ready", None)
+    assert ppa_count(seeded, plan.id) == 3  # not 6: the old PPAs were deleted
+    pages = seeded.execute(
+        "SELECT page_no FROM pages WHERE plan_id = %s ORDER BY page_no", (plan.id,)
+    ).fetchall()
+    assert pages == [(1,), (2,)]  # one row per page, not two
+
+
+@needs_db
+def test_retry_on_an_unknown_plan_is_404(seeded: psycopg.Connection) -> None:
+    assert retry(999).status_code == 404
+
+
+@needs_db
+def test_retry_with_a_non_pdf_is_400_and_the_plan_stays_failed(
+    seeded: psycopg.Connection,
+) -> None:
+    plan = Plan.model_validate(upload().json())
+    seeded.execute("UPDATE plans SET status = 'failed', error = 'boom' WHERE id = %s", (plan.id,))
+    response = retry(plan.id, b"plain text, not a pdf", "notes.txt")
+    assert response.status_code == 400, response.text
+    assert response.json()["detail"] == "Not a PDF"
+    failed = Plan.model_validate(TestClient(app).get(f"/plans/{plan.id}").json())
+    assert (failed.status, failed.error) == ("failed", "boom")
