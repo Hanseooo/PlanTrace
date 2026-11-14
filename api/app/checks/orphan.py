@@ -21,7 +21,7 @@ You help a Philippine city planner link projects across plans. An Annual Investm
 Local Development Investment Program (LDIP), but this one is linked to none.
 
 The input gives the AIP project, then the candidate CDP and LDIP programs. Each line reads \
-"code | title | sector | barangays (PSGC codes) | years".
+"code | title | sector | barangays | years".
 
 Pick the one candidate this AIP project most plausibly carries out: same sector, an \
 overlapping barangay and overlapping years count most. Return:
@@ -34,10 +34,18 @@ NO_SUGGESTION = (
     "No CDP or LDIP PPA is linked as this project's parent. No AI suggestion is available."
 )
 
+# The model reads barangay names, so its reason names them too, never a PSGC code (J6).
+BARANGAY_NAMES = """array(
+           SELECT b.name FROM lgus b
+           WHERE b.level = 'barangay' AND b.psgc_code = ANY (p.barangays)
+           ORDER BY b.psgc_code
+       ) AS barangay_names"""
+
 # Confirmed AIP PPAs of confirmed plans (S4-04), and whether a confirmed link already gives
 # them a CDP or LDIP parent. A rejected link doesn't count (AC-19).
-SELECT_AIP_PPAS = """
-SELECT p.id, p.code, p.title, p.sector, p.barangays, p.year_start, p.year_end, p.page_id,
+SELECT_AIP_PPAS = f"""
+SELECT p.id, p.code, p.title, p.sector, p.barangays, {BARANGAY_NAMES}, p.year_start,
+       p.year_end, p.page_id,
        EXISTS (
            SELECT 1 FROM links l
            JOIN ppas parent ON parent.id = l.parent_ppa_id
@@ -51,9 +59,9 @@ ORDER BY p.code, p.id
 """
 
 # A candidate without a code can't be named in the answer, so it isn't sent.
-SELECT_CANDIDATES = """
-SELECT p.id, p.code, p.title, p.sector, p.barangays, p.year_start, p.year_end, p.page_id,
-       false AS has_parent
+SELECT_CANDIDATES = f"""
+SELECT p.id, p.code, p.title, p.sector, p.barangays, {BARANGAY_NAMES}, p.year_start,
+       p.year_end, p.page_id, false AS has_parent
 FROM ppas p JOIN plans pl ON pl.id = p.plan_id
 WHERE pl.type IN ('CDP', 'LDIP') AND pl.status = 'confirmed' AND p.status = 'confirmed'
   AND p.code IS NOT NULL
@@ -85,7 +93,8 @@ class _Ppa:
     code: str | None
     title: str | None
     sector: str | None
-    barangays: list[str]
+    barangays: list[str]  # PSGC codes, for grouping
+    barangay_names: list[str]  # what the model reads
     year_start: int | None
     year_end: int | None
     page_id: int | None
@@ -99,7 +108,7 @@ def _line(p: _Ppa) -> str:
         years = str(p.year_start)
     else:
         years = f"{p.year_start or 'not stated'}-{p.year_end}"
-    fields = [p.code, p.title, p.sector, ", ".join(sorted(p.barangays)) or None, years]
+    fields = [p.code, p.title, p.sector, ", ".join(p.barangay_names) or None, years]
     return " | ".join(f or "not stated" for f in fields)
 
 

@@ -138,7 +138,9 @@ def store_run(
         for f in findings:
             review = old.get(review_key(f.check, f.ppa_a, f.ppa_b, f.barangay))
             status, reviewed_at = "suggested", None
-            if review and review.unchanged:
+            # An orphan matches on ppa_a, so its note carries, but a review of one suggested
+            # parent says nothing about another: the status carries only for the same ppa_b.
+            if review and review.unchanged and review.ppa_b == f.ppa_b:
                 status, reviewed_at = review.status, review.reviewed_at
             conn.execute(
                 INSERT_FINDING,

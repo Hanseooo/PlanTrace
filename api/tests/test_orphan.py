@@ -128,7 +128,7 @@ def test_without_cdp_or_ldip_candidates_the_ai_is_not_called(
 
 
 @needs_db
-def test_the_input_names_ppas_by_code_and_sends_only_cdp_and_ldip_candidates(
+def test_the_input_names_ppas_by_code_barangays_by_name_and_sends_cdp_and_ldip_only(
     seeded: psycopg.Connection, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     sent: list[str] = []
@@ -137,12 +137,13 @@ def test_the_input_names_ppas_by_code_and_sends_only_cdp_and_ldip_candidates(
     assert len(sent) == 2
     first = sent[0]
     assert first.startswith(
-        "AIP project:\nAIP-04 | Upland sitio road concreting | roads | 1199900006 | 2027\n"
+        "AIP project:\nAIP-04 | Upland sitio road concreting | roads | Barangay 6 | 2027\n"
     )
     assert (
         "CDP-03 | Farm-to-market roads program | roads"
-        " | 1199900006, 1199900007, 1199900010, 1199900011 | 2026-2031\n"
+        " | Barangay 6, Barangay 7, Barangay 10, Barangay 11 | 2026-2031\n"
     ) in first
+    assert "11999" not in first  # names, not PSGC codes, so the AI's reason reads as names
     assert "LDRRMP-01" not in first  # LDRRMP is neither CDP nor LDIP
     assert "AIP-03" not in first and "LCCAP" not in first
 
@@ -243,6 +244,12 @@ def test_committed_orphan_answers_suggest_cdp_03(
     assert [f.ppa_b for f in found] == [cdp_03, cdp_03]
 
 
+def api_conn() -> Iterator[psycopg.Connection]:
+    assert TEST_DATABASE_URL
+    with psycopg.connect(TEST_DATABASE_URL) as c:
+        yield c
+
+
 def orphan_count(client: TestClient) -> tuple[int, int]:
     response = client.post("/checks/run")
     assert response.status_code == 200, response.text
@@ -256,13 +263,7 @@ def test_run_accept_and_rerun_through_the_api(
     seeded: psycopg.Connection, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     use(monkeypatch, answering("CDP-03"))
-
-    def conn() -> Iterator[psycopg.Connection]:
-        assert TEST_DATABASE_URL
-        with psycopg.connect(TEST_DATABASE_URL) as c:
-            yield c
-
-    app.dependency_overrides[get_conn] = conn
+    app.dependency_overrides[get_conn] = api_conn
     try:
         client = TestClient(app)
         assert orphan_count(client) == (10, 2)
@@ -275,5 +276,39 @@ def test_run_accept_and_rerun_through_the_api(
         assert response.status_code == 200, response.text
         assert link_of(seeded, "AIP-04", "CDP-03") == ("ai", "confirmed")
         assert orphan_count(client) == (10, 1)
+    finally:
+        app.dependency_overrides.pop(get_conn)
+
+
+@needs_db
+def test_a_rejected_orphan_suggestion_does_not_carry_onto_a_new_parent(
+    seeded: psycopg.Connection, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def aip_04(client: TestClient) -> Finding:
+        findings = TypeAdapter(list[Finding]).validate_python(client.get("/findings").json())
+        [f] = [f for f in findings if f.check == "orphan" and f.ppa_a.code == "AIP-04"]
+        return f
+
+    use(monkeypatch, answering("CDP-03"))
+    app.dependency_overrides[get_conn] = api_conn
+    try:
+        client = TestClient(app)
+        orphan_count(client)
+        body = {"status": "rejected", "note": "Not this program"}
+        response = client.patch(f"/findings/{aip_04(client).id}", json=body)
+        assert response.status_code == 200, response.text
+
+        # Same orphan, unchanged PPAs, but the AI now names another parent.
+        seeded.execute("DELETE FROM ai_cache")
+        use(monkeypatch, answering("CDP-10"))
+        orphan_count(client)
+        f = aip_04(client)
+        assert f.ppa_b and f.ppa_b.code == "CDP-10"
+        assert (f.status, f.note) == ("suggested", "Not this program")
+
+        # A review of the parent the next run suggests again carries over (D5).
+        client.patch(f"/findings/{aip_04(client).id}", json={"status": "rejected"})
+        orphan_count(client)
+        assert aip_04(client).status == "rejected"
     finally:
         app.dependency_overrides.pop(get_conn)
