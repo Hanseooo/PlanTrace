@@ -34,9 +34,13 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
 }) => {
   const consoleErrors = collectConsoleErrors(page);
 
-  // J1: opening the app lands on the plans list with the 4 seeded plans, each
-  // confirmed, under the synthetic label (expectShell).
+  // J1: the landing page, then "Open the app" lands on the plans list with the 4
+  // seeded plans, each confirmed, under the synthetic label (expectShell).
   await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(
+    "Trace every plan",
+  );
+  await page.getByRole("link", { name: "Open the app" }).click();
   await expect(page).toHaveURL(/\/plans$/);
   await expect(page.getByRole("heading", { name: "Plans" })).toBeVisible();
   await expectShell(page);

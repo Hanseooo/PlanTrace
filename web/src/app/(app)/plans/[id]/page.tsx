@@ -4,13 +4,34 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertDialog } from "@base-ui/react/alert-dialog";
-import { ArrowLeft, LoaderCircle, Plus, Trash2 } from "lucide-react";
-import { card } from "@/components/page-header";
+import {
+  ArrowLeft,
+  Check,
+  FileSearch,
+  LoaderCircle,
+  Plus,
+  RotateCw,
+  Trash2,
+} from "lucide-react";
+import { cn } from "cn";
+import { PageHeader, card } from "@/components/page-header";
 import { QueryStates } from "@/components/query-states";
 import { StatusBadge } from "@/components/status-badge";
 import { SourcePanel, usePage } from "@/components/source-panel";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { toast } from "@/components/toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { PpaCell, ppasKey, type PpaField } from "./ppa-cell";
 import {
   ApiError,
@@ -44,6 +65,16 @@ const FIELDS: { field: PpaField; label: string }[] = [
   { field: "year_end", label: "End year" },
 ];
 const COLUMNS = [...FIELDS.map((f) => f.label), "Status", "Source", "Actions"];
+// Text columns keep a readable width; the table scrolls sideways instead.
+const COLUMN_WIDTH: Partial<Record<PpaField, string>> = {
+  code: "whitespace-nowrap",
+  title: "min-w-52",
+  description: "min-w-60",
+  office: "min-w-44",
+  sector: "min-w-32",
+  barangays: "min-w-36",
+  cost: "whitespace-nowrap",
+};
 
 const isNotFound = (e: unknown) => e instanceof ApiError && e.status === 404;
 
@@ -62,10 +93,22 @@ export default function PlanPage() {
   const status = plan.data?.status;
   const planId = plan.data?.id;
 
-  // The status changed (e.g. extracting → ready): refresh the list's copy too.
+  // The status changed (e.g. extracting → ready): refresh the list's copy too,
+  // and tell the planner, who may be looking elsewhere on the page.
   const lastStatus = useRef(status);
   useEffect(() => {
-    if (lastStatus.current && status && lastStatus.current !== status) {
+    const before = lastStatus.current;
+    if (before && status && before !== status) {
+      if (before === "extracting" && status === "ready")
+        toast.success(
+          "Extraction finished",
+          "Check each row against its source page, then confirm the plan.",
+        );
+      if (before === "extracting" && status === "failed")
+        toast.error(
+          "Extraction failed",
+          "The reason is on this page, with a way to retry.",
+        );
       void queryClient.invalidateQueries({ queryKey: ["plans"], exact: true });
       if (planId !== undefined)
         void queryClient.invalidateQueries({ queryKey: ppasKey(planId) });
@@ -75,19 +118,32 @@ export default function PlanPage() {
 
   return (
     <div className="flex flex-col items-start gap-6">
-      <Link href="/plans" className={buttonVariants({ variant: "outline" })}>
-        <ArrowLeft aria-hidden />
-        Back to plans
-      </Link>
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight">PPA table</h1>
-        <p className="text-muted-foreground">
-          Each row is one program, project or activity (PPA) read from the plan.
-          Click any value to fix it; press Enter to save or Escape to undo.
-        </p>
-      </div>
+      <PageHeader
+        title="PPA table"
+        description="Each row is one program, project or activity (PPA) read from the plan. Click any value to fix it; press Enter to save or Escape to undo."
+        back={
+          <Link
+            href="/plans"
+            aria-label="Back to plans"
+            title="Back to plans"
+            className="mt-1 flex size-11 shrink-0 items-center justify-center rounded-full border bg-card shadow-xs transition-colors outline-none hover:border-primary/40 hover:bg-secondary focus-visible:ring-3 focus-visible:ring-ring/40"
+          >
+            <ArrowLeft aria-hidden className="size-5" />
+          </Link>
+        }
+      />
       {isNotFound(plan.error) ? (
-        <p role="alert">Plan not found.</p>
+        <div
+          role="alert"
+          className={`${card} flex w-full flex-col items-center gap-3 p-10 text-center`}
+        >
+          <FileSearch aria-hidden className="size-8 text-muted-foreground" />
+          <p className="font-heading text-lg font-bold">Plan not found.</p>
+          <p className="text-muted-foreground">
+            It may have been removed, or the link is wrong. Use the back button
+            to return to the plans list.
+          </p>
+        </div>
       ) : (
         <QueryStates
           query={plan}
@@ -102,18 +158,94 @@ export default function PlanPage() {
   );
 }
 
+// The plan's road from upload to checks; the status picks the current step.
+const STEPS = ["Upload", "Extract", "Review", "Confirm"] as const;
+const STEP_OF: Record<Plan["status"], number> = {
+  extracting: 1,
+  failed: 1,
+  ready: 2,
+  confirmed: STEPS.length,
+};
+
+function PlanProgress({ status }: { status: Plan["status"] }) {
+  const current = STEP_OF[status];
+  return (
+    <ol
+      aria-label="Plan progress"
+      className="flex w-full flex-wrap items-center gap-2"
+    >
+      {STEPS.map((step, i) => {
+        const done = i < current;
+        const now = i === current;
+        const failed = now && status === "failed";
+        return (
+          <li
+            key={step}
+            aria-current={now ? "step" : undefined}
+            className="flex items-center gap-2"
+          >
+            <span
+              className={cn(
+                "flex size-7 items-center justify-center rounded-full font-heading text-xs font-bold ring-1 ring-inset",
+                done && "bg-primary text-primary-foreground ring-primary",
+                now &&
+                  !failed &&
+                  "bg-secondary text-secondary-foreground ring-primary",
+                failed &&
+                  "bg-destructive/10 text-destructive ring-destructive/40",
+                !done && !now && "bg-card text-muted-foreground ring-border",
+              )}
+            >
+              {done ? <Check aria-hidden className="size-4" /> : i + 1}
+            </span>
+            <span
+              className={cn(
+                "text-sm font-bold",
+                done || now ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
+              {step}
+              <span className="sr-only">
+                {done ? " (done)" : now ? " (current step)" : ""}
+              </span>
+            </span>
+            {i < STEPS.length - 1 && (
+              <span
+                aria-hidden
+                className={cn(
+                  "mx-1 h-0.5 w-6 rounded-full sm:w-12",
+                  done ? "bg-primary" : "bg-border",
+                )}
+              />
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 function PlanBody({ plan }: { plan: Plan }) {
   return (
     <div className="flex w-full flex-col items-start gap-5">
-      <p className="text-xl font-bold">{plan.title}</p>
+      <div
+        className={`${card} flex w-full animate-fade-up flex-col gap-4 p-5 sm:p-6`}
+      >
+        <p className="font-heading text-xl font-extrabold tracking-tight sm:text-2xl">
+          {plan.title}
+        </p>
+        <PlanProgress status={plan.status} />
+      </div>
       {plan.status === "extracting" && (
         <div
-          className={`${card} flex items-center gap-3 border-primary/30 bg-secondary p-4`}
+          className={`${card} flex w-full items-center gap-4 border-primary/30 bg-secondary/70 p-5`}
         >
-          <LoaderCircle
-            aria-hidden
-            className="size-6 shrink-0 animate-spin text-primary"
-          />
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-card">
+            <LoaderCircle
+              aria-hidden
+              className="size-6 animate-spin text-primary"
+            />
+          </span>
           <p role="status">
             Extracting PPAs. This takes about a minute. You can leave this page.
           </p>
@@ -122,13 +254,13 @@ function PlanBody({ plan }: { plan: Plan }) {
       {plan.status === "failed" && <FailedPlan plan={plan} />}
       {plan.status === "ready" && (
         <div
-          className={`${card} flex w-full flex-wrap items-center justify-between gap-4 border-warning/30 bg-warning-soft/60 p-4`}
+          className={`${card} flex w-full flex-wrap items-center justify-between gap-4 border-warning/30 bg-warning-soft/60 p-5`}
         >
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col items-start gap-2">
             <p role="status">
               <StatusBadge tone="warning">{STATUS_LABELS.ready}</StatusBadge>
             </p>
-            <p className="text-sm">
+            <p className="max-w-2xl text-sm">
               Read through the rows below and fix anything wrong. When they look
               right, confirm the plan so the checks can use it.
             </p>
@@ -137,12 +269,21 @@ function PlanBody({ plan }: { plan: Plan }) {
         </div>
       )}
       {plan.status === "confirmed" && (
-        <div className="flex flex-wrap items-center gap-3">
+        <div
+          className={`${card} flex w-full flex-wrap items-center gap-3 border-success/25 bg-success-soft/50 p-4`}
+        >
           <p role="status">
             <StatusBadge tone="success">Confirmed</StatusBadge>
           </p>
-          <p className="text-sm text-muted-foreground">
-            This plan is used when you run checks on the Findings page.
+          <p className="text-sm">
+            This plan is used when you run checks on the{" "}
+            <Link
+              href="/findings"
+              className="font-bold text-primary underline underline-offset-4"
+            >
+              Findings
+            </Link>{" "}
+            page.
           </p>
         </div>
       )}
@@ -169,16 +310,23 @@ function ConfirmPlan({ planId }: { planId: number }) {
       queryClient.setQueryData(["plans", String(planId)], next);
       void queryClient.invalidateQueries({ queryKey: ["plans"], exact: true });
       void queryClient.invalidateQueries({ queryKey: ppasKey(planId) });
+      toast.success("Plan confirmed", "Its PPAs now go into the checks.");
     },
+    onError: (e) => toast.error("Couldn't confirm the plan", e.message),
   });
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-3">
       <Button
         size="lg"
         disabled={!ppas.data || noRows || confirm.isPending}
         aria-describedby={noRows ? "confirm-hint" : undefined}
         onClick={() => confirm.mutate()}
       >
+        {confirm.isPending ? (
+          <LoaderCircle aria-hidden className="animate-spin" />
+        ) : (
+          <Check aria-hidden />
+        )}
         {confirm.isPending ? "Confirming…" : "Confirm plan"}
       </Button>
       {noRows && (
@@ -209,9 +357,11 @@ function FailedPlan({ plan }: { plan: Plan }) {
     },
     onSuccess: (next, pdf) => {
       keepFile(plan.id, pdf);
+      toast.info("Retrying extraction", "PlanTrace is reading the PDF again.");
       // Back to extracting, so the page's poll starts again.
       queryClient.setQueryData(["plans", String(plan.id)], next);
     },
+    onError: (e) => toast.error("Retry failed", e.message),
   });
 
   function chooseFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -229,7 +379,7 @@ function FailedPlan({ plan }: { plan: Plan }) {
   return (
     <div
       role="alert"
-      className="flex flex-col items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4"
+      className="flex w-full flex-col items-start gap-3 rounded-3xl border border-destructive/25 bg-destructive/5 p-5"
     >
       <StatusBadge tone="danger">{STATUS_LABELS.failed}</StatusBadge>
       {plan.error && <p>{plan.error}</p>}
@@ -239,15 +389,19 @@ function FailedPlan({ plan }: { plan: Plan }) {
           disabled={retry.isPending}
           onClick={() => retry.mutate(file)}
         >
+          <RotateCw
+            aria-hidden
+            className={retry.isPending ? "animate-spin" : undefined}
+          />
           {retry.isPending ? "Retrying…" : "Retry"}
         </Button>
       ) : (
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1.5 text-sm font-bold">
           Choose the file again
           <input
             type="file"
             accept="application/pdf,.pdf"
-            className="text-sm"
+            className="text-sm font-normal file:mr-3 file:h-10 file:cursor-pointer file:rounded-xl file:border-0 file:bg-secondary file:px-4 file:font-bold file:text-secondary-foreground"
             disabled={retry.isPending}
             onChange={chooseFile}
           />
@@ -274,9 +428,9 @@ function SourceButton({
   const pageNo = page.data?.page_no;
   return (
     <Button
-      variant="link"
-      size="sm"
-      className="h-auto px-0"
+      variant="secondary"
+      size="xs"
+      className="rounded-full px-2.5 tabular-nums"
       aria-label={
         pageNo === undefined ? "Source page" : `Source page ${pageNo}`
       }
@@ -310,6 +464,7 @@ function PpaTable({ planId }: { planId: number }) {
       ]);
       setAddedId(row.id);
     },
+    onError: (e) => toast.error("Couldn't add a row", e.message),
   });
   const addRow = (
     <div className="flex flex-wrap items-center gap-2">
@@ -335,7 +490,7 @@ function PpaTable({ planId }: { planId: number }) {
       what="PPAs"
       isEmpty={(data) => data.length === 0}
       empty={
-        <div className="flex flex-col items-start gap-2">
+        <div className="flex flex-col items-center gap-3">
           <p>No PPAs found. Add rows by hand.</p>
           {addRow}
         </div>
@@ -346,12 +501,12 @@ function PpaTable({ planId }: { planId: number }) {
           <div className="flex w-full min-w-0 flex-1 flex-col items-start gap-3">
             <div className={`${card} w-full overflow-x-auto`}>
               <table className="w-full text-left text-sm">
-                <thead className="border-b bg-muted/60 text-muted-foreground">
+                <thead className="border-b bg-muted/50 text-xs tracking-wide text-muted-foreground uppercase">
                   <tr>
                     {COLUMNS.map((c) => (
                       <th
                         key={c}
-                        className="px-3 py-3 font-bold whitespace-nowrap"
+                        className="px-3 py-3.5 font-bold whitespace-nowrap first:pl-5 last:pr-5"
                       >
                         {c}
                       </th>
@@ -377,7 +532,12 @@ function PpaTable({ planId }: { planId: number }) {
                 </tbody>
               </table>
             </div>
-            {addRow}
+            <div className="flex w-full flex-wrap items-center justify-between gap-2">
+              {addRow}
+              <p className="text-sm text-muted-foreground">
+                {data.length} {data.length === 1 ? "PPA" : "PPAs"} in this plan
+              </p>
+            </div>
           </div>
           {source && (
             <SourcePanel
@@ -420,10 +580,13 @@ function PpaRow({
   return (
     <>
       <tr
-        className={`align-top transition-colors hover:bg-muted/40 ${saveError ? "" : "border-b"}`}
+        className={`align-top transition-colors hover:bg-secondary/30 ${saveError ? "" : "border-b last:border-b-0"}`}
       >
         {FIELDS.map(({ field, label }) => (
-          <td key={field} className="px-3 py-2">
+          <td
+            key={field}
+            className={cn("px-3 py-2.5 first:pl-5", COLUMN_WIDTH[field])}
+          >
             <PpaCell
               ppa={ppa}
               field={field}
@@ -436,32 +599,35 @@ function PpaRow({
             />
           </td>
         ))}
-        <td className="px-3 py-2">
+        <td className="px-3 py-2.5">
           <span
-            className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold ${
+            className={`inline-block rounded-full px-2.5 py-1 text-xs leading-none font-bold ring-1 ring-inset ${
               ppa.status === "confirmed"
-                ? "bg-success-soft text-success"
-                : "bg-warning-soft text-warning"
+                ? "bg-success-soft text-success ring-success/20"
+                : "bg-warning-soft text-warning ring-warning/25"
             }`}
           >
             {ppa.status}
           </span>
         </td>
-        <td className="px-3 py-2">
+        <td className="px-3 py-2.5">
           {ppa.page_id === null ? (
             "—"
           ) : (
             <SourceButton pageId={ppa.page_id} onOpen={onOpenSource} />
           )}
         </td>
-        <td className="px-3 py-2">
+        <td className="px-3 py-1.5 pr-5">
           <DeletePpa ppa={ppa} rowName={rowName} onDeleted={onDeleted} />
         </td>
       </tr>
       {saveError && (
         <tr className="border-b">
-          <td colSpan={COLUMNS.length} className="px-3 pb-2">
-            <p role="alert" className="text-sm text-destructive">
+          <td colSpan={COLUMNS.length} className="px-5 pb-3">
+            <p
+              role="alert"
+              className="rounded-xl bg-destructive/5 px-3 py-2 text-sm text-destructive"
+            >
               {saveError}
             </p>
           </td>
@@ -491,11 +657,13 @@ function DeletePpa({
       queryClient.setQueryData<Ppa[]>(ppasKey(ppa.plan_id), (rows) =>
         rows?.filter((r) => r.id !== ppa.id),
       );
+      toast.success("Row deleted", `${rowName} is no longer in this plan.`);
     },
+    onError: (e) => toast.error("Couldn't delete the row", e.message),
   });
   const what = `Delete PPA ${rowName}`;
   return (
-    <AlertDialog.Root
+    <AlertDialog
       open={open}
       onOpenChange={(next) => {
         if (remove.isPending) return;
@@ -503,41 +671,51 @@ function DeletePpa({
         setOpen(next);
       }}
     >
-      <AlertDialog.Trigger
+      <AlertDialogTrigger
         aria-label={what}
-        className={buttonVariants({ variant: "destructive", size: "sm" })}
+        title={what}
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-9 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          />
+        }
       >
-        <Trash2 aria-hidden />
-        Delete
-      </AlertDialog.Trigger>
-      <AlertDialog.Portal>
-        <AlertDialog.Backdrop className="fixed inset-0 z-40 bg-black/40" />
-        <AlertDialog.Popup className="fixed top-1/2 left-1/2 z-50 flex w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-xl border bg-card p-6 shadow-lg">
-          <AlertDialog.Title className="text-lg font-semibold">
+        <Trash2 aria-hidden className="size-4" />
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia className="bg-destructive/10 text-destructive">
+            <Trash2 aria-hidden />
+          </AlertDialogMedia>
+          <AlertDialogTitle>
             {what}? This can&apos;t be undone.
-          </AlertDialog.Title>
-          {remove.isError && (
-            <p role="alert" className="text-sm text-destructive">
-              Couldn&apos;t delete. {remove.error.message}
-            </p>
-          )}
-          <div className="flex justify-end gap-2">
-            <AlertDialog.Close
-              disabled={remove.isPending}
-              className={buttonVariants({ variant: "outline" })}
-            >
-              Cancel
-            </AlertDialog.Close>
-            <Button
-              variant="destructive"
-              disabled={remove.isPending}
-              onClick={() => remove.mutate()}
-            >
-              {remove.isPending ? "Deleting…" : "Delete"}
-            </Button>
-          </div>
-        </AlertDialog.Popup>
-      </AlertDialog.Portal>
-    </AlertDialog.Root>
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            The row and its edits leave this plan. Findings that use it change
+            on the next run.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {remove.isError && (
+          <p role="alert" className="text-sm text-destructive">
+            Couldn&apos;t delete. {remove.error.message}
+          </p>
+        )}
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={remove.isPending}>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-white shadow-none hover:bg-destructive/90"
+            disabled={remove.isPending}
+            onClick={() => remove.mutate()}
+          >
+            <Trash2 aria-hidden />
+            {remove.isPending ? "Deleting…" : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

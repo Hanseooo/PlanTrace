@@ -22,6 +22,7 @@ from langchain_core.messages import BaseMessage
 from langchain_core.runnables import Runnable
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
+from psycopg.pq import TransactionStatus
 from pydantic import BaseModel, SecretStr, ValidationError
 
 # Part of the cache key: a primed row keeps hitting whichever provider answered it.
@@ -112,7 +113,11 @@ def call_llm[T: BaseModel](
 ) -> T:
     """Ask the model and return a validated `output_model`, or raise `LLMError`.
 
-    The cache row is written on `conn`; the caller owns the transaction.
+    The cache row is written on `conn`. Before a provider is asked, an open transaction
+    on `conn` is committed: a provider can take minutes, and a connection left idle in a
+    transaction that long can be closed by the database or its pooler, which failed the
+    whole check run (POST /checks/run answered 500 after 212 s). Callers commit their
+    writes before asking, so this only ends the reads (and cache rows) so far.
     """
     key = cache_key(prompt, input, output_model)
     row = conn.execute(SELECT_CACHE, (key,)).fetchone()
@@ -121,6 +126,9 @@ def call_llm[T: BaseModel](
             return output_model.model_validate_json(row[0])
         except ValidationError:
             pass  # a row from an older output model: ask again and overwrite it
+
+    if conn.info.transaction_status == TransactionStatus.INTRANS:
+        conn.commit()
 
     reasons: list[str] = []
     for name, provider in PROVIDERS:

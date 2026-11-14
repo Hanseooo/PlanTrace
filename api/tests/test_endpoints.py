@@ -20,3 +20,20 @@ def test_retry_is_advertised_as_multipart() -> None:
     """The retry's behaviour is tested in test_extract.py against the database (S2-14)."""
     content = app.openapi()["paths"]["/plans/{plan_id}/retry"]["post"]["requestBody"]["content"]
     assert list(content) == ["multipart/form-data"]
+
+
+def test_unexpected_error_is_a_json_500() -> None:
+    """An unhandled error answers 500 with a detail the web app shows (main.py)."""
+    from app.db import get_conn
+    from app.main import UNEXPECTED_ERROR
+
+    def broken() -> None:
+        raise RuntimeError("boom")
+
+    app.dependency_overrides[get_conn] = broken
+    try:
+        res = client.get("/checks/latest")
+    finally:
+        del app.dependency_overrides[get_conn]
+    assert res.status_code == 500
+    assert res.json() == {"detail": UNEXPECTED_ERROR}
