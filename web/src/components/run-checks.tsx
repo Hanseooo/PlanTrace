@@ -1,6 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Play } from "lucide-react";
+import { card } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { apiGet, apiPost, type Schemas } from "@/lib/api";
 
@@ -38,12 +40,13 @@ export function RunChecks() {
   });
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <Button disabled={run.isPending} onClick={() => run.mutate()}>
+    <div className={`${card} flex flex-wrap items-center gap-4 p-4`}>
+      <Button size="lg" disabled={run.isPending} onClick={() => run.mutate()}>
+        <Play aria-hidden />
         {run.isPending ? "Running checks…" : "Run checks"}
       </Button>
       {latest.data && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground">
           Last run {ranAt.format(new Date(latest.data.ran_at))}
         </p>
       )}

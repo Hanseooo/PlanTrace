@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Download } from "lucide-react";
+import { PageHeader, card } from "@/components/page-header";
 import { QueryStates } from "@/components/query-states";
 import { RunChecks, useLatestRun } from "@/components/run-checks";
 import { SourcePanel } from "@/components/source-panel";
@@ -14,6 +16,19 @@ type Matrix = Schemas["CccMatrix"];
 type Cell = Schemas["CccCell"];
 type Ppa = Matrix["ppas"][number];
 
+// Colour per verdict; the letter stays, so colour is never the only cue.
+const VERDICT_STYLE: Record<Cell["verdict"], string> = {
+  Conflict: "bg-destructive/15 font-bold text-destructive",
+  Compatible: "bg-secondary text-secondary-foreground",
+  Complementary: "bg-success-soft text-success",
+};
+
+const VERDICT_HELP: Record<Cell["verdict"], string> = {
+  Conflict: "the two projects work against each other",
+  Compatible: "the two projects can go ahead side by side",
+  Complementary: "the two projects help each other",
+};
+
 // AC-33 cell labels.
 const VERDICT_SHORT: Record<Cell["verdict"], string> = {
   Conflict: "C",
@@ -21,12 +36,9 @@ const VERDICT_SHORT: Record<Cell["verdict"], string> = {
   Complementary: "Cp",
 };
 
-/**
- * S5-11: "<plan type> <code>: <title>". CccPpa carries no code yet, so the code
- * shows once the api sends one (#52); until then the label is "<plan type>: <title>".
- */
+/** S5-11: "<plan type> <code>: <title>". */
 function ppaLabel(p: Ppa): string {
-  const code = "code" in p && typeof p.code === "string" ? ` ${p.code}` : "";
+  const code = p.code ? ` ${p.code}` : "";
   return `${p.plan_type}${code}: ${p.title ?? "Untitled PPA"}`;
 }
 
@@ -53,22 +65,26 @@ export default function CccPage() {
   const exporting = useMutation({ mutationFn: downloadExport });
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-4">
-        <h1 className="text-2xl font-semibold">CCC matrix</h1>
-        <Button
-          variant="outline"
-          disabled={exporting.isPending}
-          onClick={() => exporting.mutate()}
-        >
-          {exporting.isPending ? "Exporting…" : "Export CCC matrix (.xlsx)"}
-        </Button>
-        {exporting.isError && (
-          <p role="alert" className="text-sm text-destructive">
-            Couldn&apos;t export: {exporting.error.message}
-          </p>
-        )}
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="CCC matrix"
+        description="Every pair of projects that share a place, and how they affect each other. Read across a row and down a column to find a pair."
+        actions={
+          <Button
+            variant="outline"
+            disabled={exporting.isPending}
+            onClick={() => exporting.mutate()}
+          >
+            <Download aria-hidden />
+            {exporting.isPending ? "Exporting…" : "Export CCC matrix (.xlsx)"}
+          </Button>
+        }
+      />
+      {exporting.isError && (
+        <p role="alert" className="text-sm text-destructive">
+          Couldn&apos;t export: {exporting.error.message}
+        </p>
+      )}
       <RunChecks />
       <QueryStates
         query={latest}
@@ -140,19 +156,38 @@ function MatrixGrid({ matrix }: { matrix: Matrix }) {
         if (e.key === "Escape" && open) close();
       }}
     >
-      <p className="text-sm text-muted-foreground">
-        C conflict, Cm compatible, Cp complementary.{" "}
-        <span className="rounded border border-dashed border-foreground px-1">
-          Dashed border
-        </span>
-        : AI suggestion
-      </p>
+      <dl
+        aria-label="What the letters mean"
+        className={`${card} flex flex-wrap gap-x-6 gap-y-2 p-4 text-sm`}
+      >
+        {(Object.keys(VERDICT_SHORT) as Cell["verdict"][]).map((v) => (
+          <div key={v} className="flex items-center gap-2">
+            <dt
+              className={`flex h-7 w-9 items-center justify-center rounded border ${VERDICT_STYLE[v]}`}
+            >
+              {VERDICT_SHORT[v]}
+            </dt>
+            <dd>
+              <span className="font-bold">{v}</span>: {VERDICT_HELP[v]}
+            </dd>
+          </div>
+        ))}
+        <div className="flex items-center gap-2">
+          <dt className="h-7 w-9 rounded border border-dashed border-foreground" />
+          <dd>
+            <span className="font-bold">Dashed border</span>: AI suggestion, not
+            yet reviewed
+          </dd>
+        </div>
+      </dl>
       <div className="flex flex-col items-start gap-4 lg:flex-row">
-        <div className="max-w-full min-w-0 flex-1 overflow-x-auto">
+        <div
+          className={`${card} max-w-full min-w-0 flex-1 overflow-x-auto p-4`}
+        >
           <table className="border-collapse text-xs">
             <thead>
               <tr>
-                <td className="sticky left-0 bg-background" />
+                <td className="sticky left-0 bg-card" />
                 {matrix.ppas.map((col) => (
                   <th
                     key={col.id}
@@ -174,7 +209,7 @@ function MatrixGrid({ matrix }: { matrix: Matrix }) {
                   <th
                     scope="row"
                     title={ppaLabel(row)}
-                    className="sticky left-0 z-10 w-64 max-w-64 truncate border bg-background p-1 text-left font-medium"
+                    className="sticky left-0 z-10 w-64 max-w-64 truncate border bg-card p-1 text-left font-medium"
                   >
                     {ppaLabel(row)}
                   </th>
@@ -199,7 +234,7 @@ function MatrixGrid({ matrix }: { matrix: Matrix }) {
                               setSource(null);
                               setOpen({ cell, opener: e.currentTarget });
                             }}
-                            className={`h-full w-full hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring aria-pressed:bg-muted ${cell.status === "suggested" ? "border border-dashed border-foreground" : ""}`}
+                            className={`h-full w-full hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring aria-pressed:ring-2 aria-pressed:ring-primary ${VERDICT_STYLE[cell.verdict]} ${cell.status === "suggested" ? "border border-dashed border-foreground" : ""}`}
                           >
                             {VERDICT_SHORT[cell.verdict]}
                           </button>
