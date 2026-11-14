@@ -133,13 +133,15 @@ Every row carries `lgu_psgc` through its plan. Office names, sectors and languag
 | POST | `/plans/{id}/retry` | Send the file of a `failed` plan again (multipart `file`) and restart extraction; 409 unless `failed` (S2-14) |
 | GET, PATCH, POST, DELETE | `/plans/{id}/ppas`, `/ppas/{id}` | Edit the PPA table |
 | POST | `/plans/{id}/confirm` | Confirm a plan |
+| GET | `/barangays` | The city's barangays (`psgc_code`, `name`) by code, for the barangay picker and names (S3-01) |
+| GET | `/pages/{id}` | One page's `plan_id`, `page_no` and text for the source panel; 404 for an unknown page (S3-02) |
 | POST | `/checks/run` | Run all 4 checks |
 | GET, PATCH | `/findings`, `/findings/{id}` | List findings; confirm, reject, note |
 | GET | `/ccc`, `/ccc/export` | Matrix data, Excel file |
 | GET | `/chain` | Nodes and edges for the chain view (deferred) |
 | POST | `/ask` | Question in, cited answer out (deferred) |
 
-`GET /plans` reads the `plans` table (S1-11), so it needs `DATABASE_URL`: without it, or when the database is unreachable, it answers 503 and the plans screen shows its error state with Retry. This changes S0-07, under which the app started and answered without `DATABASE_URL`; the api still starts without it. `GET /plans/{id}` and `GET /plans/{id}/ppas` read the database too (S2-16) and answer 404 for an unknown plan. Every other endpoint still serves `seed/fixtures/` until its slice lands. Routes get their connection from the `get_conn` dependency in `api/app/db/__init__.py`; tests override it with `TEST_DATABASE_URL` (D7).
+`GET /plans` reads the `plans` table (S1-11), so it needs `DATABASE_URL`: without it, or when the database is unreachable, it answers 503 and the plans screen shows its error state with Retry. This changes S0-07, under which the app started and answered without `DATABASE_URL`; the api still starts without it. `GET /plans/{id}` and `GET /plans/{id}/ppas` read the database too (S2-16) and answer 404 for an unknown plan. `GET /barangays` and `GET /pages/{id}` read it too (S3-01, S3-02), with 503 the same way and 404 for an unknown page. Every other endpoint still serves `seed/fixtures/` until its slice lands. Routes get their connection from the `get_conn` dependency in `api/app/db/__init__.py`; tests override it with `TEST_DATABASE_URL` (D7).
 
 Web routes: `/` redirects to `/plans`; `/plans` (plans list and upload form), `/plans/[id]` (a plan's PPA table), `/findings` (findings list and side-by-side detail), `/ccc` (CCC matrix and export link).
 
