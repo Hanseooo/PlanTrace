@@ -110,7 +110,7 @@ def test_run_finds_the_answer_keys_duplicates_and_zone_finding(confirmed: TestCl
     # sector; every barangay has a zone row, so zone checks each (PPA, barangay): 36.
     assert got["duplicate"] == (51, 3)
     assert got["zone"] == (36, 1)
-    assert got["ccc"] == (0, 0)
+    assert got["ccc"] == (49, 0)  # providers fail: every candidate pair is skipped
 
     rule_findings = [f for f in list_findings(confirmed) if f.check in RULE_CHECKS]
     expected = {

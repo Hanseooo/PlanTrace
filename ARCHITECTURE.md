@@ -63,7 +63,7 @@ plantrace/
         findings.py       lane:data. Storing a run, listing and reviewing findings, the latest run
         orphan.py         lane:ai. Orphan check and its AI suggested parent
         run.py            lane:ai. `POST /checks/run`: the checks, then findings.store_run
-        ccc_export.py     the CCC export seam: the Excel layout lives only here (S5 adds ccc.py)
+        ccc_export.py     the CCC export seam: the Excel layout lives only here (`ccc.py` is the CCC check)
       plans/              lane:data. Plan list and status, PPA table edits, confirm
       db/                 lane:data, schema owner. Connection, migrations/NNN_name.sql
   seed/                   lane:data
@@ -95,10 +95,10 @@ A model change is a contract change: tell the team, regenerate the types, and up
 4. At startup, any plan still `extracting` becomes `failed` with "Extraction was interrupted. Retry." (S2-15).
 5. The web app polls `GET /plans/{id}` every 2 seconds with TanStack Query's `refetchInterval` until the status leaves `extracting`.
 
-The uploaded file is discarded after step 2. The prompt and output model live in `extract/extraction.py`; `app.extract.load_cache` loads the committed LCCAP response under the same key (S2-19), and the committed orphan answers in `seed/ai_cache/orphans.json` under the keys the run computes (S4-15). The demo fallback is a pre-extracted plan that is already `ready`.
+The uploaded file is discarded after step 2. The prompt and output model live in `extract/extraction.py`; `app.extract.load_cache` loads the committed LCCAP response under the same key (S2-19), the committed orphan answers in `seed/ai_cache/orphans.json` under the keys the run computes (S4-15), and the CCC answers in `seed/ai_cache/ccc.json` under the key of each stored input (S5-05). The demo fallback is a pre-extracted plan that is already `ready`.
 
 **Checks (F3)**
-`POST /checks/run` reads only `confirmed` PPAs. Duplicate and zone checks are SQL. Orphan and CCC use SQL to pick candidate pairs, then `llm.py` for the suggestion or the verdict. Every finding stores `page_ids` and starts as `suggested`.
+`POST /checks/run` reads only `confirmed` PPAs. Duplicate and zone checks are SQL. Orphan and CCC use SQL to pick candidate pairs, then `llm.py` for the suggestion or the verdict. CCC sends one call per cross-plan pair and stores all verdicts; the findings list shows Conflicts. Every finding stores `page_ids` and starts as `suggested`.
 
 **CCC export (F5)**
 `GET /ccc/export` calls `checks/ccc_export.py`. The real CCC sheet layout is unknown (PRD F5), so the layout changes in that one file.
