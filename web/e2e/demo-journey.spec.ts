@@ -217,11 +217,9 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   await expect(page.getByRole("button", { name: "Run checks" })).toBeEnabled();
   await page.unroute(isRun);
   await expect(page.getByText(/^Last run /)).toBeVisible();
-  // The LCCAP is still `ready` here (J3's confirm isn't in the smoke yet), so its
-  // row isn't checked: 2 duplicates, 2 orphans, 1 zone. This becomes 6 when #32
-  // confirms the LCCAP in J3, and 8 after S5 adds CCC.
+  // J3 confirmed the LCCAP, so: 3 duplicates, 2 orphans, 1 zone. 8 after S5 adds CCC.
   const findingList = page.getByRole("region", { name: "Findings list" });
-  await expect(findingList.getByRole("button")).toHaveCount(5);
+  await expect(findingList.getByRole("button")).toHaveCount(6);
 
   // J5: the drainage duplicate side by side, its sources, and the reject dialog.
   await findingList
