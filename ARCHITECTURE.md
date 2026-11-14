@@ -29,7 +29,7 @@ The web app calls the API directly over HTTPS, with CORS. There is no Next.js pr
 | Types across languages | `openapi-typescript` from FastAPI's OpenAPI | Frontend and backend agree on the contract |
 | Database | Supabase as plain Postgres, `pg_trgm`, full-text search. No Supabase Auth or auto API | One shared database for dev and demo |
 | DB access | psycopg 3, SQL written by hand, numbered `.sql` migrations | Trigram similarity, `tsvector` and arrays are plain SQL. An ORM would need workarounds |
-| AI | Gemini (a current Flash model; check the model list for the ID) through LangChain `with_structured_output`, `.with_fallbacks([OpenRouter model])` | PDF input, JSON matching Pydantic models, fallback in two lines |
+| AI | Gemini (`gemini-flash-latest`, the current Flash model) through LangChain `with_structured_output`, then an OpenRouter model (`openai/gpt-4o-mini`) through `langchain-openai` on failure | PDF input, JSON matching Pydantic models, fallback in two lines |
 | Files | PyMuPDF (page text), pandas/openpyxl (Excel in, CCC export out) | Page-level citations |
 | Deploy | Vercel (web, root `web/`), Render (api, root `api/`, free tier), both from `main` | Render's free tier sleeps: wake the api 2 minutes before the demo. Vercel needs `NEXT_PUBLIC_API_URL` before the build; Render's `CORS_ORIGINS` must list the Vercel origin |
 | Tooling | ruff and pyright (api), ESLint and `tsc` (web), pytest, Playwright | Run by CI on every PR |
@@ -99,11 +99,13 @@ The uploaded file is discarded after step 2. The demo fallback is a pre-extracte
 
 ## The LLM seam
 
-`api/app/llm.py` is the only code that calls a model. Callers pass a prompt, an input and a Pydantic output model, and get a validated object back.
+`api/app/llm.py` is the only code that calls a model. Callers pass a connection, a prompt, an input string and a Pydantic output model to `call_llm`, and get a validated object back.
 
-- Gemini first, OpenRouter on failure, via LangChain `.with_fallbacks`.
-- Cache: key = hash of model, prompt and input, stored in `ai_cache`. A hit returns without a network call, so the demo replays offline and teammates share results.
-- Invalid JSON or a timeout raises one error type that callers turn into a `failed` status or a message.
+- Gemini first, OpenRouter on failure, each with a 90-second timeout. A missing API key counts as that provider failing. `llm.py` calls the two in order itself, not through `.with_fallbacks`, so the error can name both failures.
+- `llm.py` validates the raw output against the output model itself.
+- Cache: `cache_key()` hashes the primary model id, the prompt, the input and the output model's name. Rows live in `ai_cache`. The key ignores which provider answered, so a row primed while Gemini was down still hits. A hit returns without a network call, so the demo replays offline and teammates share results. The S2-19 loader imports `cache_key()` rather than copying it.
+- Only output that passed validation is cached, so a bad answer never replays. The row is written on the caller's connection, and the caller commits.
+- When every provider fails, times out or returns invalid output, `LLMError` is raised. Its message names each provider and its reason, for example "Gemini timed out after 90 s; OpenRouter returned invalid JSON.", and never contains a key or a stack trace. Callers turn it into a `failed` status or a message.
 
 ## Data model
 
