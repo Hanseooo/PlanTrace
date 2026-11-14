@@ -42,7 +42,7 @@ Change a line here only after telling the team. One line each: choice, because r
 - Lint (api): `cd api && uv run ruff check . && uv run ruff format --check .`
 - Lint (web): none yet: #4 adds it
 - Unit tests (api): `cd api && uv run pytest`
-- Migrate: none yet: #3 adds it
+- Migrate: `cd api && uv run python -m app.db.migrate` (reads `DATABASE_URL`; or pass a URL as the argument)
 - Demo smoke: none yet: #4 adds it
 
 ## Parallel work

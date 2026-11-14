@@ -112,10 +112,10 @@ The uploaded file is discarded after step 2. The demo fallback is a pre-extracte
 | `lgus` | `psgc_code`, name, level |
 | `plans` | id, `lgu_psgc`, type, title, period_start, period_end, status (extracting, ready, confirmed, failed), error |
 | `pages` | id, plan_id, page_no, text, `tsv` |
-| `ppas` | id, plan_id, code, title, description, office, sector, barangays (PSGC[]), cost, year_start, year_end, page_id, status (draft, confirmed) |
+| `ppas` | id, plan_id, code, title, description, office, sector, barangays (PSGC[]), cost, year_start, year_end, page_id, status (draft, confirmed), updated_at |
 | `zones` | id, plan_id, barangay, zone_type, hazard, forbidden_sectors[], page_id |
 | `links` | id, child_ppa_id, parent_ppa_id, source (ai, manual), status (suggested, confirmed, rejected) |
-| `findings` | id, check (duplicate, orphan, ccc, zone), ppa_a, ppa_b, verdict, reason, page_ids[], status (suggested, confirmed, rejected), note, created_by (ai, rule) |
+| `findings` | id, check (duplicate, orphan, ccc, zone), ppa_a, ppa_b, verdict, reason, page_ids[], status (suggested, confirmed, rejected), note, created_by (ai, rule), reviewed_at |
 | `ai_cache` | key, response, created_at |
 | `questions` | id, text, answer, cited_page_ids[], created_at (deferred with F7) |
 
@@ -135,7 +135,9 @@ Every row carries `lgu_psgc` through its plan. Office names, sectors and languag
 | GET | `/chain` | Nodes and edges for the chain view (deferred) |
 | POST | `/ask` | Question in, cited answer out (deferred) |
 
-## Open for ticket 01
+The schema is `api/app/db/migrations/001_init.sql` (#3); its check constraints use the `models.py` strings. `findings."check"` is a reserved word, so quote it in SQL. `pg_trgm` is enabled.
 
-- Which database the pytest check tests run against. The shared Supabase database also holds the demo data, so tests must not write to it unguarded.
-- How a rejected finding stays rejected on re-run "unless the PPAs change" (PRD F3).
+## Settled in ticket 01
+
+- Test database (D7): pytest reads only `TEST_DATABASE_URL` (a second Supabase project locally, a Postgres service in CI) and skips the database tests when it is unset. The tests drop and recreate its `public` schema.
+- Rejected stays rejected (D5): a reviewed finding is kept on re-run while both PPAs' `updated_at` are older than its `reviewed_at`. A trigger sets `ppas.updated_at` on every update.
