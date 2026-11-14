@@ -252,7 +252,6 @@ def orphan_count(client: TestClient) -> tuple[int, int]:
 
 
 @needs_db
-@pytest.mark.xfail(reason="needs #38 storage", strict=False)
 def test_run_accept_and_rerun_through_the_api(
     seeded: psycopg.Connection, monkeypatch: pytest.MonkeyPatch
 ) -> None:

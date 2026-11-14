@@ -203,8 +203,11 @@ def update_finding(conn: psycopg.Connection, finding_id: int, body: FindingUpdat
     with conn.cursor(row_factory=class_row(StoredFinding)) as cur:
         stored = cur.execute(SELECT_FINDING, (finding_id,)).fetchone()
     assert stored
-    # #39: the orphan's parent link (S4-10 Accept and Reject) goes here, before the commit,
-    # so the finding and its link change in one transaction.
+    # Imported here: orphan.py imports NewFinding from this module.
+    from app.checks.orphan import apply_review
+
+    # Same transaction as the finding, so the finding and its link change together.
+    apply_review(conn, stored.check, stored.ppa_a, stored.ppa_b, body.status)
     conn.commit()
     return with_ppas(conn, [stored])[0]
 
