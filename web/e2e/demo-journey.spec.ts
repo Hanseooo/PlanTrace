@@ -200,6 +200,13 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   await expect(page.getByRole("heading", { name: "Findings" })).toBeVisible();
   await expectShell(page);
   await expect(page.getByText("Checks haven't been run yet.")).toBeVisible();
+  // S5-10: the CCC matrix says the same, with its own Run checks button.
+  await mainNav(page).getByRole("link", { name: "CCC matrix" }).click();
+  await expect(page.getByRole("heading", { name: "CCC matrix" })).toBeVisible();
+  await expect(page.getByText("Checks haven't been run yet.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Run checks" })).toBeEnabled();
+  await mainNav(page).getByRole("link", { name: "Findings" }).click();
+  await expect(page.getByRole("heading", { name: "Findings" })).toBeVisible();
   // J4: Run checks, disabled while the run is in flight. The run is held so the
   // in-flight state can be seen.
   let releaseRun!: () => void;
@@ -217,9 +224,14 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   await expect(page.getByRole("button", { name: "Run checks" })).toBeEnabled();
   await page.unroute(isRun);
   await expect(page.getByText(/^Last run /)).toBeVisible();
-  // J3 confirmed the LCCAP, so: 3 duplicates, 2 orphans, 1 zone. 8 after S5 adds CCC.
+  // J3 confirmed the LCCAP, so: 3 duplicates, 2 orphans, 1 zone, 2 CCC conflicts.
   const findingList = page.getByRole("region", { name: "Findings list" });
-  await expect(findingList.getByRole("button")).toHaveCount(6);
+  await expect(findingList.getByRole("button")).toHaveCount(8);
+  await expect(
+    findingList
+      .getByRole("region", { name: "CCC", exact: true })
+      .getByRole("button"),
+  ).toHaveCount(2);
 
   // J5: the drainage duplicate side by side, its sources, and the reject dialog.
   await findingList
@@ -271,20 +283,74 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
       .getByRole("region", { name: "Barangay 9", exact: true }),
   ).toContainText("Socialized housing project, Barangay 9");
 
+  // J7 (CCC half): the CCC group for Barangay 9.
+  const cccBarangay9 = findingList
+    .getByRole("region", { name: "CCC", exact: true })
+    .getByRole("region", { name: "Barangay 9", exact: true });
+  await expect(cccBarangay9).toContainText(
+    "Socialized housing project, Barangay 9",
+  );
+  await expect(cccBarangay9).toContainText("Evacuation centre, Barangay 9");
+  await expect(cccBarangay9).toContainText("Conflict");
+
   // J8-J9: the CCC matrix, reached through the nav, and its export.
   await mainNav(page).getByRole("link", { name: "CCC matrix" }).click();
   await expect(page.getByRole("heading", { name: "CCC matrix" })).toBeVisible();
   await expectShell(page);
+  // J8: the named cell shows C; Enter opens its detail, Escape returns focus to it.
+  const conflictCell = page.getByRole("button", {
+    name: "Conflict, AI suggestion: CDP CDP-01: Socialized housing project, Barangay 9 × LDRRMP LDRRMP-02: Evacuation centre, Barangay 9",
+  });
+  await expect(conflictCell).toHaveText("C");
+  await conflictCell.focus();
+  await page.keyboard.press("Enter");
+  const cellDetail = page.getByRole("region", { name: "Cell detail" });
   await expect(
-    page.getByRole("cell", {
-      name: "Conflict: CDP: Socialized housing project, Barangay 9 × LDRRMP: Evacuation centre, Barangay 9",
-    }),
-  ).toHaveText("C");
+    cellDetail.getByRole("heading", { name: "Conflict" }),
+  ).toBeVisible();
+  await expect(cellDetail).toContainText("AI suggestion");
+  await expect(cellDetail.locator("p").last()).not.toBeEmpty();
+  // Escape closes the source panel first, then the detail.
+  const cellSource = cellDetail
+    .getByRole("button", { name: /^Source page \d+$/ })
+    .first();
+  await cellSource.click();
+  const cellPanel = page.getByRole("complementary", { name: "Source page" });
+  await expect(cellPanel).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(cellPanel).toBeHidden();
+  await expect(cellDetail).toBeVisible();
+  await expect(cellSource).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(cellDetail).toBeHidden();
+  await expect(conflictCell).toBeFocused();
+  // J9: the export button downloads the workbook.
   const download = page.waitForEvent("download");
-  await page.getByRole("link", { name: "Export CCC matrix (.xlsx)" }).click();
+  await page.getByRole("button", { name: "Export CCC matrix (.xlsx)" }).click();
   expect((await download).suggestedFilename()).toBe("ccc_export.xlsx");
 
   expect(consoleErrors).toEqual([]);
+
+  // RS-01 export failure (S5-13): the reason shows and the button works again.
+  const isExport = (url: URL) => url.pathname === "/ccc/export";
+  await page.route(isExport, (route) =>
+    route.fulfill({
+      status: 500,
+      body: "",
+      headers: { "access-control-allow-origin": "*" },
+    }),
+  );
+  const exportButton = page.getByRole("button", {
+    name: "Export CCC matrix (.xlsx)",
+  });
+  await exportButton.click();
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "Couldn't export: The PlanTrace API answered 500." }),
+  ).toBeVisible();
+  await expect(exportButton).toBeEnabled();
+  await page.unroute(isExport);
 
   // RS-01 states, last because the aborted calls log console errors:
   // hold, then fail, then empty every api call; let the web app's own requests through.
