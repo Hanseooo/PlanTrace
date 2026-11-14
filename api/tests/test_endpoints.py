@@ -1,8 +1,9 @@
 """S0-06: every MVP endpoint answers with a body valid against its model.
 
 GET /plans (S1-11), GET /plans/{id}, GET /plans/{id}/ppas (S2-16), GET /barangays and
-GET /pages/{id} (S3-01, S3-02) read the database;
-tests/test_plans.py covers them. POST /plans (S2-10) is covered by tests/test_extract.py.
+GET /pages/{id} (S3-01, S3-02) read the database, as do the PPA writes and confirm (S3-03 to
+S3-08); tests/test_plans.py covers them. POST /plans (S2-10) is covered by
+tests/test_extract.py.
 """
 
 from io import BytesIO
@@ -14,14 +15,11 @@ from openpyxl import load_workbook
 from pydantic import TypeAdapter
 
 from app.main import app
-from app.models import CccMatrix, CheckRunResult, Finding, Plan, Ppa
+from app.models import CccMatrix, CheckRunResult, Finding
 
 client = TestClient(app)
 
 CASES: list[tuple[str, str, dict[str, Any], Any]] = [
-    ("POST", "/plans/2/ppas", {"json": {}}, Ppa),
-    ("PATCH", "/ppas/201", {"json": {"cost": 1000}}, Ppa),
-    ("POST", "/plans/2/confirm", {}, Plan),
     ("POST", "/checks/run", {}, CheckRunResult),
     ("GET", "/findings", {}, list[Finding]),
     ("PATCH", "/findings/1", {"json": {"status": "confirmed"}}, Finding),
@@ -42,10 +40,6 @@ def test_retry_is_advertised_as_multipart() -> None:
     """The retry's behaviour is tested in test_extract.py against the database (S2-14)."""
     content = app.openapi()["paths"]["/plans/{plan_id}/retry"]["post"]["requestBody"]["content"]
     assert list(content) == ["multipart/form-data"]
-
-
-def test_delete_ppa_returns_no_content() -> None:
-    assert client.delete("/ppas/201").status_code == 204
 
 
 def test_fixtures_show_the_sampaguita_journey() -> None:
