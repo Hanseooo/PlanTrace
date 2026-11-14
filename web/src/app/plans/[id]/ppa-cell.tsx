@@ -130,6 +130,7 @@ export function PpaCell({
   field,
   label,
   rowName,
+  autoOpen = false,
   onSaveError,
 }: {
   ppa: Ppa;
@@ -138,13 +139,15 @@ export function PpaCell({
   label: string;
   /** The row's name for accessible names, e.g. "LCCAP-01". */
   rowName: string;
+  /** Open the editor on mount, e.g. the first cell of a row just added. */
+  autoOpen?: boolean;
   onSaveError: (message: string | null) => void;
 }) {
   const queryClient = useQueryClient();
   const barangays = useBarangays();
   const value = ppa[field] as Value;
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<Draft>("");
+  const [open, setOpen] = useState(autoOpen);
+  const [draft, setDraft] = useState<Draft>(() => toDraft(field, value));
   const [error, setError] = useState<string | null>(null);
   // Enter, Escape or a click on the cell are done; the blur that follows isn't.
   const done = useRef(false);

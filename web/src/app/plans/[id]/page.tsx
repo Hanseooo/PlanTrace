@@ -4,11 +4,19 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { QueryStates } from "@/components/query-states";
 import { SourcePanel, usePage } from "@/components/source-panel";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { PpaCell, type PpaField } from "./ppa-cell";
-import { ApiError, apiGet, apiPostForm, type Schemas } from "@/lib/api";
+import {
+  ApiError,
+  apiDelete,
+  apiGet,
+  apiPost,
+  apiPostForm,
+  type Schemas,
+} from "@/lib/api";
 import {
   FILE_RULE,
   POLL_MS,
@@ -32,7 +40,7 @@ const FIELDS: { field: PpaField; label: string }[] = [
   { field: "year_start", label: "Start year" },
   { field: "year_end", label: "End year" },
 ];
-const COLUMNS = [...FIELDS.map((f) => f.label), "Status", "Source"];
+const COLUMNS = [...FIELDS.map((f) => f.label), "Status", "Source", "Actions"];
 
 const isNotFound = (e: unknown) => e instanceof ApiError && e.status === 404;
 
@@ -93,12 +101,65 @@ function PlanBody({ plan }: { plan: Plan }) {
       )}
       {plan.status === "failed" && <FailedPlan plan={plan} />}
       {plan.status === "ready" && (
-        <p role="status" className="font-medium">
-          {STATUS_LABELS.ready}
+        <div className="flex flex-wrap items-center gap-3">
+          <p role="status" className="font-medium">
+            {STATUS_LABELS.ready}
+          </p>
+          <ConfirmPlan planId={plan.id} />
+        </div>
+      )}
+      {plan.status === "confirmed" && (
+        <p
+          role="status"
+          className="rounded-full border border-primary/40 bg-primary/10 px-3 py-0.5 text-sm font-medium"
+        >
+          Confirmed
         </p>
       )}
       {(plan.status === "ready" || plan.status === "confirmed") && (
         <PpaTable planId={plan.id} />
+      )}
+    </div>
+  );
+}
+
+type Ppa = Schemas["Ppa"];
+const ppasKey = (planId: number) => ["plans", String(planId), "ppas"];
+
+/** S3-15: confirm a ready plan and its rows; disabled with no rows. */
+function ConfirmPlan({ planId }: { planId: number }) {
+  const queryClient = useQueryClient();
+  const ppas = useQuery({
+    queryKey: ppasKey(planId),
+    queryFn: () => apiGet<Ppa[]>(`/plans/${planId}/ppas`),
+  });
+  const noRows = ppas.data?.length === 0;
+  const confirm = useMutation({
+    mutationFn: () => apiPost<Plan>(`/plans/${planId}/confirm`),
+    onSuccess: (next) => {
+      queryClient.setQueryData(["plans", String(planId)], next);
+      void queryClient.invalidateQueries({ queryKey: ["plans"], exact: true });
+      void queryClient.invalidateQueries({ queryKey: ppasKey(planId) });
+    },
+  });
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button
+        disabled={!ppas.data || noRows || confirm.isPending}
+        aria-describedby={noRows ? "confirm-hint" : undefined}
+        onClick={() => confirm.mutate()}
+      >
+        {confirm.isPending ? "Confirming…" : "Confirm plan"}
+      </Button>
+      {noRows && (
+        <span id="confirm-hint" className="text-sm text-muted-foreground">
+          Add a row first
+        </span>
+      )}
+      {confirm.isError && (
+        <span role="alert" className="text-sm text-destructive">
+          Couldn&apos;t confirm. {confirm.error.message}
+        </span>
       )}
     </div>
   );
@@ -201,21 +262,55 @@ function PpaTable({ planId }: { planId: number }) {
     pageId: number;
     opener: HTMLElement;
   } | null>(null);
+  const queryClient = useQueryClient();
   const ppas = useQuery({
-    queryKey: ["plans", String(planId), "ppas"],
-    queryFn: () => apiGet<Schemas["Ppa"][]>(`/plans/${planId}/ppas`),
+    queryKey: ppasKey(planId),
+    queryFn: () => apiGet<Ppa[]>(`/plans/${planId}/ppas`),
   });
+  // S3-13: the added row opens its first cell's editor.
+  const [addedId, setAddedId] = useState<number | null>(null);
+  const add = useMutation({
+    mutationFn: () => apiPost<Ppa>(`/plans/${planId}/ppas`),
+    onSuccess: (row) => {
+      queryClient.setQueryData<Ppa[]>(ppasKey(planId), (rows) => [
+        ...(rows ?? []),
+        row,
+      ]);
+      setAddedId(row.id);
+    },
+  });
+  const addRow = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button
+        variant="outline"
+        disabled={add.isPending}
+        onClick={() => add.mutate()}
+      >
+        {add.isPending ? "Adding…" : "Add row"}
+      </Button>
+      {add.isError && (
+        <span role="alert" className="text-sm text-destructive">
+          Couldn&apos;t add a row. {add.error.message}
+        </span>
+      )}
+    </div>
+  );
 
   return (
     <QueryStates
       query={ppas}
       what="PPAs"
       isEmpty={(data) => data.length === 0}
-      empty="No PPAs found. Add rows by hand."
+      empty={
+        <div className="flex flex-col items-start gap-2">
+          <p>No PPAs found. Add rows by hand.</p>
+          {addRow}
+        </div>
+      }
     >
       {(data) => (
         <div className="flex w-full flex-col items-start gap-4 lg:flex-row">
-          <div className="w-full min-w-0 flex-1 overflow-x-auto">
+          <div className="flex w-full min-w-0 flex-1 flex-col items-start gap-3 overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="border-b text-muted-foreground">
                 <tr>
@@ -232,13 +327,20 @@ function PpaTable({ planId }: { planId: number }) {
                     key={ppa.id}
                     ppa={ppa}
                     rowName={ppa.code ?? ppa.title ?? `row ${i + 1}`}
+                    autoOpen={ppa.id === addedId}
                     onOpenSource={(pageId, opener) =>
                       setSource({ pageId, opener })
                     }
+                    onDeleted={() => {
+                      // S3-14: the panel closes with the row whose page it showed.
+                      if (source && source.pageId === ppa.page_id)
+                        setSource(null);
+                    }}
                   />
                 ))}
               </tbody>
             </table>
+            {addRow}
           </div>
           {source && (
             <SourcePanel
@@ -257,11 +359,16 @@ function PpaTable({ planId }: { planId: number }) {
 function PpaRow({
   ppa,
   rowName,
+  autoOpen,
   onOpenSource,
+  onDeleted,
 }: {
-  ppa: Schemas["Ppa"];
+  ppa: Ppa;
   rowName: string;
+  /** Open the first cell's editor on mount (a row just added). */
+  autoOpen: boolean;
   onOpenSource: (pageId: number, opener: HTMLElement) => void;
+  onDeleted: () => void;
 }) {
   const [saveError, setSaveError] = useState<string | null>(null);
   return (
@@ -274,17 +381,21 @@ function PpaRow({
               field={field}
               label={label}
               rowName={rowName}
+              autoOpen={autoOpen && field === FIELDS[0].field}
               onSaveError={setSaveError}
             />
           </td>
         ))}
         <td className="py-2 pr-4">{ppa.status}</td>
-        <td className="py-2">
+        <td className="py-2 pr-4">
           {ppa.page_id === null ? (
             "—"
           ) : (
             <SourceButton pageId={ppa.page_id} onOpen={onOpenSource} />
           )}
+        </td>
+        <td className="py-2">
+          <DeletePpa ppa={ppa} rowName={rowName} onDeleted={onDeleted} />
         </td>
       </tr>
       {saveError && (
@@ -297,5 +408,75 @@ function PpaRow({
         </tr>
       )}
     </>
+  );
+}
+
+/** S3-14, RS-06: delete a row after an AlertDialog confirms it. */
+function DeletePpa({
+  ppa,
+  rowName,
+  onDeleted,
+}: {
+  ppa: Ppa;
+  rowName: string;
+  onDeleted: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const remove = useMutation({
+    mutationFn: () => apiDelete(`/ppas/${ppa.id}`),
+    onSuccess: () => {
+      setOpen(false);
+      onDeleted();
+      queryClient.setQueryData<Ppa[]>(ppasKey(ppa.plan_id), (rows) =>
+        rows?.filter((r) => r.id !== ppa.id),
+      );
+    },
+  });
+  const what = `Delete PPA ${rowName}`;
+  return (
+    <AlertDialog.Root
+      open={open}
+      onOpenChange={(next) => {
+        if (remove.isPending) return;
+        if (next) remove.reset();
+        setOpen(next);
+      }}
+    >
+      <AlertDialog.Trigger
+        aria-label={what}
+        className={buttonVariants({ variant: "ghost", size: "sm" })}
+      >
+        Delete
+      </AlertDialog.Trigger>
+      <AlertDialog.Portal>
+        <AlertDialog.Backdrop className="fixed inset-0 z-40 bg-black/40" />
+        <AlertDialog.Popup className="fixed top-1/2 left-1/2 z-50 flex w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-lg border bg-background p-6 shadow-lg">
+          <AlertDialog.Title className="text-lg font-semibold">
+            {what}? This can&apos;t be undone.
+          </AlertDialog.Title>
+          {remove.isError && (
+            <p role="alert" className="text-sm text-destructive">
+              Couldn&apos;t delete. {remove.error.message}
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            <AlertDialog.Close
+              disabled={remove.isPending}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Cancel
+            </AlertDialog.Close>
+            <Button
+              variant="destructive"
+              disabled={remove.isPending}
+              onClick={() => remove.mutate()}
+            >
+              {remove.isPending ? "Deleting…" : "Delete"}
+            </Button>
+          </div>
+        </AlertDialog.Popup>
+      </AlertDialog.Portal>
+    </AlertDialog.Root>
   );
 }
