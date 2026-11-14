@@ -84,12 +84,13 @@ A model change is a contract change: tell the team, regenerate the types, and up
 ## Key flows
 
 **Upload and extract (F1)**
-1. `POST /plans` saves the plan row with status `extracting` and returns at once.
-2. A FastAPI `BackgroundTask` reads each page's text with PyMuPDF into `pages`, sends the PDF to `llm.py`, and writes the PPAs (and zones for a CLUP) as `draft`.
-3. Status becomes `ready` (ready to confirm) or `failed` with a message.
-4. The web app polls `GET /plans/{id}` every 2 seconds with TanStack Query's `refetchInterval` until the status leaves `extracting`.
+1. `POST /plans` checks the file (`%PDF`, 10 MB), the period and that a city is seeded, saves the plan row with status `extracting` and title `"{type} {start}–{end}"`, and returns at once.
+2. A FastAPI `BackgroundTask` reads each page's text with PyMuPDF into `pages`, sends that text to `llm.py` under `=== page N ===` markers with the city's barangay names and codes (text in, not the PDF: S2-12), and writes the cleaned PPAs as `draft`. Zones for a CLUP upload are deferred (AC-07).
+3. Status becomes `ready` (ready to confirm) or `failed` with a message. A PDF with no text fails with "No text found. Scanned PDFs aren't supported."
+4. At startup, any plan still `extracting` becomes `failed` with "Extraction was interrupted. Retry." (S2-15).
+5. The web app polls `GET /plans/{id}` every 2 seconds with TanStack Query's `refetchInterval` until the status leaves `extracting`.
 
-The uploaded file is discarded after step 2. The demo fallback is a pre-extracted plan that is already `ready`.
+The uploaded file is discarded after step 2. The prompt and output model live in `extract/extraction.py`; `app.extract.load_cache` loads the committed LCCAP response under the same key (S2-19). The demo fallback is a pre-extracted plan that is already `ready`.
 
 **Checks (F3)**
 `POST /checks/run` reads only `confirmed` PPAs. Duplicate and zone checks are SQL. Orphan and CCC use SQL to pick candidate pairs, then `llm.py` for the suggestion or the verdict. Every finding stores `page_ids` and starts as `suggested`.

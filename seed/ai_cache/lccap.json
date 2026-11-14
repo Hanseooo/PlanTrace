@@ -1,0 +1,47 @@
+{
+  "ppas": [
+    {
+      "code": "LCCAP-01",
+      "title": "Mangrove rehabilitation along the coast",
+      "description": "Replanting of 20 hectares of coastal mangroves",
+      "office": "City Environment and Natural Resources Office",
+      "sector": "flood_control",
+      "barangays": [
+        "1199900012"
+      ],
+      "cost": "3000000",
+      "year_start": "2026",
+      "year_end": "2028",
+      "page": 2
+    },
+    {
+      "code": "LCCAP-02",
+      "title": "Rainwater harvesting for farms",
+      "description": "Rainwater collectors for upland farms",
+      "office": "City Agriculture Office",
+      "sector": "water_supply",
+      "barangays": [
+        "1199900007"
+      ],
+      "cost": "2500000",
+      "year_start": "2027",
+      "year_end": "2029",
+      "page": 2
+    },
+    {
+      "code": "LCCAP-03",
+      "title": "Climate-smart rice seed distribution",
+      "description": "Drought- and flood-tolerant rice seed for lowland farms",
+      "office": "City Agriculture Office",
+      "sector": "agriculture",
+      "barangays": [
+        "1199900010",
+        "1199900011"
+      ],
+      "cost": "1500000",
+      "year_start": "2026",
+      "year_end": "2028",
+      "page": 2
+    }
+  ]
+}

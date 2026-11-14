@@ -82,11 +82,13 @@ jobs:
         run: npm run typecheck
 
       # After pytest, which drops the test schema. S1-12: the smoke's api reads the seeded city.
+      # S2-19: the cached LCCAP response lets J2's upload run with no provider call.
       - name: Seed the test database
         working-directory: api
         run: |
           uv run python -m app.db.migrate "$TEST_DATABASE_URL"
           uv run python -m app.db.seed "$TEST_DATABASE_URL"
+          uv run python -m app.extract.load_cache "$TEST_DATABASE_URL"
 
       # The Playwright config starts the api on :8000 and the web app on :3000.
       - name: Demo smoke

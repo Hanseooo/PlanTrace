@@ -45,6 +45,7 @@ Change a line here only after telling the team. One line each: choice, because r
 - Unit tests (api): `cd api && uv run pytest`
 - Migrate: `cd api && uv run python -m app.db.migrate` (reads `DATABASE_URL`; or pass a URL as the argument)
 - Seed: `cd api && uv run python -m app.db.seed` (reads `DATABASE_URL`, or pass a URL; migrate first. Renders `seed/pdfs/` from `seed/city.json`, then empties every table except `ai_cache` and `schema_migrations` and loads the City of Sampaguita)
+- Load the cached LCCAP extraction: `cd api && uv run python -m app.extract.load_cache` (reads `DATABASE_URL`, or pass a URL; seed first. Puts `seed/ai_cache/lccap.json` into `ai_cache` under the key the J2 upload computes. `--capture` asks the real providers instead and rewrites that file; needs `GEMINI_API_KEY` or `OPENROUTER_API_KEY`)
 - Demo smoke: `cd web && npm run smoke` (starts the api on :8000 and builds and starts the web app on :3000 against it; set `DATABASE_URL` to a seeded database first, as CI does with `TEST_DATABASE_URL`); against a deployed web app: `cd web && BASE_URL=<web url> npm run smoke` (PowerShell: `cd web; $env:BASE_URL="<web url>"; npm run smoke`)
 
 ## Parallel work

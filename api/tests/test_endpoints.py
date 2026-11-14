@@ -1,7 +1,7 @@
 """S0-06: every MVP endpoint answers with a body valid against its model.
 
 GET /plans (S1-11), GET /plans/{id} and GET /plans/{id}/ppas (S2-16) read the database;
-tests/test_plans.py covers them.
+tests/test_plans.py covers them. POST /plans (S2-10) is covered by tests/test_extract.py.
 """
 
 from io import BytesIO
@@ -35,19 +35,6 @@ def test_endpoint_body_matches_model(
     response = client.request(method, path, **kwargs)
     assert response.status_code == 200, response.text
     TypeAdapter(model).validate_python(response.json())
-
-
-def test_upload_returns_extracting_plan() -> None:
-    response = client.post(
-        "/plans",
-        files={"file": ("lccap.pdf", b"%PDF-1.4", "application/pdf")},
-        data={"type": "LCCAP", "period_start": "2026", "period_end": "2028"},
-    )
-    assert response.status_code == 200, response.text
-    assert Plan.model_validate(response.json()).status == "extracting"
-    # The web client is generated from OpenAPI, so the upload must be advertised as multipart.
-    content = app.openapi()["paths"]["/plans"]["post"]["requestBody"]["content"]
-    assert list(content) == ["multipart/form-data"]
 
 
 def test_retry_returns_a_plan() -> None:
