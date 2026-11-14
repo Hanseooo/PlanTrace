@@ -2,7 +2,8 @@ import { expect, test, type Page, type Route } from "@playwright/test";
 
 // The demo journey (J1 to J9, docs/specs/plantrace-spec.md). Later tickets add
 // their steps here rather than new files (AGENTS.md "Testing").
-// Data values are from seed/fixtures/, which the api serves until S1.
+// J1's plans come from the seeded database (S1-11); later steps' values are still
+// from seed/fixtures/, which the other endpoints serve until their slices land.
 
 function collectConsoleErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -32,14 +33,27 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
 }) => {
   const consoleErrors = collectConsoleErrors(page);
 
-  // J1: opening the app lands on the plans list with 4 confirmed plans.
+  // J1: opening the app lands on the plans list with the 4 seeded plans, each
+  // confirmed, under the synthetic label (expectShell).
   await page.goto("/");
   await expect(page).toHaveURL(/\/plans$/);
   await expect(page.getByRole("heading", { name: "Plans" })).toBeVisible();
   await expectShell(page);
-  await expect(
-    page.getByRole("cell", { name: "confirmed", exact: true }),
-  ).toHaveCount(4);
+  const planRows = page.getByRole("table").getByRole("row");
+  // The header row plus one row per plan.
+  await expect(planRows).toHaveCount(5);
+  for (const title of [
+    "City of Sampaguita Comprehensive Land Use Plan 2023-2031",
+    "City of Sampaguita Comprehensive Development Plan 2026-2031",
+    "City of Sampaguita Local DRRM Plan 2026-2028",
+    "City of Sampaguita Annual Investment Program 2027",
+  ]) {
+    await expect(
+      planRows
+        .filter({ has: page.getByRole("link", { name: title, exact: true }) })
+        .getByRole("cell", { name: "confirmed", exact: true }),
+    ).toBeVisible();
+  }
   await expect(
     page.getByRole("button", { name: "Upload", exact: true }),
   ).toBeDisabled();

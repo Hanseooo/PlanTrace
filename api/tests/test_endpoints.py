@@ -1,4 +1,7 @@
-"""S0-06: every MVP endpoint answers with a body valid against its model."""
+"""S0-06: every MVP endpoint answers with a body valid against its model.
+
+GET /plans reads the database since S1-11; tests/test_plans.py covers it.
+"""
 
 from io import BytesIO
 from typing import Any
@@ -14,7 +17,6 @@ from app.models import CccMatrix, CheckRunResult, Finding, Plan, Ppa
 client = TestClient(app)
 
 CASES: list[tuple[str, str, dict[str, Any], Any]] = [
-    ("GET", "/plans", {}, list[Plan]),
     ("GET", "/plans/1", {}, Plan),
     ("GET", "/plans/2/ppas", {}, list[Ppa]),
     ("POST", "/plans/2/ppas", {"json": {}}, Ppa),
@@ -54,9 +56,6 @@ def test_delete_ppa_returns_no_content() -> None:
 
 
 def test_fixtures_show_the_sampaguita_journey() -> None:
-    plans = client.get("/plans").json()
-    assert sorted(p["type"] for p in plans) == ["AIP", "CDP", "CLUP", "LDRRMP"]
-    assert {p["status"] for p in plans} == {"confirmed"}
     findings = client.get("/findings").json()
     assert len(findings) == 8
     assert {f["check"] for f in findings} == {"duplicate", "orphan", "ccc", "zone"}

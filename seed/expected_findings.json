@@ -1,0 +1,18 @@
+{
+  "_comment": "Answer key for PRD section 4 (AC-39). PPAs are named by plan type and code, never by database id. Change the city only in city.json; test_seed.py checks this key against it.",
+  "findings": [
+    {"check": "duplicate", "ppas": [{"plan_type": "CDP", "code": "CDP-02"}, {"plan_type": "LDRRMP", "code": "LDRRMP-01"}], "note": "Drainage in Barangay 5: PHP 12,000,000 in 2027 vs PHP 9,500,000 in 2028"},
+    {"check": "duplicate", "ppas": [{"plan_type": "LDRRMP", "code": "LDRRMP-04"}, {"plan_type": "AIP", "code": "AIP-07"}], "note": "Flood early warning system in Barangays 7 and 10 in both plans"},
+    {"check": "duplicate", "ppas": [{"plan_type": "CDP", "code": "CDP-06"}, {"plan_type": "LCCAP", "code": "LCCAP-01"}], "note": "Mangrove rehabilitation in Barangay 12; the LCCAP comes in through the live upload (J2)"},
+    {"check": "orphan", "ppas": [{"plan_type": "AIP", "code": "AIP-04"}], "suggested_parent": {"plan_type": "CDP", "code": "CDP-03"}, "note": "Farm road with no CDP parent link"},
+    {"check": "orphan", "ppas": [{"plan_type": "AIP", "code": "AIP-05"}], "suggested_parent": {"plan_type": "CDP", "code": "CDP-03"}, "note": "Farm road with no CDP parent link"},
+    {"check": "zone", "ppas": [{"plan_type": "CDP", "code": "CDP-01"}], "barangay": "1199900009", "sector": "housing", "note": "Barangay 9 is flood-prone and forbids housing"},
+    {"check": "ccc", "ppas": [{"plan_type": "CDP", "code": "CDP-01"}, {"plan_type": "LDRRMP", "code": "LDRRMP-02"}], "verdict": "Conflict", "note": "New housing in flood-prone Barangay 9, where the LDRRMP builds an evacuation centre for the families at risk"},
+    {"check": "ccc", "ppas": [{"plan_type": "CDP", "code": "CDP-05"}, {"plan_type": "LDRRMP", "code": "LDRRMP-03"}], "verdict": "Conflict", "note": "D11: river channel quarrying in Barangay 2 undermines the riverbank the LDRRMP stabilizes, 2027 to 2028 overlap"}
+  ],
+  "lccap_ppas": [
+    {"code": "LCCAP-01", "title": "Mangrove rehabilitation along the coast", "description": "Replanting of 20 hectares of coastal mangroves", "office": "City Environment and Natural Resources Office", "sector": "flood_control", "barangays": ["1199900012"], "cost": 3000000, "year_start": 2026, "year_end": 2028, "page_no": 2},
+    {"code": "LCCAP-02", "title": "Rainwater harvesting for farms", "description": "Rainwater collectors for upland farms", "office": "City Agriculture Office", "sector": "water_supply", "barangays": ["1199900007"], "cost": 2500000, "year_start": 2027, "year_end": 2029, "page_no": 2},
+    {"code": "LCCAP-03", "title": "Climate-smart rice seed distribution", "description": "Drought- and flood-tolerant rice seed for lowland farms", "office": "City Agriculture Office", "sector": "agriculture", "barangays": ["1199900010", "1199900011"], "cost": 1500000, "year_start": 2026, "year_end": 2028, "page_no": 2}
+  ]
+}

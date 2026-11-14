@@ -4,31 +4,20 @@ Reads TEST_DATABASE_URL and never DATABASE_URL. Each test drops and recreates th
 public schema, so never point TEST_DATABASE_URL at a database you want to keep.
 """
 
-import os
-from collections.abc import Iterator
-
 import psycopg
 import pytest
 
 from app.db.migrate import migrate
+from tests.db import needs_db
 
-TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
-
-pytestmark = pytest.mark.skipif(
-    not TEST_DATABASE_URL,
-    reason="TEST_DATABASE_URL is unset; database tests skipped (D7: tests never use DATABASE_URL)",
-)
+pytestmark = needs_db
 
 TABLES = {"lgus", "plans", "pages", "ppas", "zones", "links", "findings", "ai_cache"}
 
 
 @pytest.fixture
-def conn() -> Iterator[psycopg.Connection]:
-    assert TEST_DATABASE_URL
-    with psycopg.connect(TEST_DATABASE_URL, autocommit=True) as conn:
-        conn.execute("DROP SCHEMA public CASCADE")
-        conn.execute("CREATE SCHEMA public")
-        yield conn
+def conn(empty_db: psycopg.Connection) -> psycopg.Connection:
+    return empty_db
 
 
 def tables(conn: psycopg.Connection) -> set[str]:

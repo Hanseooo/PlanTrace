@@ -1,6 +1,11 @@
 import os
+from collections.abc import Iterator
 
 import psycopg
+from fastapi import HTTPException
+
+# Fail fast on an unreachable host so GET /plans answers 503 instead of hanging.
+CONNECT_TIMEOUT_S = 5
 
 
 def connect(url: str | None = None) -> psycopg.Connection:
@@ -8,4 +13,19 @@ def connect(url: str | None = None) -> psycopg.Connection:
     url = url or os.environ.get("DATABASE_URL")
     if not url:
         raise RuntimeError("DATABASE_URL is not set")
-    return psycopg.connect(url)
+    return psycopg.connect(url, connect_timeout=CONNECT_TIMEOUT_S)
+
+
+def get_conn() -> Iterator[psycopg.Connection]:
+    """FastAPI dependency: one DATABASE_URL connection per request, 503 when there is none.
+
+    Tests override it with a TEST_DATABASE_URL connection (D7).
+    """
+    if not os.environ.get("DATABASE_URL"):
+        raise HTTPException(503, "The PlanTrace API has no DATABASE_URL set")
+    try:
+        conn = connect()
+    except psycopg.OperationalError as e:
+        raise HTTPException(503, "The PlanTrace API can't reach its database") from e
+    with conn:
+        yield conn
