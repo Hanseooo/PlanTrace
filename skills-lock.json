@@ -1,45 +1,53 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "code-review": {
       "source": "mattpocock/skills",
       "sourceType": "github",
-      "computedHash": "c2e0695f4d6bb9e1cc0b4c68d9965d062271cff387000fa59c1c2d31a18c25b8"
+      "skillPath": "skills/engineering/code-review/SKILL.md",
+      "computedHash": "ce86b40a3d1648a0018b712f0c70704e6c2316b2a9b9e915ab116916a31273dc"
     },
     "hack-init": {
       "source": "Hanseooo/hanseo-skills",
       "sourceType": "github",
-      "computedHash": "6f069f074a5d0ccb0d022d8a5a821de0a7ea6553d799c70b686548fb75c37f99"
+      "computedHash": "c4ae8ef62c621ae7faef8e69480f1cb8a4d2a45cb6c9d3cd21911e1b923c8b52"
     },
     "han-grill": {
       "source": "Hanseooo/hanseo-skills",
       "sourceType": "github",
-      "computedHash": "f263554f57c8b6bc4a65cfec11ab31af0e466399155caf8849ec1a0968d74ec4"
+      "computedHash": "40707edf9ba6265ea468d9b86e648cf1106f7c533f20e31eecf526fa04160ec8"
     },
     "han-to-spec": {
       "source": "Hanseooo/hanseo-skills",
       "sourceType": "github",
-      "computedHash": "1fe4c198079d31feff9f98b673a43ae833faa3e6dcab43627d75fcbde144e217"
+      "computedHash": "9efa6474f527a885ef2c6521fe7f38faf2522c7bc44049400d10a57671943ab7"
     },
     "han-to-tickets": {
       "source": "Hanseooo/hanseo-skills",
       "sourceType": "github",
-      "computedHash": "d10376e9a36d0a1a0a264148acc22f63f692ff4e8dd378176eda8b844e84d9eb"
+      "computedHash": "e16dc0db23aea6e0809a98d7f0ede17f82403520046d72b925324f852858ab58"
+    },
+    "implement": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/implement/SKILL.md",
+      "computedHash": "560465496ad0669329993bfdd0604e5c93b5c2446309a76f486040010b063908"
     },
     "setup-matt-pocock-skills": {
       "source": "mattpocock/skills",
       "sourceType": "github",
-      "computedHash": "a7107058cd22442215320bb4282a7d8623aeabc7fbf9817b560c5464f34efd51"
+      "computedHash": "9659e7025d4cf1c0a0b40ddff32ed4b8debb87a4b20d7a52ff89c506a638df69"
     },
     "stint": {
       "source": "Hanseooo/hanseo-skills",
       "sourceType": "github",
-      "computedHash": "6c50d7bd975c34dff68f9e00adf8d76bf3b0a7e67b3c9538f3001d5a99bfbc08"
+      "computedHash": "b9bc33228120fd8370652b3b74e4fbe93a9e2c5e2a6a88cdd76c2db4e0535d23"
     },
     "tdd": {
       "source": "mattpocock/skills",
       "sourceType": "github",
-      "computedHash": "535d1a6f3bd5bded8971e7e4ea76538907cbff6b6d32c39cf97b669869dcd383"
+      "skillPath": "skills/engineering/tdd/SKILL.md",
+      "computedHash": "e3e0f78ff1c2d52ffefa0378baa1e80e129d359288cf9a56f4e59afcd2aac86c"
     }
   }
 }
