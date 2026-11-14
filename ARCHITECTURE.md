@@ -95,7 +95,7 @@ A model change is a contract change: tell the team, regenerate the types, and up
 4. At startup, any plan still `extracting` becomes `failed` with "Extraction was interrupted. Retry." (S2-15).
 5. The web app polls `GET /plans/{id}` every 2 seconds with TanStack Query's `refetchInterval` until the status leaves `extracting`.
 
-The uploaded file is discarded after step 2. The prompt and output model live in `extract/extraction.py`; `app.extract.load_cache` loads the committed LCCAP response under the same key (S2-19). The demo fallback is a pre-extracted plan that is already `ready`.
+The uploaded file is discarded after step 2. The prompt and output model live in `extract/extraction.py`; `app.extract.load_cache` loads the committed LCCAP response under the same key (S2-19), and the committed orphan answers in `seed/ai_cache/orphans.json` under the keys the run computes (S4-15). The demo fallback is a pre-extracted plan that is already `ready`.
 
 **Checks (F3)**
 `POST /checks/run` reads only `confirmed` PPAs. Duplicate and zone checks are SQL. Orphan and CCC use SQL to pick candidate pairs, then `llm.py` for the suggestion or the verdict. Every finding stores `page_ids` and starts as `suggested`.
