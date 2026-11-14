@@ -82,7 +82,13 @@
             {"code": "CDP-01", "title": "Socialized housing project, Barangay 9", "description": "120 housing units for informal settler families", "office": "City Housing Office", "sector": "housing", "barangays": ["1199900009"], "cost": 25000000, "year_start": 2027, "year_end": 2028},
             {"code": "CDP-02", "title": "Drainage improvement, Barangay 5", "description": "Upgrade of the main drainage canal along the national road", "office": "City Engineering Office", "sector": "drainage", "barangays": ["1199900005"], "cost": 12000000, "year_start": 2027, "year_end": 2027},
             {"code": "CDP-03", "title": "Farm-to-market roads program", "description": "Concreting of farm roads linking agricultural barangays to the public market", "office": "City Engineering Office", "sector": "roads", "barangays": ["1199900006", "1199900007", "1199900010", "1199900011"], "cost": 60000000, "year_start": 2026, "year_end": 2031},
-            {"code": "CDP-04", "title": "Health station upgrade", "description": "Birthing room and equipment for the health station", "office": "City Health Office", "sector": "health", "barangays": ["1199900003"], "cost": 4500000, "year_start": 2027, "year_end": 2027}
+            {"code": "CDP-04", "title": "Health station upgrade", "description": "Birthing room and equipment for the health station", "office": "City Health Office", "sector": "health", "barangays": ["1199900003"], "cost": 4500000, "year_start": 2027, "year_end": 2027},
+            {"code": "CDP-05", "title": "Quarry and aggregates extraction, Barangay 2", "description": "Sand and gravel extraction from the river channel to supply city construction projects", "office": "City Environment and Natural Resources Office", "sector": "industrial", "barangays": ["1199900002"], "cost": 8000000, "year_start": 2027, "year_end": 2029},
+            {"code": "CDP-06", "title": "Coastal mangrove rehabilitation", "description": "Replanting of coastal mangroves as a natural buffer against storm surge", "office": "City Environment and Natural Resources Office", "sector": "flood_control", "barangays": ["1199900012"], "cost": 3500000, "year_start": 2026, "year_end": 2028},
+            {"code": "CDP-07", "title": "Public market modernization", "description": "New stalls, wet section drainage and solid waste area at the public market", "office": "City Economic Enterprise Office", "sector": "commercial", "barangays": ["1199900004"], "cost": 30000000, "year_start": 2027, "year_end": 2028},
+            {"code": "CDP-08", "title": "Elementary school building", "description": "Two-storey, eight-classroom building for the central elementary school", "office": "City Engineering Office", "sector": "education", "barangays": ["1199900001"], "cost": 16000000, "year_start": 2026, "year_end": 2027},
+            {"code": "CDP-09", "title": "Community disaster preparedness program", "description": "Drills, hazard maps and response plans for the upland farming barangays", "office": "City Disaster Risk Reduction and Management Office", "sector": "evacuation", "barangays": ["1199900007", "1199900010"], "cost": 6000000, "year_start": 2026, "year_end": 2031},
+            {"code": "CDP-10", "title": "Level III water system expansion", "description": "Transmission line and house connections from the upland spring source", "office": "City Water Office", "sector": "water_supply", "barangays": ["1199900006", "1199900007"], "cost": 40000000, "year_start": 2026, "year_end": 2029}
           ]
         }
       ]
@@ -103,13 +109,13 @@
         },
         {
           "heading": "Prevention, mitigation and preparedness measures",
-          "paragraphs": [
-            "Costs are estimates in Philippine pesos, funded from the local DRRM fund."
-          ],
+          "paragraphs": ["Costs are estimates in Philippine pesos, funded from the local DRRM fund."],
           "ppas": [
-            {"code": "LDRRMP-01", "title": "Flood mitigation canal works", "description": "Desilting and lining of the canal network to reduce street flooding", "office": "City Disaster Risk Reduction and Management Office", "sector": "drainage", "barangays": ["1199900005"], "cost": 9500000, "year_start": 2028, "year_end": 2028},
+            {"code": "LDRRMP-01", "title": "Drainage improvement works, Barangay 5", "description": "Desilting and lining of the canal network to reduce street flooding", "office": "City Disaster Risk Reduction and Management Office", "sector": "drainage", "barangays": ["1199900005"], "cost": 9500000, "year_start": 2028, "year_end": 2028},
             {"code": "LDRRMP-02", "title": "Evacuation centre construction", "description": "Two-storey evacuation centre for 300 families", "office": "City Disaster Risk Reduction and Management Office", "sector": "evacuation", "barangays": ["1199900009"], "cost": 18000000, "year_start": 2026, "year_end": 2027},
-            {"code": "LDRRMP-03", "title": "Riverbank slope stabilization", "description": "Gabions and slope protection along the eroding riverbank", "office": "City Engineering Office", "sector": "flood_control", "barangays": ["1199900002"], "cost": 15000000, "year_start": 2026, "year_end": 2028}
+            {"code": "LDRRMP-03", "title": "Riverbank slope stabilization, Barangay 2", "description": "Gabions and slope protection along the eroding riverbank", "office": "City Engineering Office", "sector": "flood_control", "barangays": ["1199900002"], "cost": 15000000, "year_start": 2026, "year_end": 2028},
+            {"code": "LDRRMP-04", "title": "Flood early warning system installation", "description": "Sirens and automated rain gauges along the upper river", "office": "City Disaster Risk Reduction and Management Office", "sector": "flood_control", "barangays": ["1199900007", "1199900010"], "cost": 4000000, "year_start": 2026, "year_end": 2027},
+            {"code": "LDRRMP-05", "title": "Relief goods warehouse", "description": "Prepositioned food packs and supplies for 1,000 families", "office": "City Disaster Risk Reduction and Management Office", "sector": "evacuation", "barangays": ["1199900004"], "cost": 5000000, "year_start": 2027, "year_end": 2027}
           ]
         }
       ]
@@ -136,7 +142,14 @@
           "ppas": [
             {"code": "AIP-01", "title": "Canal upgrade, first segment", "description": "2027 works on the first 600 m of the main canal", "office": "City Engineering Office", "sector": "drainage", "barangays": ["1199900005"], "cost": 6000000, "year_start": 2027, "year_end": 2027, "parent": "CDP-02"},
             {"code": "AIP-02", "title": "Birthing room fit-out", "description": "Equipment purchase and minor civil works for 2027", "office": "City Health Office", "sector": "health", "barangays": ["1199900003"], "cost": 4500000, "year_start": 2027, "year_end": 2027, "parent": "CDP-04"},
-            {"code": "AIP-03", "title": "Concreting of the access lane to the public market", "description": "2027 package of 1.2 km concrete paving", "office": "City Engineering Office", "sector": "roads", "barangays": ["1199900011"], "cost": 9000000, "year_start": 2027, "year_end": 2027, "parent": "CDP-03"}
+            {"code": "AIP-03", "title": "Concreting of the access lane to the public market", "description": "2027 package of 1.2 km concrete paving", "office": "City Engineering Office", "sector": "roads", "barangays": ["1199900011"], "cost": 9000000, "year_start": 2027, "year_end": 2027, "parent": "CDP-03"},
+            {"code": "AIP-04", "title": "Sitio Malinao road concreting", "description": "1.5 km concrete paving from the sitio to the provincial road", "office": "City Engineering Office", "sector": "roads", "barangays": ["1199900006"], "cost": 7500000, "year_start": 2027, "year_end": 2027},
+            {"code": "AIP-05", "title": "Gravel lane rehabilitation to the rice mill", "description": "Regravelling and side ditches for 2 km of lane", "office": "City Engineering Office", "sector": "roads", "barangays": ["1199900010"], "cost": 3000000, "year_start": 2027, "year_end": 2027},
+            {"code": "AIP-06", "title": "Construction of four classrooms", "description": "2027 tranche: ground floor of the school building", "office": "City Engineering Office", "sector": "education", "barangays": ["1199900001"], "cost": 8000000, "year_start": 2027, "year_end": 2027, "parent": "CDP-08"},
+            {"code": "AIP-07", "title": "Flood early warning system, upper river", "description": "Purchase and installation of sirens and rain gauges in 2027", "office": "City Disaster Risk Reduction and Management Office", "sector": "flood_control", "barangays": ["1199900007", "1199900010"], "cost": 4000000, "year_start": 2027, "year_end": 2027, "parent": "CDP-09"},
+            {"code": "AIP-08", "title": "Transmission pipe laying, phase 1", "description": "2027 laying of the first 3 km of pipe from the spring", "office": "City Water Office", "sector": "water_supply", "barangays": ["1199900006"], "cost": 12000000, "year_start": 2027, "year_end": 2027, "parent": "CDP-10"},
+            {"code": "AIP-09", "title": "Wet section stall replacement", "description": "2027 replacement of 40 stalls in the wet section", "office": "City Economic Enterprise Office", "sector": "commercial", "barangays": ["1199900004"], "cost": 7000000, "year_start": 2027, "year_end": 2027, "parent": "CDP-07"},
+            {"code": "AIP-10", "title": "Seedling nursery for coastal planting", "description": "2027 nursery of 10,000 propagules", "office": "City Environment and Natural Resources Office", "sector": "flood_control", "barangays": ["1199900012"], "cost": 800000, "year_start": 2027, "year_end": 2027, "parent": "CDP-06"}
           ]
         }
       ]
@@ -157,12 +170,11 @@
         },
         {
           "heading": "Adaptation programs, projects and activities",
-          "paragraphs": [
-            "Costs are estimates in Philippine pesos."
-          ],
+          "paragraphs": ["Costs are estimates in Philippine pesos."],
           "ppas": [
-            {"code": "LCCAP-01", "title": "Mangrove rehabilitation", "description": "Replanting of 20 hectares of coastal mangroves", "office": "City Environment and Natural Resources Office", "sector": "flood_control", "barangays": ["1199900012"], "cost": 3000000, "year_start": 2026, "year_end": 2028},
-            {"code": "LCCAP-02", "title": "Rainwater harvesting for farms", "description": "Rainwater collectors for upland farms", "office": "City Agriculture Office", "sector": "water_supply", "barangays": ["1199900007"], "cost": 2500000, "year_start": 2027, "year_end": 2029}
+            {"code": "LCCAP-01", "title": "Mangrove rehabilitation along the coast", "description": "Replanting of 20 hectares of coastal mangroves", "office": "City Environment and Natural Resources Office", "sector": "flood_control", "barangays": ["1199900012"], "cost": 3000000, "year_start": 2026, "year_end": 2028},
+            {"code": "LCCAP-02", "title": "Rainwater harvesting for farms", "description": "Rainwater collectors for upland farms", "office": "City Agriculture Office", "sector": "water_supply", "barangays": ["1199900007"], "cost": 2500000, "year_start": 2027, "year_end": 2029},
+            {"code": "LCCAP-03", "title": "Climate-smart rice seed distribution", "description": "Drought- and flood-tolerant rice seed for lowland farms", "office": "City Agriculture Office", "sector": "agriculture", "barangays": ["1199900010", "1199900011"], "cost": 1500000, "year_start": 2026, "year_end": 2028}
           ]
         }
       ]
