@@ -1,0 +1,95 @@
+# S0-11: every check on every PR and every push to main. Needs no secrets.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      # The stock image ships pg_trgm as a contrib extension.
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+
+    env:
+      # D7: tests read TEST_DATABASE_URL, never DATABASE_URL.
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # uv installs the Python that api/.python-version names.
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: api/uv.lock
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install (api)
+        working-directory: api
+        run: uv sync
+
+      - name: Migrate the test database
+        working-directory: api
+        run: uv run python -m app.db.migrate "$TEST_DATABASE_URL"
+
+      - name: Lint (api)
+        working-directory: api
+        run: uv run ruff check . && uv run ruff format --check .
+
+      - name: Typecheck (api)
+        working-directory: api
+        run: uv run pyright
+
+      # The database tests skip when TEST_DATABASE_URL is unset; here a skip is a failure.
+      - name: Unit tests (api)
+        working-directory: api
+        run: |
+          uv run pytest -rs | tee pytest.log
+          if grep -qi skipped pytest.log; then echo "::error::pytest skipped tests"; exit 1; fi
+
+      - name: Install (web)
+        working-directory: web
+        run: npm ci && npx playwright install --with-deps chromium
+
+      - name: Types are fresh
+        working-directory: web
+        run: npm run gen:types && git diff --exit-code -- src/lib/api-types.ts
+
+      - name: Lint (web)
+        working-directory: web
+        run: npm run lint
+
+      - name: Typecheck (web)
+        working-directory: web
+        run: npm run typecheck
+
+      # The Playwright config starts the api on :8000 and the web app on :3000.
+      - name: Demo smoke
+        working-directory: web
+        run: npm run smoke
+
+      - name: Upload Playwright results
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-results
+          path: |
+            web/test-results
+            web/playwright-report
+          if-no-files-found: ignore
