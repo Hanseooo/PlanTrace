@@ -1,0 +1,174 @@
+{
+  "ppas": [
+    {
+      "id": 201,
+      "plan_type": "CDP",
+      "title": "Socialized housing project, Barangay 9"
+    },
+    {
+      "id": 202,
+      "plan_type": "CDP",
+      "title": "Drainage improvement, Barangay 5"
+    },
+    {
+      "id": 203,
+      "plan_type": "CDP",
+      "title": "Farm-to-market road, Barangay 11"
+    },
+    {
+      "id": 204,
+      "plan_type": "CDP",
+      "title": "Barangay health station upgrade, Barangay 3"
+    },
+    {
+      "id": 205,
+      "plan_type": "CDP",
+      "title": "Level II water system, Barangay 7"
+    },
+    {
+      "id": 206,
+      "plan_type": "CDP",
+      "title": "Rice production support program"
+    },
+    {
+      "id": 207,
+      "plan_type": "CDP",
+      "title": "Public market rehabilitation, Barangay 1"
+    },
+    {
+      "id": 208,
+      "plan_type": "CDP",
+      "title": "School building, Barangay 4"
+    },
+    {
+      "id": 209,
+      "plan_type": "CDP",
+      "title": "Skills training for fisherfolk families"
+    },
+    {
+      "id": 210,
+      "plan_type": "CDP",
+      "title": "Flood control dike, Barangay 8"
+    },
+    {
+      "id": 301,
+      "plan_type": "LDRRMP",
+      "title": "Evacuation centre, Barangay 9"
+    },
+    {
+      "id": 302,
+      "plan_type": "LDRRMP",
+      "title": "Drainage canal upgrading, Barangay 5"
+    },
+    {
+      "id": 303,
+      "plan_type": "LDRRMP",
+      "title": "Community early warning system"
+    },
+    {
+      "id": 304,
+      "plan_type": "LDRRMP",
+      "title": "River dike construction, Barangay 8"
+    },
+    {
+      "id": 305,
+      "plan_type": "LDRRMP",
+      "title": "Retention pond, Barangay 11"
+    },
+    {
+      "id": 406,
+      "plan_type": "AIP",
+      "title": "Installation of early warning sirens"
+    },
+    {
+      "id": 408,
+      "plan_type": "AIP",
+      "title": "Street lighting, Barangay 2"
+    },
+    {
+      "id": 409,
+      "plan_type": "AIP",
+      "title": "Livelihood centre, Barangay 6"
+    }
+  ],
+  "cells": [
+    {
+      "ppa_a": 201,
+      "ppa_b": 301,
+      "verdict": "Conflict",
+      "status": "suggested",
+      "reason": "New housing in Barangay 9 adds residents to a high flood hazard area that the evacuation centre is meant to empty during floods.",
+      "page_ids": [
+        22,
+        32,
+        13
+      ]
+    },
+    {
+      "ppa_a": 206,
+      "ppa_b": 305,
+      "verdict": "Conflict",
+      "status": "suggested",
+      "reason": "The retention pond takes rice land in Barangay 11 that the rice production program supports.",
+      "page_ids": [
+        24,
+        33
+      ]
+    },
+    {
+      "ppa_a": 202,
+      "ppa_b": 302,
+      "verdict": "Compatible",
+      "status": "suggested",
+      "reason": "Both improve the same canal in Barangay 5 and can be merged.",
+      "page_ids": [
+        22,
+        32
+      ]
+    },
+    {
+      "ppa_a": 210,
+      "ppa_b": 304,
+      "verdict": "Complementary",
+      "status": "suggested",
+      "reason": "Both reduce river flooding in Barangay 8.",
+      "page_ids": [
+        24,
+        33
+      ]
+    },
+    {
+      "ppa_a": 202,
+      "ppa_b": 210,
+      "verdict": "Complementary",
+      "status": "confirmed",
+      "reason": "Drainage in Barangay 5 and the dike in Barangay 8 lower flood risk downstream together.",
+      "page_ids": [
+        22,
+        24
+      ]
+    },
+    {
+      "ppa_a": 301,
+      "ppa_b": 304,
+      "verdict": "Compatible",
+      "status": "suggested",
+      "reason": "Different barangays; no shared resources.",
+      "page_ids": [
+        32,
+        33
+      ]
+    },
+    {
+      "ppa_a": 302,
+      "ppa_b": 304,
+      "verdict": "Complementary",
+      "status": "rejected",
+      "reason": "Both drain floodwater toward the river.",
+      "page_ids": [
+        32,
+        33
+      ]
+    }
+  ]
+}

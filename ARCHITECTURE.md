@@ -2,7 +2,7 @@
 
 # PlanTrace architecture
 
-2026-11-14. Status: planned. No code exists yet. Ticket 01 (walking skeleton) creates the folders, commands and contract files named here. If the code and this file disagree, the code wins: fix this file in the same PR.
+2026-11-14. Status: walking skeleton (S0, spec #1) in progress. `api/` serves fixture stubs (#2), migration 001 and the migrate command exist (#3), `web/` shows the journey screens on fixture data (#4, #5), and CI runs the checks (#6). Deploy and the contract-file list are #7. If the code and this file disagree, the code wins: fix this file in the same PR.
 
 Product scope and the demo journey are in [PRD.md](PRD.md). How to write the code is in [CODING_STANDARDS.md](CODING_STANDARDS.md).
 
@@ -55,10 +55,11 @@ plantrace/
       main.py             app, CORS, router mounting (contract file)
       models.py           Pydantic models for the API and the AI output (contract file)
       llm.py              the LLM seam (lane:ai)
-      extract/            lane:ai. Upload, page text, PPA and zone extraction
-      checks/             lane:ai. Duplicate, orphan, CCC, zone; findings routes
+      fixtures.py         loads and validates a `seed/fixtures/` file for a stub route
+      extract/            lane:ai. Upload (`POST /plans`), page text, PPA and zone extraction
+      checks/             lane:ai. Duplicate, orphan, CCC, zone; `/checks/run`, `/findings`, `/ccc` routes
         ccc_export.py     the CCC export seam: the Excel layout lives only here
-      plans/              lane:data. Plan list, PPA table edits, confirm
+      plans/              lane:data. Plan list and status, PPA table edits, confirm
       db/                 lane:data, schema owner. Connection, migrations/NNN_name.sql
   seed/                   lane:data
     plans/                synthetic PDFs for the 4 plans and the LCCAP excerpt
@@ -66,19 +67,19 @@ plantrace/
     expected_findings.json the answer key for PRD section 4
 ```
 
-`api/app/plans/` going to the data lane is a fill-in, not agreed. Move it at ticket 01 if the team splits differently.
+`api/app/plans/` stays in the data lane (team decision on #1, 2026-11-14). Each lane folder has a `routes.py` with one `APIRouter` that `main.py` mounts.
 
 ## Contract
 
 1. Pydantic models in `api/app/models.py` define every request, response and AI output.
 2. FastAPI publishes them as OpenAPI.
-3. `openapi-typescript` generates `web/src/lib/api-types.ts`. Ticket 01 adds the command.
+3. `openapi-typescript` generates `web/src/lib/api-types.ts`: `cd web && npm run gen:types`.
 
 A model change is a contract change: tell the team, regenerate the types, and update `seed/fixtures/` in the same PR.
 
 **Mock data.** From ticket 01, every endpoint exists. Until its real query lands, an endpoint returns the matching file from `seed/fixtures/`. The web app has no mock mode. It always calls the API.
 
-**Env names** (contract; ticket 01 confirms them in `.env.example`): `DATABASE_URL`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `CORS_ORIGINS` (api); `NEXT_PUBLIC_API_URL` (web).
+**Env names** (contract; listed in `.env.example`): `DATABASE_URL`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, `CORS_ORIGINS` (comma-separated origins), `TEST_DATABASE_URL` (pytest only, D7) (api); `NEXT_PUBLIC_API_URL` (web).
 
 ## Key flows
 
@@ -111,14 +112,14 @@ The uploaded file is discarded after step 2. The demo fallback is a pre-extracte
 | `lgus` | `psgc_code`, name, level |
 | `plans` | id, `lgu_psgc`, type, title, period_start, period_end, status (extracting, ready, confirmed, failed), error |
 | `pages` | id, plan_id, page_no, text, `tsv` |
-| `ppas` | id, plan_id, code, title, description, office, sector, barangays (PSGC[]), cost, year_start, year_end, page_id, status (draft, confirmed) |
+| `ppas` | id, plan_id, code, title, description, office, sector, barangays (PSGC[]), cost, year_start, year_end, page_id, status (draft, confirmed), updated_at |
 | `zones` | id, plan_id, barangay, zone_type, hazard, forbidden_sectors[], page_id |
 | `links` | id, child_ppa_id, parent_ppa_id, source (ai, manual), status (suggested, confirmed, rejected) |
-| `findings` | id, check (duplicate, orphan, ccc, zone), ppa_a, ppa_b, verdict, reason, page_ids[], status (suggested, confirmed, rejected), note, created_by (ai, rule) |
+| `findings` | id, check (duplicate, orphan, ccc, zone), ppa_a, ppa_b, verdict, reason, page_ids[], status (suggested, confirmed, rejected), note, created_by (ai, rule), reviewed_at |
 | `ai_cache` | key, response, created_at |
 | `questions` | id, text, answer, cited_page_ids[], created_at (deferred with F7) |
 
-Every row carries `lgu_psgc` through its plan. Office names, sectors and languages are data, not code. `plans.status` values and `error` are proposed here; the schema owner settles them at ticket 01.
+Every row carries `lgu_psgc` through its plan. Office names, sectors and languages are data, not code. `plans.status` values are settled in `api/app/models.py` (#2): `extracting`, `ready`, `confirmed`, `failed`. "Uploading" is web-only (AC-03). Sector is the D3 list in `models.py`: `housing`, `drainage`, `flood_control`, `roads`, `evacuation`, `agriculture`, `water_supply`, `health`, `education`, `livelihood`, `commercial`, `industrial`.
 
 ## API
 
@@ -134,7 +135,9 @@ Every row carries `lgu_psgc` through its plan. Office names, sectors and languag
 | GET | `/chain` | Nodes and edges for the chain view (deferred) |
 | POST | `/ask` | Question in, cited answer out (deferred) |
 
-## Open for ticket 01
+The schema is `api/app/db/migrations/001_init.sql` (#3); its check constraints use the `models.py` strings. `findings."check"` is a reserved word, so quote it in SQL. `pg_trgm` is enabled. The migrate command keeps applied file names in `schema_migrations`.
 
-- Which database the pytest check tests run against. The shared Supabase database also holds the demo data, so tests must not write to it unguarded.
-- How a rejected finding stays rejected on re-run "unless the PPAs change" (PRD F3).
+## Settled in ticket 01
+
+- Test database (D7): pytest reads only `TEST_DATABASE_URL` (a second Supabase project locally, a Postgres service in CI) and skips the database tests when it is unset. The tests drop and recreate its `public` schema.
+- Rejected stays rejected (D5): a reviewed finding is kept on re-run while both PPAs' `updated_at` are older than its `reviewed_at`. A trigger sets `ppas.updated_at` to `now()` on every update that does not set `updated_at` itself, so writers never touch it (seed scripts may).

@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "lgu_psgc": "1199900000",
+    "type": "CLUP",
+    "title": "City of Sampaguita Comprehensive Land Use Plan 2023-2031",
+    "period_start": 2023,
+    "period_end": 2031,
+    "status": "confirmed",
+    "error": null
+  },
+  {
+    "id": 2,
+    "lgu_psgc": "1199900000",
+    "type": "CDP",
+    "title": "City of Sampaguita Comprehensive Development Plan 2026-2031",
+    "period_start": 2026,
+    "period_end": 2031,
+    "status": "confirmed",
+    "error": null
+  },
+  {
+    "id": 3,
+    "lgu_psgc": "1199900000",
+    "type": "LDRRMP",
+    "title": "City of Sampaguita Local DRRM Plan 2026-2028",
+    "period_start": 2026,
+    "period_end": 2028,
+    "status": "confirmed",
+    "error": null
+  },
+  {
+    "id": 4,
+    "lgu_psgc": "1199900000",
+    "type": "AIP",
+    "title": "City of Sampaguita Annual Investment Program 2027",
+    "period_start": 2027,
+    "period_end": 2027,
+    "status": "confirmed",
+    "error": null
+  }
+]

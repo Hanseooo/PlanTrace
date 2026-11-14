@@ -1,0 +1,125 @@
+import { expect, test, type Page, type Route } from "@playwright/test";
+
+// The demo journey (J1 to J9, docs/specs/plantrace-spec.md). Later tickets add
+// their steps here rather than new files (AGENTS.md "Testing").
+// Data values are from seed/fixtures/, which the api serves until S1.
+
+function collectConsoleErrors(page: Page): string[] {
+  const errors: string[] = [];
+  page.on("console", (msg) => {
+    if (msg.type() === "error") errors.push(msg.text());
+  });
+  page.on("pageerror", (err) => errors.push(err.message));
+  return errors;
+}
+
+const mainNav = (page: Page) =>
+  page.getByRole("banner").getByRole("navigation", { name: "Main" });
+
+// The nav and the label come from the root layout's header.
+async function expectShell(page: Page) {
+  for (const name of ["Plans", "Findings", "CCC matrix"]) {
+    await expect(mainNav(page).getByRole("link", { name })).toBeVisible();
+  }
+  await expect(
+    page.getByRole("banner").getByText("Synthetic demo data"),
+  ).toBeVisible();
+}
+
+test("demo journey: every screen shows the nav, the label, its data and its states", async ({
+  page,
+  baseURL,
+}) => {
+  const consoleErrors = collectConsoleErrors(page);
+
+  // J1: opening the app lands on the plans list with 4 confirmed plans.
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/plans$/);
+  await expect(page.getByRole("heading", { name: "Plans" })).toBeVisible();
+  await expectShell(page);
+  await expect(
+    page.getByRole("cell", { name: "confirmed", exact: true }),
+  ).toHaveCount(4);
+  await expect(
+    page.getByRole("button", { name: "Upload", exact: true }),
+  ).toBeDisabled();
+
+  // J2-J3: a plan's PPA table, with an in-app way back to the plans list.
+  await page
+    .getByRole("link", {
+      name: "City of Sampaguita Comprehensive Development Plan 2026-2031",
+    })
+    .click();
+  await expect(page).toHaveURL(/\/plans\/2$/);
+  await expect(page.getByRole("heading", { name: "PPA table" })).toBeVisible();
+  await expectShell(page);
+  await expect(
+    page.getByRole("cell", { name: "Socialized housing project, Barangay 9" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Back to plans" }).click();
+  await expect(page).toHaveURL(/\/plans$/);
+  await expect(page.getByRole("heading", { name: "Plans" })).toBeVisible();
+
+  // J4-J7: findings, reached through the nav; J5's drainage duplicate side by side.
+  await mainNav(page).getByRole("link", { name: "Findings" }).click();
+  await expect(page.getByRole("heading", { name: "Findings" })).toBeVisible();
+  await expectShell(page);
+  const findingList = page.getByRole("list", { name: "Findings" });
+  await expect(findingList.getByRole("button")).toHaveCount(8);
+  await findingList
+    .getByRole("button", {
+      name: /Drainage improvement, Barangay 5 vs Drainage canal upgrading, Barangay 5/,
+    })
+    .click();
+  const detail = page.getByRole("region", { name: "Finding detail" });
+  await expect(detail).toContainText("₱12,000,000");
+  await expect(detail).toContainText("₱9,500,000");
+  await expect(detail).toContainText("Source pages: 22, 32");
+
+  // J8-J9: the CCC matrix, reached through the nav, and its export.
+  await mainNav(page).getByRole("link", { name: "CCC matrix" }).click();
+  await expect(page.getByRole("heading", { name: "CCC matrix" })).toBeVisible();
+  await expectShell(page);
+  await expect(
+    page.getByRole("cell", {
+      name: "Conflict: CDP: Socialized housing project, Barangay 9 × LDRRMP: Evacuation centre, Barangay 9",
+    }),
+  ).toHaveText("C");
+  const download = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Export CCC matrix (.xlsx)" }).click();
+  expect((await download).suggestedFilename()).toBe("ccc_export.xlsx");
+
+  expect(consoleErrors).toEqual([]);
+
+  // RS-01 states, last because the aborted calls log console errors:
+  // hold, then fail, then empty every api call; let the web app's own requests through.
+  const webOrigin = new URL(baseURL!).origin;
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  let apiCalls = 0;
+  await page.route(
+    (url) => url.origin !== webOrigin,
+    async (route: Route) => {
+      apiCalls += 1;
+      if (apiCalls <= 2) {
+        // The first call and TanStack Query's one retry.
+        await held;
+        return route.abort();
+      }
+      return route.fulfill({
+        json: [],
+        headers: { "access-control-allow-origin": "*" },
+      });
+    },
+  );
+
+  await page.goto("/plans");
+  await expect(page.getByRole("status")).toHaveText("Loading plans…");
+  release();
+  const alert = page
+    .getByRole("alert")
+    .filter({ hasText: "Couldn't load plans." });
+  await expect(alert).toContainText("Can't reach the PlanTrace API");
+  await alert.getByRole("button", { name: "Retry" }).click();
+  await expect(page.getByText("No plans yet.")).toBeVisible();
+});

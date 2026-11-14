@@ -18,8 +18,8 @@ Structure, seams and contract: [ARCHITECTURE.md](ARCHITECTURE.md). How to write 
    criterion. Done and Ready 2026-11-14; decisions D1 to D13 confirmed.
 3. Slice roadmap: `docs/specs/plantrace-roadmap.md` splits the spec into
    slices S0 to S6. Per slice: `/han-to-spec` writes a short slice spec that
-   cites the master spec's AC IDs, then `/han-to-tickets`. S0 is ticket 01,
-   the walking skeleton (Parallel work).
+   cites the master spec's AC IDs, then `/han-to-tickets`. S0, the walking
+   skeleton, is spec #1 with tickets #2 to #7 (Parallel work).
 4. Each person claims a ticket, branches, and runs `/stint #<n>`.
 
 ## Decisions
@@ -33,20 +33,27 @@ Change a line here only after telling the team. One line each: choice, because r
   - Add a Python service: the core needs a Python-only library.
 
 ## Commands (use exactly)
-- Install: none yet: ticket 01 adds it (assumed: npm in `web/`, `uv sync` in `api/`)
-- Dev: none yet: ticket 01 adds it
-- Typecheck: none yet: ticket 01 adds it
-- Lint: none yet: ticket 01 adds it
-- Unit tests: none yet: ticket 01 adds it
-- Demo smoke: none yet: ticket 01 adds it
+- Install (api): `cd api && uv sync`
+- Install (web): `cd web && npm ci && npx playwright install chromium` (CI and fresh Linux: `npx playwright install --with-deps chromium`)
+- Dev (api): `cd api && uv run uvicorn app.main:app --reload` (port 8000; set `CORS_ORIGINS` to the web origin)
+- Dev (web): `cd web && npm run dev` (http://localhost:3000)
+- Typecheck (api): `cd api && uv run pyright`
+- Typecheck (web): `cd web && npm run typecheck`
+- Lint (api): `cd api && uv run ruff check . && uv run ruff format --check .`
+- Lint (web): `cd web && npm run lint`
+- Generate API types: `cd web && npm run gen:types` (needs `uv sync` in `api/`; writes `web/src/lib/api-types.ts`, never edit it by hand)
+- Unit tests (api): `cd api && uv run pytest`
+- Migrate: `cd api && uv run python -m app.db.migrate` (reads `DATABASE_URL`; or pass a URL as the argument)
+- Demo smoke: `cd web && npm run smoke` (starts the api on :8000 and builds and starts the web app on :3000 against it); against a deployed web app: `cd web && BASE_URL=<web url> npm run smoke` (PowerShell: `cd web; $env:BASE_URL="<web url>"; npm run smoke`)
 
 ## Parallel work
-- Ticket 01, the **walking skeleton**: the app deployed, the demo journey's
-  screens reachable on mock data, the contract files written, the demo smoke
-  passing, and a CI check that runs typecheck, lint, unit tests and the demo
-  smoke on every PR. It blocks every other ticket.
+- S0, the **walking skeleton** (spec #1, tickets #2 to #7): the app deployed,
+  the demo journey's screens reachable on mock data, the contract files
+  written, the demo smoke passing, and a CI check that runs typecheck, lint,
+  unit tests and the demo smoke on every PR. #2, #3 and #4 start in parallel.
+  #7, the closeout, blocks every ticket of S1 to S6.
 - **Contract files**: shared types, schema, mock data, root layout,
-  `package.json` and lockfile, env names. Paths: <listed by ticket 01>.
+  `package.json` and lockfile, env names. Paths: <listed by #7>.
 - Every later ticket owns one folder, labelled `lane:<folder>` on GitHub.
   Edit outside your folder only in contract files, after telling the team.
 - Claim before starting: assign yourself on GitHub.
@@ -54,6 +61,20 @@ Change a line here only after telling the team. One line each: choice, because r
   passes. `main` stays demoable.
 - Deferred work (the roadmap's optional extensions) starts only when the demo smoke passes
   on the deployed `main` and it is before 2026-11-15 04:30.
+
+## Docs
+- A PR that changes something a doc states (a command, path, env name,
+  schema, endpoint, route or decision) updates that doc in the same PR.
+  When code and a doc disagree, the code wins: fix the doc and say so in
+  the PR body.
+- A new command goes into "Commands" above in the PR that adds it.
+- Roadmap: a ticket's PR doesn't edit `docs/specs/plantrace-roadmap.md`.
+  After merging, comment the PR and CI run links on the slice's spec issue.
+  The slice's closeout ticket writes them into the roadmap, sets the status
+  and moves the current-slice line. One writer per slice avoids merge
+  conflicts on the shared row.
+- A doc change to Decisions, the contract or a confirmed D decision needs
+  the team told first, as for code.
 
 ## Testing
 - `/tdd` at these seams: parsers, data transforms, branching domain logic.

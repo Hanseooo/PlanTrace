@@ -1,0 +1,383 @@
+[
+  {
+    "id": 1,
+    "check": "duplicate",
+    "ppa_a": {
+      "id": 202,
+      "plan_id": 2,
+      "code": "CDP-02",
+      "title": "Drainage improvement, Barangay 5",
+      "description": "Upgrade of the main drainage canal along the national road",
+      "office": "City Engineering Office",
+      "sector": "drainage",
+      "barangays": [
+        "1199900005"
+      ],
+      "cost": 12000000,
+      "year_start": 2027,
+      "year_end": 2027,
+      "page_id": 22,
+      "status": "confirmed",
+      "plan_type": "CDP"
+    },
+    "ppa_b": {
+      "id": 302,
+      "plan_id": 3,
+      "code": "LDRRMP-02",
+      "title": "Drainage canal upgrading, Barangay 5",
+      "description": null,
+      "office": "City Disaster Risk Reduction and Management Office",
+      "sector": "drainage",
+      "barangays": [
+        "1199900005"
+      ],
+      "cost": 9500000,
+      "year_start": 2028,
+      "year_end": 2028,
+      "page_id": 32,
+      "status": "confirmed",
+      "plan_type": "LDRRMP"
+    },
+    "verdict": null,
+    "reason": "Same drainage canal in Barangay 5 in two plans. Costs differ (PHP 12,000,000 vs PHP 9,500,000) and years differ (2027 vs 2028).",
+    "page_ids": [
+      22,
+      32
+    ],
+    "status": "suggested",
+    "note": null,
+    "created_by": "rule"
+  },
+  {
+    "id": 2,
+    "check": "duplicate",
+    "ppa_a": {
+      "id": 303,
+      "plan_id": 3,
+      "code": "LDRRMP-03",
+      "title": "Community early warning system",
+      "description": "Sirens and rain gauges",
+      "office": "City Disaster Risk Reduction and Management Office",
+      "sector": "evacuation",
+      "barangays": [
+        "1199900005",
+        "1199900008"
+      ],
+      "cost": 2000000,
+      "year_start": 2027,
+      "year_end": 2027,
+      "page_id": 32,
+      "status": "confirmed",
+      "plan_type": "LDRRMP"
+    },
+    "ppa_b": {
+      "id": 406,
+      "plan_id": 4,
+      "code": "AIP-06",
+      "title": "Installation of early warning sirens",
+      "description": null,
+      "office": "City Disaster Risk Reduction and Management Office",
+      "sector": "evacuation",
+      "barangays": [
+        "1199900005",
+        "1199900008"
+      ],
+      "cost": 2000000,
+      "year_start": 2027,
+      "year_end": 2027,
+      "page_id": 42,
+      "status": "confirmed",
+      "plan_type": "AIP"
+    },
+    "verdict": null,
+    "reason": "The AIP sirens line repeats the LDRRMP early warning system for Barangays 5 and 8 with the same cost and year.",
+    "page_ids": [
+      32,
+      42
+    ],
+    "status": "suggested",
+    "note": null,
+    "created_by": "rule"
+  },
+  {
+    "id": 3,
+    "check": "duplicate",
+    "ppa_a": {
+      "id": 210,
+      "plan_id": 2,
+      "code": "CDP-10",
+      "title": "Flood control dike, Barangay 8",
+      "description": "Earth dike along the river bend",
+      "office": "City Engineering Office",
+      "sector": "flood_control",
+      "barangays": [
+        "1199900008"
+      ],
+      "cost": 20000000,
+      "year_start": 2028,
+      "year_end": 2030,
+      "page_id": 24,
+      "status": "confirmed",
+      "plan_type": "CDP"
+    },
+    "ppa_b": {
+      "id": 304,
+      "plan_id": 3,
+      "code": "LDRRMP-04",
+      "title": "River dike construction, Barangay 8",
+      "description": null,
+      "office": "City Disaster Risk Reduction and Management Office",
+      "sector": "flood_control",
+      "barangays": [
+        "1199900008"
+      ],
+      "cost": 18500000,
+      "year_start": 2027,
+      "year_end": 2029,
+      "page_id": 33,
+      "status": "confirmed",
+      "plan_type": "LDRRMP"
+    },
+    "verdict": null,
+    "reason": "Both plans fund a river dike in Barangay 8. Costs differ (PHP 20,000,000 vs PHP 18,500,000) and years differ (2028-2030 vs 2027-2029).",
+    "page_ids": [
+      24,
+      33
+    ],
+    "status": "suggested",
+    "note": null,
+    "created_by": "rule"
+  },
+  {
+    "id": 4,
+    "check": "orphan",
+    "ppa_a": {
+      "id": 408,
+      "plan_id": 4,
+      "code": "AIP-08",
+      "title": "Street lighting, Barangay 2",
+      "description": null,
+      "office": "City Engineering Office",
+      "sector": "roads",
+      "barangays": [
+        "1199900002"
+      ],
+      "cost": 1200000,
+      "year_start": 2027,
+      "year_end": 2027,
+      "page_id": 43,
+      "status": "confirmed",
+      "plan_type": "AIP"
+    },
+    "ppa_b": {
+      "id": 203,
+      "plan_id": 2,
+      "code": "CDP-03",
+      "title": "Farm-to-market road, Barangay 11",
+      "description": "Concreting of 2.4 km farm road",
+      "office": "City Engineering Office",
+      "sector": "roads",
+      "barangays": [
+        "1199900011"
+      ],
+      "cost": 18000000,
+      "year_start": 2027,
+      "year_end": 2028,
+      "page_id": 23,
+      "status": "confirmed",
+      "plan_type": "CDP"
+    },
+    "verdict": null,
+    "reason": "No CDP parent found. Closest match: the Barangay 11 farm-to-market road, which is a different barangay.",
+    "page_ids": [
+      43,
+      23
+    ],
+    "status": "suggested",
+    "note": null,
+    "created_by": "ai"
+  },
+  {
+    "id": 5,
+    "check": "orphan",
+    "ppa_a": {
+      "id": 409,
+      "plan_id": 4,
+      "code": "AIP-09",
+      "title": "Livelihood centre, Barangay 6",
+      "description": null,
+      "office": "City Social Welfare and Development Office",
+      "sector": "livelihood",
+      "barangays": [
+        "1199900006"
+      ],
+      "cost": 3000000,
+      "year_start": 2027,
+      "year_end": 2027,
+      "page_id": 43,
+      "status": "confirmed",
+      "plan_type": "AIP"
+    },
+    "ppa_b": {
+      "id": 209,
+      "plan_id": 2,
+      "code": "CDP-09",
+      "title": "Skills training for fisherfolk families",
+      "description": null,
+      "office": "City Social Welfare and Development Office",
+      "sector": "livelihood",
+      "barangays": [
+        "1199900002",
+        "1199900006"
+      ],
+      "cost": 1500000,
+      "year_start": 2027,
+      "year_end": 2028,
+      "page_id": 24,
+      "status": "confirmed",
+      "plan_type": "CDP"
+    },
+    "verdict": null,
+    "reason": "No CDP parent found. Suggested parent: skills training for fisherfolk families, which also covers Barangay 6.",
+    "page_ids": [
+      43,
+      24
+    ],
+    "status": "suggested",
+    "note": null,
+    "created_by": "ai"
+  },
+  {
+    "id": 6,
+    "check": "zone",
+    "ppa_a": {
+      "id": 201,
+      "plan_id": 2,
+      "code": "CDP-01",
+      "title": "Socialized housing project, Barangay 9",
+      "description": "120 housing units for informal settler families",
+      "office": "City Housing Office",
+      "sector": "housing",
+      "barangays": [
+        "1199900009"
+      ],
+      "cost": 25000000,
+      "year_start": 2027,
+      "year_end": 2028,
+      "page_id": 22,
+      "status": "confirmed",
+      "plan_type": "CDP"
+    },
+    "ppa_b": null,
+    "verdict": null,
+    "reason": "Barangay 9 is a high flood susceptibility zone in the CLUP, which forbids new housing.",
+    "page_ids": [
+      22,
+      13
+    ],
+    "status": "suggested",
+    "note": null,
+    "created_by": "rule"
+  },
+  {
+    "id": 7,
+    "check": "ccc",
+    "ppa_a": {
+      "id": 201,
+      "plan_id": 2,
+      "code": "CDP-01",
+      "title": "Socialized housing project, Barangay 9",
+      "description": "120 housing units for informal settler families",
+      "office": "City Housing Office",
+      "sector": "housing",
+      "barangays": [
+        "1199900009"
+      ],
+      "cost": 25000000,
+      "year_start": 2027,
+      "year_end": 2028,
+      "page_id": 22,
+      "status": "confirmed",
+      "plan_type": "CDP"
+    },
+    "ppa_b": {
+      "id": 301,
+      "plan_id": 3,
+      "code": "LDRRMP-01",
+      "title": "Evacuation centre, Barangay 9",
+      "description": "Multi-purpose evacuation centre",
+      "office": "City Disaster Risk Reduction and Management Office",
+      "sector": "evacuation",
+      "barangays": [
+        "1199900009"
+      ],
+      "cost": 14000000,
+      "year_start": 2027,
+      "year_end": 2028,
+      "page_id": 32,
+      "status": "confirmed",
+      "plan_type": "LDRRMP"
+    },
+    "verdict": "Conflict",
+    "reason": "New housing in Barangay 9 adds residents to a high flood hazard area that the evacuation centre is meant to empty during floods.",
+    "page_ids": [
+      22,
+      32,
+      13
+    ],
+    "status": "suggested",
+    "note": null,
+    "created_by": "ai"
+  },
+  {
+    "id": 8,
+    "check": "ccc",
+    "ppa_a": {
+      "id": 206,
+      "plan_id": 2,
+      "code": "CDP-06",
+      "title": "Rice production support program",
+      "description": "Seeds, fertilizer and training for rice farmers",
+      "office": "City Agriculture Office",
+      "sector": "agriculture",
+      "barangays": [
+        "1199900010",
+        "1199900011",
+        "1199900012"
+      ],
+      "cost": 3200000,
+      "year_start": 2027,
+      "year_end": 2029,
+      "page_id": 24,
+      "status": "confirmed",
+      "plan_type": "CDP"
+    },
+    "ppa_b": {
+      "id": 305,
+      "plan_id": 3,
+      "code": "LDRRMP-05",
+      "title": "Retention pond, Barangay 11",
+      "description": "Flood retention pond on farmland",
+      "office": "City Disaster Risk Reduction and Management Office",
+      "sector": "flood_control",
+      "barangays": [
+        "1199900011"
+      ],
+      "cost": 7000000,
+      "year_start": 2028,
+      "year_end": 2028,
+      "page_id": 33,
+      "status": "confirmed",
+      "plan_type": "LDRRMP"
+    },
+    "verdict": "Conflict",
+    "reason": "The retention pond takes rice land in Barangay 11 that the rice production program supports.",
+    "page_ids": [
+      24,
+      33
+    ],
+    "status": "suggested",
+    "note": null,
+    "created_by": "ai"
+  }
+]
