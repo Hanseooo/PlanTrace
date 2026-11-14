@@ -14,9 +14,14 @@ from app.models import Plan, Ppa, PpaInput
 
 router = APIRouter()
 
-PLAN_COLUMNS = "id, lgu_psgc, type, title, period_start, period_end, status, error"
-SELECT_PLANS = f"SELECT {PLAN_COLUMNS} FROM plans ORDER BY id"
-SELECT_PLAN = f"SELECT {PLAN_COLUMNS} FROM plans WHERE id = %s"
+SELECT_PLANS = """
+SELECT id, lgu_psgc, type, title, period_start, period_end, status, error
+FROM plans ORDER BY id
+"""
+SELECT_PLAN = """
+SELECT id, lgu_psgc, type, title, period_start, period_end, status, error
+FROM plans WHERE id = %s
+"""
 SELECT_PPAS = """
 SELECT id, plan_id, code, title, description, office, sector, barangays, cost,
        year_start, year_end, page_id, status

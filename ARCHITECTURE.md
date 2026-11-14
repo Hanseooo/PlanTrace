@@ -29,7 +29,7 @@ The web app calls the API directly over HTTPS, with CORS. There is no Next.js pr
 | Types across languages | `openapi-typescript` from FastAPI's OpenAPI | Frontend and backend agree on the contract |
 | Database | Supabase as plain Postgres, `pg_trgm`, full-text search. No Supabase Auth or auto API | One shared database for dev and demo |
 | DB access | psycopg 3, SQL written by hand, numbered `.sql` migrations | Trigram similarity, `tsvector` and arrays are plain SQL. An ORM would need workarounds |
-| AI | Gemini (`gemini-flash-latest`, the current Flash model) through LangChain `with_structured_output`, then an OpenRouter model (`openai/gpt-4o-mini`) through `langchain-openai` on failure | PDF input, JSON matching Pydantic models, fallback in two lines |
+| AI | Gemini (`gemini-flash-latest`, the current Flash model) through LangChain `with_structured_output`, then an OpenRouter model (`openai/gpt-4o-mini`) through `langchain-openai` on failure | Page text in (not the PDF), JSON matching Pydantic models, both providers behind one seam (`llm.py`) |
 | Files | PyMuPDF (page text), pandas/openpyxl (Excel in, CCC export out) | Page-level citations |
 | Deploy | Vercel (web, root `web/`), Render (api, root `api/`, free tier), both from `main` | Render's free tier sleeps: wake the api 2 minutes before the demo. Vercel needs `NEXT_PUBLIC_API_URL` before the build; Render's `CORS_ORIGINS` must list the Vercel origin |
 | Tooling | ruff and pyright (api), ESLint and `tsc` (web), pytest, Playwright | Run by CI on every PR |
