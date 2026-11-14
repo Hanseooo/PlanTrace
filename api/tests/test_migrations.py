@@ -12,7 +12,18 @@ from tests.db import needs_db
 
 pytestmark = needs_db
 
-TABLES = {"lgus", "plans", "pages", "ppas", "zones", "links", "findings", "ai_cache"}
+TABLES = {
+    "lgus",
+    "plans",
+    "pages",
+    "ppas",
+    "zones",
+    "links",
+    "findings",
+    "ai_cache",
+    "check_runs",
+}
+MIGRATIONS = ["001_init.sql", "002_check_runs.sql"]
 
 
 @pytest.fixture
@@ -46,14 +57,32 @@ def insert_ppa(conn: psycopg.Connection, sector: str, status: str = "draft") -> 
     return ppa[0]
 
 
-def test_001_applies_on_empty_db_and_second_run_is_noop(conn: psycopg.Connection) -> None:
-    assert migrate(conn) == ["001_init.sql"]
+def test_migrations_apply_in_order_on_empty_db_and_second_run_is_noop(
+    conn: psycopg.Connection,
+) -> None:
+    assert migrate(conn) == MIGRATIONS
     assert TABLES | {"schema_migrations"} <= tables(conn)
     assert conn.execute("SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm'").fetchone()
 
     assert migrate(conn) == []
     count = conn.execute("SELECT count(*) FROM schema_migrations").fetchone()
-    assert count == (1,)
+    assert count == (2,)
+
+
+def test_002_stores_a_run_and_a_finding_barangay(conn: psycopg.Connection) -> None:
+    """S4-01: a check run keeps its time and counts; a finding keeps its barangay."""
+    migrate(conn)
+    row = conn.execute(
+        "INSERT INTO check_runs (counts) VALUES ('[]') RETURNING ran_at IS NOT NULL"
+    ).fetchone()
+    assert row == (True,)
+    ppa = insert_ppa(conn, "housing")
+    finding = conn.execute(
+        'INSERT INTO findings ("check", ppa_a, reason, created_by, barangay)'
+        " VALUES ('zone', %s, 'Zone', 'rule', '1199900009') RETURNING barangay",
+        (ppa,),
+    ).fetchone()
+    assert finding == ("1199900009",)
 
 
 def test_valid_ppa_is_accepted(conn: psycopg.Connection) -> None:

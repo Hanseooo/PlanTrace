@@ -160,6 +160,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/checks/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Latest Run */
+        get: operations["get_latest_run_checks_latest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/findings": {
         parameters: {
             query?: never;
@@ -302,6 +319,11 @@ export interface components {
         };
         /** CheckRunResult */
         CheckRunResult: {
+            /**
+             * Ran At
+             * Format: date-time
+             */
+            ran_at: string;
             /** Counts */
             counts: components["schemas"]["CheckCount"][];
         };
@@ -334,6 +356,8 @@ export interface components {
              * @enum {string}
              */
             created_by: "ai" | "rule";
+            /** Barangay */
+            barangay: string | null;
         };
         /**
          * FindingPpa
@@ -885,6 +909,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CheckRunResult"];
+                };
+            };
+        };
+    };
+    get_latest_run_checks_latest_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckRunResult"] | null;
                 };
             };
         };

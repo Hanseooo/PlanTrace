@@ -4,8 +4,12 @@ GET /plans (S1-11), GET /plans/{id}, GET /plans/{id}/ppas (S2-16), GET /barangay
 GET /pages/{id} (S3-01, S3-02) read the database, as do the PPA writes and confirm (S3-03 to
 S3-08); tests/test_plans.py covers them. POST /plans (S2-10) is covered by
 tests/test_extract.py.
+
+The checks and findings routes take a connection (S4-03) but their stubs ignore it, so
+these tests hand them none. Remove a case here once its real query lands.
 """
 
+from collections.abc import Iterator
 from io import BytesIO
 from typing import Any
 
@@ -14,13 +18,25 @@ from fastapi.testclient import TestClient
 from openpyxl import load_workbook
 from pydantic import TypeAdapter
 
+from app.db import get_conn
 from app.main import app
 from app.models import CccMatrix, CheckRunResult, Finding
 
 client = TestClient(app)
 
+
+@pytest.fixture(autouse=True)
+def no_database() -> Iterator[None]:
+    app.dependency_overrides[get_conn] = lambda: None
+    try:
+        yield
+    finally:
+        app.dependency_overrides.pop(get_conn)
+
+
 CASES: list[tuple[str, str, dict[str, Any], Any]] = [
     ("POST", "/checks/run", {}, CheckRunResult),
+    ("GET", "/checks/latest", {}, CheckRunResult | None),
     ("GET", "/findings", {}, list[Finding]),
     ("PATCH", "/findings/1", {"json": {"status": "confirmed"}}, Finding),
     ("GET", "/ccc", {}, CccMatrix),

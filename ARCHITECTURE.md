@@ -57,8 +57,13 @@ plantrace/
       llm.py              the LLM seam (lane:ai)
       fixtures.py         loads and validates a `seed/fixtures/` file for a stub route
       extract/            lane:ai. Upload (`POST /plans`), page text, PPA and zone extraction
-      checks/             lane:ai. Duplicate, orphan, CCC, zone; `/checks/run`, `/findings`, `/ccc` routes
-        ccc_export.py     the CCC export seam: the Excel layout lives only here
+      checks/             split by file (S4-SH-02). Duplicate, orphan, CCC, zone; `/checks`, `/findings`, `/ccc` routes
+        routes.py         contract file: wiring only, each route calls one function below
+        rules.py          lane:data. Duplicate and zone checks (SQL)
+        findings.py       lane:data. Storing a run, listing and reviewing findings, the latest run
+        orphan.py         lane:ai. Orphan check and its AI suggested parent
+        run.py            lane:ai. `POST /checks/run`: the checks, then findings.store_run
+        ccc_export.py     the CCC export seam: the Excel layout lives only here (S5 adds ccc.py)
       plans/              lane:data. Plan list and status, PPA table edits, confirm
       db/                 lane:data, schema owner. Connection, migrations/NNN_name.sql
   seed/                   lane:data
@@ -118,7 +123,8 @@ The uploaded file is discarded after step 2. The prompt and output model live in
 | `ppas` | id, plan_id, code, title, description, office, sector, barangays (PSGC[]), cost, year_start, year_end, page_id, status (draft, confirmed), updated_at |
 | `zones` | id, plan_id, barangay, zone_type, hazard, forbidden_sectors[], page_id |
 | `links` | id, child_ppa_id, parent_ppa_id, source (ai, manual), status (suggested, confirmed, rejected) |
-| `findings` | id, check (duplicate, orphan, ccc, zone), ppa_a, ppa_b, verdict, reason, page_ids[], status (suggested, confirmed, rejected), note, created_by (ai, rule), reviewed_at |
+| `findings` | id, check (duplicate, orphan, ccc, zone), ppa_a, ppa_b, verdict, reason, page_ids[], status (suggested, confirmed, rejected), note, created_by (ai, rule), reviewed_at, barangay (PSGC code it is grouped under) |
+| `check_runs` | id, ran_at, counts (jsonb, the run's `CheckCount` list) |
 | `ai_cache` | key, response, created_at |
 | `questions` | id, text, answer, cited_page_ids[], created_at (deferred with F7) |
 
@@ -135,17 +141,18 @@ Every row carries `lgu_psgc` through its plan. Office names, sectors and languag
 | POST | `/plans/{id}/confirm` | Confirm a plan and all its rows in one transaction; a `confirmed` plan comes back unchanged. 409 "Add a row first" with no rows, 409 while `extracting` or `failed` (S3-08) |
 | GET | `/barangays` | The city's barangays (`psgc_code`, `name`) by code, for the barangay picker and names (S3-01) |
 | GET | `/pages/{id}` | One page's `plan_id`, `page_no` and text for the source panel; 404 for an unknown page (S3-02) |
-| POST | `/checks/run` | Run all 4 checks |
-| GET, PATCH | `/findings`, `/findings/{id}` | List findings; confirm, reject, note |
+| POST | `/checks/run` | Run all 4 checks, store the findings and the run, return its `ran_at` and counts |
+| GET | `/checks/latest` | The last run's `ran_at` and counts, or `null` before any run (S4-02) |
+| GET, PATCH | `/findings`, `/findings/{id}` | List findings, each with its grouping `barangay`; confirm, reject, note |
 | GET | `/ccc`, `/ccc/export` | Matrix data, Excel file |
 | GET | `/chain` | Nodes and edges for the chain view (deferred) |
 | POST | `/ask` | Question in, cited answer out (deferred) |
 
-`GET /plans` reads the `plans` table (S1-11), so it needs `DATABASE_URL`: without it, or when the database is unreachable, it answers 503 and the plans screen shows its error state with Retry. This changes S0-07, under which the app started and answered without `DATABASE_URL`; the api still starts without it. `GET /plans/{id}` and `GET /plans/{id}/ppas` read the database too (S2-16) and answer 404 for an unknown plan. `GET /barangays` and `GET /pages/{id}` read it too (S3-01, S3-02), with 503 the same way and 404 for an unknown page. The PPA writes and confirm write it (S3-03 to S3-08) and commit before answering. Every other endpoint still serves `seed/fixtures/` until its slice lands. Routes get their connection from the `get_conn` dependency in `api/app/db/__init__.py`; tests override it with `TEST_DATABASE_URL` (D7).
+`GET /plans` reads the `plans` table (S1-11), so it needs `DATABASE_URL`: without it, or when the database is unreachable, it answers 503 and the plans screen shows its error state with Retry. This changes S0-07, under which the app started and answered without `DATABASE_URL`; the api still starts without it. `GET /plans/{id}` and `GET /plans/{id}/ppas` read the database too (S2-16) and answer 404 for an unknown plan. `GET /barangays` and `GET /pages/{id}` read it too (S3-01, S3-02), with 503 the same way and 404 for an unknown page. The PPA writes and confirm write it (S3-03 to S3-08) and commit before answering. Every other endpoint still serves `seed/fixtures/` until its slice lands. The `/checks` and `/findings` stubs already take a connection (S4-03), so they answer 503 without `DATABASE_URL` too. Routes get their connection from the `get_conn` dependency in `api/app/db/__init__.py`; tests override it with `TEST_DATABASE_URL` (D7).
 
 Web routes: `/` redirects to `/plans`; `/plans` (plans list and upload form), `/plans/[id]` (a plan's PPA table), `/findings` (findings list and side-by-side detail), `/ccc` (CCC matrix and export link).
 
-The schema is `api/app/db/migrations/001_init.sql` (#3); its check constraints use the `models.py` strings. `findings."check"` is a reserved word, so quote it in SQL. `pg_trgm` is enabled. The migrate command keeps applied file names in `schema_migrations`.
+The schema is `api/app/db/migrations/001_init.sql` (#3); its check constraints use the `models.py` strings. `002_check_runs.sql` (S4-01) adds `check_runs (id, ran_at, counts jsonb)`, one row per run, and `findings.barangay`, the PSGC code a finding is grouped under. `findings."check"` is a reserved word, so quote it in SQL. `pg_trgm` is enabled. The migrate command keeps applied file names in `schema_migrations`.
 
 ## Settled in ticket 01
 
