@@ -1,3 +1,4 @@
+import path from "node:path";
 import { expect, test, type Page, type Route } from "@playwright/test";
 
 // The demo journey (J1 to J9, docs/specs/plantrace-spec.md). Later tickets add
@@ -51,14 +52,39 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
     await expect(
       planRows
         .filter({ has: page.getByRole("link", { name: title, exact: true }) })
-        .getByRole("cell", { name: "confirmed", exact: true }),
+        .getByRole("cell", { name: "Confirmed", exact: true }),
     ).toBeVisible();
   }
   await expect(
     page.getByRole("button", { name: "Upload", exact: true }),
   ).toBeDisabled();
 
-  // J2-J3: a plan's PPA table, with an in-app way back to the plans list.
+  // J2: upload the LCCAP; the plan page shows its status, then the draft table.
+  // CI primes the cached extraction (app.extract.load_cache), so no model is called.
+  const upload = page.getByRole("form", { name: "Upload a plan" });
+  await upload
+    .getByLabel("PDF file")
+    .setInputFiles(path.join(process.cwd(), "..", "seed", "pdfs", "lccap.pdf"));
+  await upload.getByLabel("Plan type").selectOption("LCCAP");
+  await upload.getByLabel("Start year").fill("2026");
+  await upload.getByLabel("End year").fill("2030");
+  await upload.getByRole("button", { name: "Upload", exact: true }).click();
+  await expect(page).toHaveURL(/\/plans\/\d+$/);
+  await expect(page.getByText("LCCAP 2026–2030")).toBeVisible();
+  await expect(page.getByText("Ready to confirm")).toBeVisible({
+    timeout: 30_000,
+  });
+  // The header row plus the 3 draft PPAs.
+  await expect(page.getByRole("table").getByRole("row")).toHaveCount(4);
+  await page.getByRole("link", { name: "Back to plans" }).click();
+  await expect(page).toHaveURL(/\/plans$/);
+  await expect(
+    planRows
+      .filter({ has: page.getByRole("link", { name: "LCCAP 2026–2030" }) })
+      .getByRole("cell", { name: "Ready to confirm", exact: true }),
+  ).toBeVisible();
+
+  // J3: a confirmed plan's PPA table, with an in-app way back to the plans list.
   await page
     .getByRole("link", {
       name: "City of Sampaguita Comprehensive Development Plan 2026-2031",
