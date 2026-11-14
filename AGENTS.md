@@ -6,16 +6,20 @@ by hand on the deployed app with the demo data. After the freeze, only fixes
 for what that rehearsal breaks merge.
 
 This repo serves one **demo journey**: the steps a judge sees, defined as the
-acceptance journey in the spec. A working demo outranks maintainability.
+acceptance journey (J1 to J9) in [docs/specs/plantrace-spec.md](docs/specs/plantrace-spec.md).
+A working demo outranks maintainability.
 Product scope and the demo script: [PRD.md](PRD.md).
 Structure, seams and contract: [ARCHITECTURE.md](ARCHITECTURE.md). How to write code: [CODING_STANDARDS.md](CODING_STANDARDS.md).
 
 ## Kickoff
 1. `/han-grill`: pick the problem from the shortlist and the backend by the
    rule under Decisions. Record both there. Done 2026-11-14, see Decisions.
-2. `/han-to-spec`: the demo journey is its end-to-end acceptance journey.
-   Edge cases off the demo journey are listed as excluded.
-3. `/han-to-tickets`: ticket 01 is the walking skeleton (Parallel work).
+2. Master spec: `docs/specs/plantrace-spec.md` holds every acceptance
+   criterion. Done and Ready 2026-11-14; decisions D1 to D13 confirmed.
+3. Slice roadmap: `docs/specs/plantrace-roadmap.md` splits the spec into
+   slices S0 to S6. Per slice: `/han-to-spec` writes a short slice spec that
+   cites the master spec's AC IDs, then `/han-to-tickets`. S0 is ticket 01,
+   the walking skeleton (Parallel work).
 4. Each person claims a ticket, branches, and runs `/stint #<n>`.
 
 ## Decisions
@@ -48,7 +52,7 @@ Change a line here only after telling the team. One line each: choice, because r
 - Claim before starting: assign yourself on GitHub.
 - One branch per ticket. PR body says `Closes #<n>`. Self-merge when CI
   passes. `main` stays demoable.
-- Deferred tickets (listed in the spec) start only when the demo smoke passes
+- Deferred work (the roadmap's optional extensions) starts only when the demo smoke passes
   on the deployed `main` and it is before 2026-11-15 04:30.
 
 ## Testing

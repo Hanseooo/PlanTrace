@@ -8,11 +8,13 @@
 
 **Problem.** A city has many plans: CLUP, CDP, LDIP, AIP, LDRRMP, LCCAP and more. They should connect, but offices often write them separately. So the same project shows up twice with different costs, AIP projects have no parent in the CDP, and projects clash with each other or with land use and hazard zones. Planners must find these by hand. One required step is the Conflict-Compatibility-Complementarity (CCC) test, which compares projects pair by pair.
 
-**Solution.** Upload the city's plans. The AI extracts every program, project and activity (PPA) into one table, and a planner confirms it. The tool then runs 4 checks: duplicates, orphans, CCC pairs and zone conflicts. Each finding shows a reason and the source page, and a person confirms it. "Ask the records" answers questions along the plan chain with citations.
+**Solution.** Upload the city's plans. The AI extracts every program, project and activity (PPA) into one table, and a planner confirms it. The tool then runs 4 checks: duplicates, orphans, CCC pairs and zone conflicts. Each finding shows a reason and the source page, and a person confirms it. Later (deferred): "Ask the records" answers questions along the plan chain with citations.
 
-**User.** City Planning and Development Office (CPDO) staff in one city LGU. This is horizontal scope: across the city's own plans and offices. The mentor advised horizontal first (Reported, from the team).
+**User.** City Planning and Development Office (CPDO) staff in one city LGU in Davao Region (Region XI). Named example: Mati City, Davao Oriental, where the mentor was City Planning and Development Coordinator. This is horizontal scope: across the city's own plans and offices. The mentor advised horizontal first (Reported, from the team).
 
-**19-hour MVP.** A fictional Region XI city, 4 plans, about 15 to 20 PPAs with planted issues, AI extraction with one live upload, 4 checks, a CCC matrix export, a plan chain view, and Ask the records. No login.
+**Mindanao anchor.** Slide 29 requires a named Mindanao community. The problem is anchored in real Region XI cases (slide 12 Davao Occidental scenario, slide 14 Masara landslide in Davao de Oro). The demo city stays fictional and is labelled synthetic, so no invented plan is passed off as a real LGU's.
+
+**MVP (about 9 hours of building, 3 people).** The hackathon runs 21:44 to 09:29 with code freeze at 06:29. A fictional Davao Region city, 4 plans, about 15 to 20 PPAs with planted issues, AI extraction with one live upload, 4 checks, findings review, and a CCC matrix export. No login. The plan chain view (F6) and Ask the records (F7) are deferred.
 
 ## 2. Why this problem
 
@@ -26,6 +28,7 @@
 | DILG names "multiplicity of plans" and sectoral plans "prepared independently of the CDP and CLUP" as problems | Reported | [DILG CDP–LDIP deck](https://docs.google.com/presentation/d/1JuEn7WlL6raSEFctQfGicPej-I4n_a4L/htmlpresent), [CDP Quick Guide](https://www.slideshare.net/slideshow/cdp-quick-guide/58211838) |
 | The DILG guide tells planners to "take note of inconsistencies between existing plans" | Reported | [problem H](../ds3-lgu-wiki/problems/h-plan-budget-risk.md) |
 | Slide 13: plans "must connect to every stage of delivery", or they remain separate documents | Documented (mentor slide) | [slide 13](../ds3-lgu-wiki/slides/10-15-three-major-challenges.md) |
+| The challenge requires a real problem in a named Mindanao community | Documented (mentor slide) | [slides 26 to 29](../ds3-lgu-wiki/slides/26-29-requirements-and-challenge.md) |
 | How long a CCC test takes by hand | **Unknown** | Ask the mentor. Nobody on the team has done one |
 
 **Why it is bigger than turnover (Inference).** Turnover hurts at specific moments and we have no data on the share of contract staff. Plan inconsistency is named in DILG's own material, hits every planning cycle, and has a required step (CCC) where a tool fits.
@@ -60,13 +63,16 @@
 ## 5. Scope
 
 **In**
-1. Upload and extract plans (PDF, Excel).
+1. Upload and extract plans (PDF only; Excel comes first after the deferred list, D1).
 2. Confirm the PPA table.
 3. Checks: duplicate, orphan, CCC pairs, zone conflict.
 4. Findings review: confirm, reject or note.
 5. CCC matrix view and Excel export.
-6. Plan chain view: AIP → LDIP → CDP → CLUP, plus sectoral plans.
-7. Ask the records.
+
+**Deferred** (start only if the demo smoke passes on the deployed `main` before 04:30, in this order)
+1. Source page images: render each page to PNG at extraction and show it in the source panel.
+2. F6 Plan chain view: AIP → LDIP → CDP → CLUP, plus sectoral plans.
+3. F7 Ask the records.
 
 **Out (MVP)**
 - Login and roles. Next: email login and row-level security per LGU.
@@ -84,7 +90,8 @@
 The planner uploads a plan file and picks its type (CLUP, CDP, LDIP, AIP, LDRRMP, LCCAP, Other) and period. The AI reads the file and returns PPAs as structured JSON.
 
 - Each PPA has: title, description, office, sector (fixed list), barangays, cost, start year, end year, source page.
-- Each page's text is stored for search and citations.
+- Each page's text is stored for search and citations (PyMuPDF, one row per page). The uploaded file itself is not kept.
+- Extraction runs in the background. The screen polls the plan's status.
 - A CLUP upload also extracts zones: barangay, zone type, hazard, and the uses it allows or forbids.
 - Failure states: wrong file type, file too large, AI timeout, AI returns invalid JSON. Each shows a message and a retry. Gemini fails → OpenRouter fallback.
 - Status per upload: uploading, extracting, ready to confirm, failed.
@@ -93,7 +100,7 @@ The planner uploads a plan file and picks its type (CLUP, CDP, LDIP, AIP, LDRRMP
 
 An editable table per plan. The planner fixes fields, deletes rows, adds rows and confirms the plan. Only confirmed PPAs go into checks.
 
-- The source page opens next to the row.
+- The source page's text and page number open next to the row.
 - Sector and barangay are dropdowns from fixed lists. Barangays use PSGC codes.
 
 ### F3. Checks
@@ -120,11 +127,11 @@ A grid of PPAs × PPAs. Each cell shows C, Cm or Cp (Conflict, Compatible, Compl
 
 **The real CCC sheet layout is unknown.** The MVP uses the grid above (Inference). Keep the export layout in one module so it can change after the mentor shows a real sheet.
 
-### F6. Plan chain view
+### F6. Plan chain view (deferred)
 
 A graph (React Flow): CLUP zone → CDP program → LDIP → AIP project, with LDRRMP and LCCAP PPAs as side inputs. Orphans and flagged PPAs are coloured. Clicking a node opens the PPA and its findings.
 
-### F7. Ask the records
+### F7. Ask the records (deferred)
 
 The planner asks a question, for example: "Why is the drainage project in the AIP?" or "Which projects are in Barangay 5 and flood-prone?"
 
@@ -135,7 +142,7 @@ The planner asks a question, for example: "Why is the drainage project in the AI
 
 ## 7. Demo script (3 minutes of the pitch)
 
-Fictional **City of Sampaguita, Region XI**. 4 plans are pre-loaded and confirmed.
+Fictional **City of Sampaguita, Davao Region**, labelled synthetic on screen. Open by naming the real Region XI context (slide 12 Davao Occidental scenario, slide 14 Masara landslide), then show that a city like Mati could catch the same kind of risk in its plans. 4 plans are pre-loaded and confirmed.
 
 1. Upload a short LCCAP excerpt live. The AI extracts 3 PPAs, the planner fixes 1 field and confirms. (Fallback: pre-extracted copy.)
 2. Run checks. 8 findings appear.
@@ -143,11 +150,12 @@ Fictional **City of Sampaguita, Region XI**. 4 plans are pre-loaded and confirme
 4. **Orphan:** an AIP road has no CDP parent. The tool suggests "Farm-to-market roads program"; the planner accepts.
 5. **The community scene:** the CDP plans a housing project in Barangay 9. The CLUP marks Barangay 9 as high flood susceptibility, and the LDRRMP plans an evacuation centre there. Zone conflict plus a CCC **Conflict**, caught before money is spent.
 6. Open the CCC matrix and export it to Excel. Show the measured time: by hand vs with the tool.
-7. Ask: "Why is the evacuation centre in the AIP?" The answer cites LDRRMP page 14 and AIP line 22.
+
+Only if F7 ships: ask "Why is the evacuation centre in the AIP?" The answer cites LDRRMP page 14 and AIP line 22.
 
 ## 8. Synthetic data spec
 
-All data is synthetic (slide 26, RA 10173). Barangays named "Barangay 1" to "Barangay 12", or fictional names. No real people.
+All data is synthetic (slide 26, RA 10173). The city is fictional and placed in Davao Region. Barangays named "Barangay 1" to "Barangay 12", or fictional names, never real barangays, so invented hazard zones cannot be mistaken for real ones. No real people.
 
 | Plan | Content | Planted issues |
 |---|---|---|
@@ -161,71 +169,20 @@ Make each plan a short PDF (2 to 5 pages) with real-looking tables, and keep an 
 
 ## 9. Architecture
 
-```
-web/ (Next.js, React)          api/ (FastAPI, Python)            Supabase Postgres
- tables, matrix, chain,  --->   upload, extract, checks,  --->   plans, pages, ppas, zones,
- findings, ask                  ccc, ask, export                 links, findings
-                                     |
-                                     v
-                         Gemini API (PDF in, JSON out)
-                         fallback: OpenRouter
-```
+Moved to [ARCHITECTURE.md](ARCHITECTURE.md): stack, folders and lanes, contract, data model and API. Coding rules are in [CODING_STANDARDS.md](CODING_STANDARDS.md).
 
-| Part | Choice | Why |
-|---|---|---|
-| Frontend | Next.js, shadcn/ui, TanStack Table and Query, React Flow | Editable tables, matrix and graph |
-| Backend | FastAPI, Pydantic, `uv` | One schema for extraction, checks and API |
-| Types across languages | `openapi-typescript` from FastAPI's OpenAPI | Frontend and backend agree on the contract |
-| Database | Supabase, used as plain Postgres; `pg_trgm`, full-text search | One shared database for dev and demo. No Supabase Auth or auto API |
-| AI | Gemini (a current Flash model; check the model list for the ID) through LangChain `with_structured_output`, `.with_fallbacks([OpenRouter model])` | PDF input, JSON matching Pydantic models, fallback in two lines |
-| Files | PyMuPDF (page text), pandas/openpyxl (Excel) | Page-level citations |
-| Deploy | Vercel (web), Render or Railway (api) | Free tiers. Wake the api 2 minutes before the demo |
+## 10. Team plan (about 9 hours of building, 3 people)
 
-**Not used, and why**
-- **LangGraph.** The pipeline is linear, so it isn't needed.
-- **Vector DB or pgvector.** Links plus full-text search are enough. An embedding column can be added later.
-- **Jev or Laya.** A CCC cell needs a reason and sources, not only a label. Jev could be a cheap pre-screen when a city has hundreds of PPAs (Reported, secondary sources).
-- **Docker** is only one teammate's offline backup database.
+Lanes and their folders: [ARCHITECTURE.md](ARCHITECTURE.md#folders-and-lanes). The data lane also owns the pitch. Slice order and what runs in parallel: [roadmap](docs/specs/plantrace-roadmap.md).
 
-### Data model
-
-| Table | Key columns |
-|---|---|
-| `lgus` | `psgc_code`, name, level |
-| `plans` | id, `lgu_psgc`, type, title, period_start, period_end, file_path, status |
-| `pages` | id, plan_id, page_no, text, `tsv` |
-| `ppas` | id, plan_id, code, title, description, office, sector, barangays (PSGC[]), cost, year_start, year_end, page_id, status (draft, confirmed) |
-| `zones` | id, plan_id, barangay, zone_type, hazard, forbidden_sectors[], page_id |
-| `links` | id, child_ppa_id, parent_ppa_id, source (ai, manual), status (suggested, confirmed, rejected) |
-| `findings` | id, check (duplicate, orphan, ccc, zone), ppa_a, ppa_b, verdict, reason, page_ids[], status (suggested, confirmed, rejected), note, created_by (ai, rule) |
-| `questions` | id, text, answer, cited_page_ids[], created_at |
-
-Every row carries `lgu_psgc` through its plan. That keeps the design LGU-agnostic: office names, sectors and languages are data, not code.
-
-### API (first draft, fixed in hour 0)
-
-| Method | Path | Does |
-|---|---|---|
-| POST | `/plans` | Upload a file with type and period, start extraction |
-| GET | `/plans`, `/plans/{id}` | List plans, plan status |
-| GET, PATCH, POST, DELETE | `/plans/{id}/ppas`, `/ppas/{id}` | Edit the PPA table |
-| POST | `/plans/{id}/confirm` | Confirm a plan |
-| POST | `/checks/run` | Run all 4 checks |
-| GET, PATCH | `/findings`, `/findings/{id}` | List findings; confirm, reject, note |
-| GET | `/ccc`, `/ccc/export` | Matrix data, Excel file |
-| GET | `/chain` | Nodes and edges for the chain view |
-| POST | `/ask` | Question in, cited answer out |
-
-## 10. Team plan (19 hours, 4 people)
-
-| Hours | Web (1 to 2 people) | AI and checks (1) | Data, Ask, pitch (1) |
+| Time | Web (1) | AI and checks (1) | Data, pitch (1) |
 |---|---|---|---|
-| 0 to 2 | Repo, Next.js, shadcn, mock JSON from the contract | FastAPI skeleton, Pydantic models, Supabase tables | Write the 4 synthetic plans and the answer key |
-| 2 to 6 | Upload screen, PPA table | Extraction prompt, fallback, page text | Seed script; test extraction against the answer key |
-| 6 to 10 | Findings list, side-by-side view | Checks 1 and 2, then the CCC pair classifier | Ask: retrieval, citation guard |
-| 10 to 14 | CCC matrix, export, chain view | Check 4, re-run rules, tune thresholds | Ask screen; measure CCC time by hand |
-| 14 to 17 | States: loading, empty, error; polish | Fix false flags; cache AI results for the demo | Pitch, slides, demo script |
-| 17 to 19 | Rehearse, deploy, fallbacks | Same | Same |
+| 21:44 to 23:00 | Ticket 01 together: repo, Next.js, FastAPI stubs serving `seed/fixtures/`, schema, deploy, demo smoke, CI | Same | Write the 4 synthetic plans and the answer key |
+| 23:00 to 02:00 | Upload screen, PPA table, findings list | Extraction, fallback, AI cache; checks 1, 2 and 4 | Seed script; pytest for the checks against the answer key |
+| 02:00 to 04:30 | CCC matrix, export; loading, empty and error states | CCC pair classifier; tune thresholds, fix false flags | Measure CCC time by hand; pitch and slides |
+| 04:30 to 06:29 | Deferred items if the smoke passes; polish | Cache every demo AI call | Demo script; rehearse |
+| 06:29 | Code freeze. One person walks the demo on the deployed app | | |
+| 06:29 to 09:29 | Fixes only for what the rehearsal breaks | Same | Same |
 
 **Team rules**
 - One repo with `web/` and `api/` folders, each with a README of 3 setup commands or fewer.
@@ -252,7 +209,9 @@ Every row carries `lgu_psgc` through its plan. That keeps the design LGU-agnosti
 | The CCC layout or meaning differs from our working model | Ask the mentor first. Export lives in one module |
 | AI extraction errors on messy PDFs | The planner confirms every row. Demo uses clean synthetic PDFs plus one live upload with a fallback |
 | AI invents conflicts | Reason and source page required. A person confirms. Measure false flags against the answer key |
-| Judges see it as "just a form filler" | Lead with the community scene and the chain view, not the matrix |
+| Judges see it as "just a form filler" | Lead with the community scene, not the matrix |
+| Synthetic plans mistaken for a real Davao Region LGU's | Fictional city and barangays, "synthetic data" label on screen |
+| About 9 hours is not enough | F6 and F7 deferred; the demo journey is steps 1 to 6 |
 | The mentor expected the turnover story | Show the pivot early: same engine (reads plans, cites sources), sharper problem from slide 13 |
 | DILG builds a similar tool | Ask the mentor; position as a module that could plug into DILG systems |
 | Venue Wi-Fi fails | Cached results, local database backup |
@@ -268,6 +227,8 @@ Every row carries `lgu_psgc` through its plan. That keeps the design LGU-agnosti
 - [ ] Would a city or DILG Region XI pilot this, and how would they pay for it?
 
 ## 14. Stretch, in order
+
+After the deferred items in section 5:
 
 1. Cross-LGU overlap: a neighbouring city's CDP and one shared flag (proposal 2's overlap finder).
 2. Climate tagging check: compare JMC 2015-01 tags in the AIP with LCCAP PPAs.

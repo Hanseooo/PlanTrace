@@ -2,11 +2,13 @@
 
 # PlanTrace master spec
 
-2026-11-14. **Status: Draft.** Decisions D1 to D13 below are open. Criteria marked *(pending Dn)* follow the recommendation and change only if the team picks another option. When all are settled, this becomes Ready.
+2026-11-14. **Status: Ready.** Decisions D1 to D13 were confirmed by the team on 2026-11-14 as recommended in section 7. A criterion that names a decision (for example "(D2)") follows that decision.
 
 Sources: [PRD.md](../../PRD.md) (product, demo script, data), [ARCHITECTURE.md](../../ARCHITECTURE.md) (structure, contract, data model, API), [CODING_STANDARDS.md](../../CODING_STANDARDS.md) (how code is written), [AGENTS.md](../../AGENTS.md) (process, freeze). This spec does not repeat their content. It states what must be observably true.
 
 Nothing is built yet. Every criterion below describes agreed behavior, not existing behavior.
+
+Build order: [plantrace-roadmap.md](plantrace-roadmap.md) splits this spec into slices S0 to S6. Its shared rules RS-01 to RS-09 are this spec's SH-01 to SH-09. Slice specs cite AC IDs from here instead of copying them.
 
 ## 1. Purpose and scope
 
@@ -41,7 +43,7 @@ Preconditions: the deployed app, the seed loaded (US-06), and the LCCAP extracti
 | J8 | Opens the CCC matrix and clicks the housing × evacuation centre cell | The cell shows C. Its reason and sources open |
 | J9 | Exports the matrix | An `.xlsx` file downloads and opens with the same grid |
 
-Fallback for J2: if the live upload fails, the presenter opens the pre-extracted LCCAP copy and continues from J3 *(pending D10)*.
+Fallback for J2: if the live upload fails, the presenter opens the pre-extracted LCCAP copy and continues from J3 (D10).
 
 ## 2. User stories and acceptance criteria
 
@@ -52,14 +54,14 @@ As a planner, I want to upload a plan and get its PPAs as a table, so that I don
 Applies: SH-01, SH-02, SH-03, SH-07, SH-09
 
 - **AC-01** The upload form takes one file, a plan type (CLUP, CDP, LDIP, AIP, LDRRMP, LCCAP, Other) and a period (start and end year). Submit is disabled until all three are set.
-- **AC-02** Accepted files: PDF only, up to 10 MB *(pending D1, D8)*. Any other file type or a larger file is refused before upload, with a message naming the limit. The form keeps its other values.
+- **AC-02** Accepted files: PDF only, up to 10 MB (D1, D8). Any other file type or a larger file is refused before upload, with a message naming the limit. The form keeps its other values.
 - **AC-03** On submit the plan appears with status "uploading", then "extracting". Extraction keeps running if the planner leaves the screen. The plans list shows the current status.
 - **AC-04** When extraction succeeds the status becomes "ready to confirm" and the plan's PPA table opens with draft rows.
 - **AC-05** Each extracted PPA has title, description, office, sector, barangays, cost, start year, end year and source page. Missing values are blank, not invented.
 - **AC-06** Every page's text is stored with its page number. The uploaded file is not kept.
 - **AC-07** A CLUP upload also extracts zones: barangay, zone type, hazard, and forbidden sectors, each with its source page.
 - **AC-08** If Gemini fails, the same request goes to OpenRouter without any action from the planner.
-- **AC-09** If both providers fail, time out or return invalid JSON, the status becomes "failed" with a message saying which. A Retry button resends the same file *(pending D2)*.
+- **AC-09** If both providers fail, time out or return invalid JSON, the status becomes "failed" with a message saying which. A Retry button resends the same file (D2).
 
 ### US-02 Review and confirm the PPA table (F2)
 
@@ -68,12 +70,12 @@ As a planner, I want to correct the extracted rows and confirm them, so that che
 Applies: SH-01, SH-02, SH-03, SH-05, SH-06, SH-07
 
 - **AC-10** Every field of a row can be edited in place. Enter or leaving the cell saves the edit. Escape cancels the edit and restores the value.
-- **AC-11** Sector is a dropdown from the fixed sector list *(pending D3)*. Barangays is a multi-select from the city's barangays, stored as PSGC codes. Cost and years accept numbers only.
+- **AC-11** Sector is a dropdown from the fixed sector list (D3). Barangays is a multi-select from the city's barangays, stored as PSGC codes. Cost and years accept numbers only.
 - **AC-12** The planner can add a blank row and delete a row. Delete asks for confirmation or offers undo.
 - **AC-13** Selecting a row opens the source panel with that page's text and page number. Escape or a close button closes it and focus returns to the row.
 - **AC-14** "Confirm plan" marks the plan and all its rows confirmed. It is disabled while the plan has no rows.
 - **AC-15** Only confirmed PPAs go into checks.
-- **AC-16** A confirmed plan stays editable. Edits take effect on the next check run *(pending D6)*.
+- **AC-16** A confirmed plan stays editable. Edits take effect on the next check run (D6).
 
 ### US-03 Run the checks (F3)
 
@@ -85,10 +87,10 @@ Applies: SH-01, SH-03, SH-04, SH-08, SH-09
 - **AC-18** **Duplicate:** a pair of PPAs from different plans with similar titles (trigram similarity above a set threshold) and a shared barangay or sector. The finding shows the differences in cost and years. PPAs in the same plan are never paired.
 - **AC-19** **Orphan:** an AIP PPA with no confirmed parent link to a CDP or LDIP PPA. The finding carries the AI's suggested parent and a reason.
 - **AC-20** **CCC:** candidate pairs share a barangay, or the same sector, with overlapping years. The AI returns Conflict, Compatible or Complementary, a reason, and the page IDs it used. Pairs that don't meet the filter aren't sent.
-- **AC-21** **Zone conflict:** a PPA whose barangay lies in a CLUP zone that forbids the PPA's sector *(pending D3)*. No AI.
+- **AC-21** **Zone conflict:** a PPA whose barangay lies in a CLUP zone that forbids the PPA's sector (D3). No AI.
 - **AC-22** Every finding stores a reason and at least one source page ID. Rule findings start as `suggested` like AI findings.
 - **AC-23** The run result reports, for each check, the number of pairs or PPAs checked and the number of findings.
-- **AC-24** On a re-run, confirmed and rejected findings keep their status when neither PPA has changed since the review. Otherwise they come back as `suggested` *(pending D5)*.
+- **AC-24** On a re-run, confirmed and rejected findings keep their status when neither PPA has changed since the review. Otherwise they come back as `suggested` (D5).
 - **AC-25** A CCC result counts as a finding in the list only when its verdict is Conflict. Compatible and Complementary results appear only in the matrix. This follows from the PRD's count of 8 findings.
 
 ### US-04 Review findings (F4)
@@ -100,7 +102,7 @@ Applies: SH-01, SH-02, SH-03, SH-04, SH-05, SH-06, SH-07, SH-08
 - **AC-26** Findings are grouped by check. Within a check they are grouped by barangay.
 - **AC-27** Opening a finding shows both PPAs side by side (plan, title, office, barangays, cost, years), the reason, and the source pages as links that open the source panel.
 - **AC-28** Actions on each finding: Confirm, Reject, Add note. The new status shows at once. Reject asks for confirmation or offers undo.
-- **AC-29** An orphan finding has "Accept parent" and "Reject". Accepting confirms the parent link and the finding. Rejecting rejects both *(pending D4)*.
+- **AC-29** An orphan finding has "Accept parent" and "Reject". Accepting confirms the parent link and the finding. Rejecting rejects both (D4).
 - **AC-30** A check with no findings shows "No issues found for this check" with the number of pairs checked from AC-23.
 - **AC-31** Before any run, the findings screen shows that checks haven't been run, with a Run checks button.
 
@@ -111,9 +113,9 @@ As a planner, I want the CCC test pre-filled as a matrix I can export, so that I
 Applies: SH-01, SH-02, SH-03, SH-04, SH-05, SH-07
 
 - **AC-32** The matrix has one row and one column per confirmed PPA, labelled with plan and title.
-- **AC-33** Each cell shows C (Conflict), Cm (Compatible) or Cp (Complementary), or is blank if the pair wasn't a candidate. A rejected verdict shows blank. A suggested verdict is marked "AI suggestion" *(pending D9)*.
+- **AC-33** Each cell shows C (Conflict), Cm (Compatible) or Cp (Complementary), or is blank if the pair wasn't a candidate. A rejected verdict shows blank. A suggested verdict is marked "AI suggestion" (D9).
 - **AC-34** Clicking a cell, or pressing Enter on a focused cell, opens its reason and sources. Escape closes it and focus returns to the cell.
-- **AC-35** Export downloads an `.xlsx` with the same grid *(pending D9 for extra sheets)*. The layout lives only in `api/app/checks/ccc_export.py`.
+- **AC-35** Export downloads an `.xlsx` with the same grid, plus a second sheet listing each pair with verdict, status, reason and page numbers (D9). The layout lives only in `api/app/checks/ccc_export.py`.
 - **AC-36** Before any run, the matrix screen shows that checks haven't been run, with a Run checks button.
 
 ### US-06 Demo data and resilience
@@ -147,7 +149,7 @@ Applies: SH-03, SH-09
 | Upload a non-PDF (e.g. `.docx`, `.xlsx`) | Refused before upload with a message | AC-02, D1 |
 | Upload over the size limit | Refused before upload with a message naming the limit | AC-02, D8 |
 | Upload with type or period missing | Submit disabled | AC-01 |
-| PDF with no text layer (scanned) | Undecided: Gemini may still extract PPAs, but the stored page text would be empty | D13 |
+| PDF with no text layer (scanned) | Extracted anyway; the source panel shows "No text on this page" with the page number. The demo uses text PDFs only | D13 |
 | AI times out or returns invalid JSON, both providers | Status failed, message, Retry | AC-09, D2 |
 | Planner leaves the screen during extraction | Extraction continues; plans list shows status | AC-03 |
 | Page reloaded after a failed upload | Retry can't resend the file; planner picks it again | D2 |
@@ -197,9 +199,9 @@ Required checks (none run yet):
 | Sources | Every finding in the seed run has at least one page ID | PRD section 4, AC-22 |
 | Freeze rehearsal | At 06:29 one person walks J1 to J9 by hand on the deployed app | AGENTS.md |
 
-## 7. Open decisions
+## 7. Decisions
 
-Each has a recommendation. Reply "accept all" or pick by number.
+All confirmed by the team on 2026-11-14 as recommended.
 
 | ID | Decision | Blocks | Recommendation |
 |---|---|---|---|
@@ -215,10 +217,9 @@ Each has a recommendation. Reply "accept all" or pick by number.
 | D10 | J2 fallback | Journey | Prime `ai_cache` with the LCCAP upload before the demo. A seed flag loads a pre-extracted LCCAP copy as "ready" if the live upload still fails |
 | D11 | The second CCC conflict pair | AC-39 | Data lane picks it while writing the plans and records it in the answer key. Doesn't block other work |
 | D12 | Overlapping findings and invalid citations | Edge cases | A pair can have both a duplicate and a CCC finding. An AI result citing a page ID it wasn't sent is treated as invalid output |
-
 | D13 | A scanned PDF with no text layer | Edge cases | Extract anyway; the source panel shows "No text on this page" with the page number. The demo uses text PDFs only |
 
-**Readiness:** Draft. D1 to D10, D12 and D13 change criteria. D11 doesn't block.
+**Readiness:** Ready. All decisions confirmed 2026-11-14. D11 is delegated to the data lane.
 
 ## 8. Coverage index
 
