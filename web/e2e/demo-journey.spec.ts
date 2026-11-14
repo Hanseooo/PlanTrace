@@ -87,6 +87,10 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   const panel = page.getByRole("complementary", { name: "Source page" });
   await expect(panel.getByRole("heading", { name: "Page 2" })).toBeVisible();
   await expect(panel).toContainText("LCCAP-01");
+  // The row's code is marked in the page text.
+  await expect(
+    panel.locator("mark", { hasText: "LCCAP-01" }).first(),
+  ).toBeVisible();
   await expect(panel).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(panel).toBeHidden();

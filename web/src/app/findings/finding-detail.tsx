@@ -218,6 +218,7 @@ export function FindingDetail({
       {source && (
         <SourcePanel
           pageId={source.pageId}
+          highlight={[ppa_a.code, ppa_a.title, ppa_b?.code, ppa_b?.title]}
           returnFocusTo={source.opener}
           onClose={() => setSource(null)}
         />
