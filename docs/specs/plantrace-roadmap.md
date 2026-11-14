@@ -2,7 +2,7 @@
 
 # PlanTrace slice roadmap
 
-2026-11-14. **Status: Active.** Decisions D1 to D13 confirmed by the team on 2026-11-14. Current slice: S0.
+2026-11-14. **Status: Active.** Decisions D1 to D13 confirmed by the team on 2026-11-14. Current slice: S2.
 
 ## Working with this roadmap
 
@@ -110,12 +110,12 @@ Full steps: [master spec section 1](plantrace-spec.md#acceptance-journey-the-dem
 
 ## Slices
 
-**Current slice:** S1. Tickets: GitHub Issues on Hanseooo/PlanTrace. S0 is Complete ([#1](https://github.com/Hanseooo/PlanTrace/issues/1)); S1 to S6 implementation is unblocked.
+**Current slice:** S2. Tickets: GitHub Issues on Hanseooo/PlanTrace. S0 ([#1](https://github.com/Hanseooo/PlanTrace/issues/1)) and S1 ([#10](https://github.com/Hanseooo/PlanTrace/issues/10)) are Complete; S2 to S6 implementation is unblocked, and S1's answer key is ready for S4's tests.
 
 | ID | Outcome | Master spec scope | Depends on | Status | Spec |
 |---|---|---|---|---|---|
 | S0 | Walking skeleton: the deployed app shows every journey screen on `seed/fixtures/`, every endpoint in ARCHITECTURE.md's API table answers, CI runs typecheck, lint, unit tests and the demo smoke | AGENTS.md "Parallel work", RS-01 to RS-03 shells, D3 sector list in the contract, D7 | — | Complete | [#1](https://github.com/Hanseooo/PlanTrace/issues/1); PR [#8](https://github.com/Hanseooo/PlanTrace/pull/8); [CI green](https://github.com/Hanseooo/PlanTrace/actions/runs/43611755202); deployed smoke passed 2026-11-15 on https://plan-trace-gov.vercel.app with api https://plantrace-2a39.onrender.com |
-| S1 | Seeded demo city: one command loads CLUP, CDP, LDRRMP and AIP as confirmed; answer key and the LCCAP PDF exist | US-06 AC-37 to AC-40, D11 | S0 | Outline | — |
+| S1 | Seeded demo city: one command loads CLUP, CDP, LDRRMP and AIP as confirmed; answer key and the LCCAP PDF exist | US-06 AC-37 to AC-40, D11 | S0 | Complete | [#10](https://github.com/Hanseooo/PlanTrace/issues/10); tickets [#11](https://github.com/Hanseooo/PlanTrace/issues/11) to [#13](https://github.com/Hanseooo/PlanTrace/issues/13) in PR [#15](https://github.com/Hanseooo/PlanTrace/pull/15) (with the slice review fixes, `/code-review` pass 1 of 2), closeout [#14](https://github.com/Hanseooo/PlanTrace/issues/14); [CI green](https://github.com/Hanseooo/PlanTrace/actions/runs/43620804166), 38 api tests with none skipped; S1-12: the deployed smoke went red on J1 against the unseeded demo database; seed then run 2026-11-15 on the Supabase demo database, and the deployed smoke passed J1 on https://plan-trace-gov.vercel.app with api https://plantrace-2a39.onrender.com. Accepted findings: `lccap_ppas` in the answer key is a hand copy of `city.json` (a test enforces equality); S1-07's zone-type list omits `industrial` and `commercial`, which S1-07 itself needs; AIP-07 (flood control) links to CDP-09 (evacuation); the page loop appears twice in `seed.py`, and `seed.py` both renders the PDFs and loads the database |
 | S2 | Upload and extract: a PDF becomes a plan with draft PPAs (and zones for a CLUP), with failure and retry. Ships `llm.py` (cache, Gemini, OpenRouter) first, since S4 and S5 call it | US-01 AC-01 to AC-09, RS-09, D1, D2, D8, D13 | S0 | Outline | — |
 | S3 | Confirm the PPA table: edit, add, delete, source panel, confirm | US-02 AC-10 to AC-16, RS-05, RS-06, D6 | S0 | Outline | — |
 | S4 | Checks and review for duplicate, orphan and zone: run, findings list, side-by-side, confirm, reject, note, accept parent | US-03 AC-17 to AC-19, AC-21 to AC-24; US-04 AC-26 to AC-31; D4, D5, D12 | S0; S2's `llm.py` for orphan suggestions; S1's answer key for its tests | Outline | — |
@@ -132,7 +132,7 @@ Full steps: [master spec section 1](plantrace-spec.md#acceptance-journey-the-dem
 | Whether `api/app/plans/` stays in the data lane | S3 ticket lanes | Team decides at ticket 01 (ARCHITECTURE.md) |
 | Move the duplicate and zone SQL checks from the AI lane to the data lane, to unload the AI lane | S4 ticket lanes | Team decides before S4 tickets (lane change in ARCHITECTURE.md) |
 
-**Next:** write S1's spec (`/han-to-spec`), then its tickets. S2 and S3 specs can be written in parallel by their lane owners.
+**Next:** write the S2 and S3 specs (`/han-to-spec`) and their tickets, in parallel by their lane owners.
 
 ## Changes
 
