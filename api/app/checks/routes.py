@@ -41,5 +41,5 @@ def export_ccc() -> FileResponse:
     return FileResponse(
         FIXTURES_DIR / "ccc_export.xlsx",
         media_type=XLSX_MEDIA_TYPE,
-        filename="ccc_matrix.xlsx",
+        filename="ccc_export.xlsx",
     )

@@ -2,7 +2,7 @@
 
 # PlanTrace architecture
 
-2026-11-14. Status: walking skeleton in progress. `api/` serves fixture stubs (#2); the rest is planned. Ticket 01 (walking skeleton) creates the folders, commands and contract files named here. If the code and this file disagree, the code wins: fix this file in the same PR.
+2026-11-14. Status: walking skeleton (S0, spec #1) in progress. `api/` serves fixture stubs (#2), migration 001 and the migrate command exist (#3), `web/` shows the journey screens on fixture data (#4, #5), and CI runs the checks (#6). Deploy and the contract-file list are #7. If the code and this file disagree, the code wins: fix this file in the same PR.
 
 Product scope and the demo journey are in [PRD.md](PRD.md). How to write the code is in [CODING_STANDARDS.md](CODING_STANDARDS.md).
 

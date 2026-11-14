@@ -34,7 +34,7 @@ Change a line here only after telling the team. One line each: choice, because r
 
 ## Commands (use exactly)
 - Install (api): `cd api && uv sync`
-- Install (web): `cd web && npm ci && npx playwright install chromium`
+- Install (web): `cd web && npm ci && npx playwright install chromium` (CI and fresh Linux: `npx playwright install --with-deps chromium`)
 - Dev (api): `cd api && uv run uvicorn app.main:app --reload` (port 8000; set `CORS_ORIGINS` to the web origin)
 - Dev (web): `cd web && npm run dev` (http://localhost:3000)
 - Typecheck (api): `cd api && uv run pyright`

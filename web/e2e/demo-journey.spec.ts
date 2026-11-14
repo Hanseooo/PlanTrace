@@ -87,7 +87,7 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   ).toHaveText("C");
   const download = page.waitForEvent("download");
   await page.getByRole("link", { name: "Export CCC matrix (.xlsx)" }).click();
-  expect((await download).suggestedFilename()).toMatch(/\.xlsx$/);
+  expect((await download).suggestedFilename()).toBe("ccc_export.xlsx");
 
   expect(consoleErrors).toEqual([]);
 

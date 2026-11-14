@@ -70,4 +70,5 @@ def test_ccc_export_is_an_xlsx() -> None:
     assert response.headers["content-type"] == (
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+    assert 'filename="ccc_export.xlsx"' in response.headers["content-disposition"]
     load_workbook(BytesIO(response.content))
