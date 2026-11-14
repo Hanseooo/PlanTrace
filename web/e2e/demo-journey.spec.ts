@@ -76,6 +76,21 @@ test("demo journey: every screen shows the nav, the label, its data and its stat
   });
   // The header row plus the 3 draft PPAs.
   await expect(page.getByRole("table").getByRole("row")).toHaveCount(4);
+  // J3 source panel (S3-12): a row's "p. N" opens its page beside the table;
+  // Escape closes it and focus goes back to the button. The cache puts all 3
+  // LCCAP rows on page 2.
+  const sourceButton = page
+    .getByRole("row", { name: /LCCAP-01/ })
+    .getByRole("button", { name: "Source page 2" });
+  await expect(sourceButton).toHaveText("p. 2");
+  await sourceButton.click();
+  const panel = page.getByRole("complementary", { name: "Source page" });
+  await expect(panel.getByRole("heading", { name: "Page 2" })).toBeVisible();
+  await expect(panel).toContainText("LCCAP-01");
+  await expect(panel).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(panel).toBeHidden();
+  await expect(sourceButton).toBeFocused();
   await page.getByRole("link", { name: "Back to plans" }).click();
   await expect(page).toHaveURL(/\/plans$/);
   await expect(
