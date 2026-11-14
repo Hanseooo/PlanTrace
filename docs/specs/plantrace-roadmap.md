@@ -110,11 +110,11 @@ Full steps: [master spec section 1](plantrace-spec.md#acceptance-journey-the-dem
 
 ## Slices
 
-**Current slice:** S0. Tickets: GitHub Issues on Hanseooo/PlanTrace (none yet).
+**Current slice:** S0. Tickets: GitHub Issues on Hanseooo/PlanTrace. S0 spec: [#1](https://github.com/Hanseooo/PlanTrace/issues/1); tickets #2 to #7. #7, the S0 closeout, gates S1 to S6 implementation.
 
 | ID | Outcome | Master spec scope | Depends on | Status | Spec |
 |---|---|---|---|---|---|
-| S0 | Walking skeleton: the deployed app shows every journey screen on `seed/fixtures/`, every endpoint in ARCHITECTURE.md's API table answers, CI runs typecheck, lint, unit tests and the demo smoke | AGENTS.md "Parallel work", RS-01 to RS-03 shells, D3 sector list in the contract, D7 | — | Outline | — |
+| S0 | Walking skeleton: the deployed app shows every journey screen on `seed/fixtures/`, every endpoint in ARCHITECTURE.md's API table answers, CI runs typecheck, lint, unit tests and the demo smoke | AGENTS.md "Parallel work", RS-01 to RS-03 shells, D3 sector list in the contract, D7 | — | Specced | [#1](https://github.com/Hanseooo/PlanTrace/issues/1) |
 | S1 | Seeded demo city: one command loads CLUP, CDP, LDRRMP and AIP as confirmed; answer key and the LCCAP PDF exist | US-06 AC-37 to AC-40, D11 | S0 | Outline | — |
 | S2 | Upload and extract: a PDF becomes a plan with draft PPAs (and zones for a CLUP), with failure and retry. Ships `llm.py` (cache, Gemini, OpenRouter) first, since S4 and S5 call it | US-01 AC-01 to AC-09, RS-09, D1, D2, D8, D13 | S0 | Outline | — |
 | S3 | Confirm the PPA table: edit, add, delete, source panel, confirm | US-02 AC-10 to AC-16, RS-05, RS-06, D6 | S0 | Outline | — |
@@ -132,9 +132,11 @@ Full steps: [master spec section 1](plantrace-spec.md#acceptance-journey-the-dem
 | Whether `api/app/plans/` stays in the data lane | S3 ticket lanes | Team decides at ticket 01 (ARCHITECTURE.md) |
 | Move the duplicate and zone SQL checks from the AI lane to the data lane, to unload the AI lane | S4 ticket lanes | Team decides before S4 tickets (lane change in ARCHITECTURE.md) |
 
-**Next:** write S0's spec with your spec skill (`/han-to-spec`) and break it into tickets. S1 to S3 specs can be written in parallel by their lane owners while S0 is built.
+**Next:** the data lane posts the D3 sector list on #1, then claim #2 (lane:ai), #3 (lane:data) and #4 (lane:web), which can start in parallel. S1 to S3 specs can be written in parallel by their lane owners while S0 is built.
 
 ## Changes
 
 - 2026-11-14: Created from the PRD and the master spec, which keeps the detailed behavior. Slices follow the master spec's US groups; US-03 is split between S4 (rule and orphan checks) and S5 (CCC) so the CCC work, the part with the most unknowns, can move on its own.
 - 2026-11-14: Team confirmed D1 to D13 as recommended. Master spec marked Ready.
+- 2026-11-14: S0 specced as [#1](https://github.com/Hanseooo/PlanTrace/issues/1). Team decisions: confirmed test seams (demo smoke, endpoint test, migrations on CI Postgres); `/chain` and `/ask` get no stubs, so S0's "every endpoint" means the MVP rows; api deploys on Render. Env contract gains `TEST_DATABASE_URL` (D7 guard).
+- 2026-11-14: S0 broken into #2 to #7, sub-issues of #1 with native blocking links. #7, the closeout, takes over "ticket 01"'s role as the gate for later slices.
