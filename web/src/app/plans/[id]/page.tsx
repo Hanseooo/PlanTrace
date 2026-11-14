@@ -7,14 +7,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QueryStates } from "@/components/query-states";
 import { SourcePanel, usePage } from "@/components/source-panel";
 import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  ApiError,
-  apiGet,
-  apiPostForm,
-  pesos,
-  years,
-  type Schemas,
-} from "@/lib/api";
+import { PpaCell, type PpaField } from "./ppa-cell";
+import { ApiError, apiGet, apiPostForm, type Schemas } from "@/lib/api";
 import {
   FILE_RULE,
   POLL_MS,
@@ -26,17 +20,19 @@ import {
 
 type Plan = Schemas["Plan"];
 
-const COLUMNS = [
-  "Code",
-  "Title",
-  "Office",
-  "Sector",
-  "Barangays",
-  "Cost",
-  "Years",
-  "Status",
-  "Source",
+// The editable columns (S3-09), in table order.
+const FIELDS: { field: PpaField; label: string }[] = [
+  { field: "code", label: "Code" },
+  { field: "title", label: "Title" },
+  { field: "description", label: "Description" },
+  { field: "office", label: "Office" },
+  { field: "sector", label: "Sector" },
+  { field: "barangays", label: "Barangays" },
+  { field: "cost", label: "Cost" },
+  { field: "year_start", label: "Start year" },
+  { field: "year_end", label: "End year" },
 ];
+const COLUMNS = [...FIELDS.map((f) => f.label), "Status", "Source"];
 
 const isNotFound = (e: unknown) => e instanceof ApiError && e.status === 404;
 
@@ -231,35 +227,15 @@ function PpaTable({ planId }: { planId: number }) {
                 </tr>
               </thead>
               <tbody>
-                {data.map((ppa) => (
-                  <tr key={ppa.id} className="border-b align-top">
-                    <td className="py-2 pr-4">{ppa.code ?? "—"}</td>
-                    <td className="py-2 pr-4">{ppa.title ?? "—"}</td>
-                    <td className="py-2 pr-4">{ppa.office ?? "—"}</td>
-                    <td className="py-2 pr-4">{ppa.sector ?? "—"}</td>
-                    <td className="py-2 pr-4">
-                      {ppa.barangays.join(", ") || "—"}
-                    </td>
-                    <td className="py-2 pr-4 tabular-nums">
-                      {ppa.cost === null ? "—" : pesos.format(ppa.cost)}
-                    </td>
-                    <td className="py-2 pr-4">
-                      {years(ppa.year_start, ppa.year_end)}
-                    </td>
-                    <td className="py-2 pr-4">{ppa.status}</td>
-                    <td className="py-2">
-                      {ppa.page_id === null ? (
-                        "—"
-                      ) : (
-                        <SourceButton
-                          pageId={ppa.page_id}
-                          onOpen={(pageId, opener) =>
-                            setSource({ pageId, opener })
-                          }
-                        />
-                      )}
-                    </td>
-                  </tr>
+                {data.map((ppa, i) => (
+                  <PpaRow
+                    key={ppa.id}
+                    ppa={ppa}
+                    rowName={ppa.code ?? ppa.title ?? `row ${i + 1}`}
+                    onOpenSource={(pageId, opener) =>
+                      setSource({ pageId, opener })
+                    }
+                  />
                 ))}
               </tbody>
             </table>
@@ -274,5 +250,52 @@ function PpaTable({ planId }: { planId: number }) {
         </div>
       )}
     </QueryStates>
+  );
+}
+
+/** One PPA row: an editable cell per field, and the row's save error (S3-11). */
+function PpaRow({
+  ppa,
+  rowName,
+  onOpenSource,
+}: {
+  ppa: Schemas["Ppa"];
+  rowName: string;
+  onOpenSource: (pageId: number, opener: HTMLElement) => void;
+}) {
+  const [saveError, setSaveError] = useState<string | null>(null);
+  return (
+    <>
+      <tr className={`align-top ${saveError ? "" : "border-b"}`}>
+        {FIELDS.map(({ field, label }) => (
+          <td key={field} className="py-2 pr-4">
+            <PpaCell
+              ppa={ppa}
+              field={field}
+              label={label}
+              rowName={rowName}
+              onSaveError={setSaveError}
+            />
+          </td>
+        ))}
+        <td className="py-2 pr-4">{ppa.status}</td>
+        <td className="py-2">
+          {ppa.page_id === null ? (
+            "—"
+          ) : (
+            <SourceButton pageId={ppa.page_id} onOpen={onOpenSource} />
+          )}
+        </td>
+      </tr>
+      {saveError && (
+        <tr className="border-b">
+          <td colSpan={COLUMNS.length} className="pb-2">
+            <p role="alert" className="text-sm text-destructive">
+              {saveError}
+            </p>
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
