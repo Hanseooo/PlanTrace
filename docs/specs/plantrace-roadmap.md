@@ -2,7 +2,7 @@
 
 # PlanTrace slice roadmap
 
-2026-11-14. **Status: Active.** Decisions D1 to D13 confirmed by the team on 2026-11-14. Current slice: S2.
+2026-11-14. **Status: Active.** Decisions D1 to D13 confirmed by the team on 2026-11-14 (D13 replaced 2026-11-15 by S2-12). Current slice: S3.
 
 ## Working with this roadmap
 
@@ -73,7 +73,7 @@ Detail lives once, in the [master spec section 7](plantrace-spec.md#7-decisions)
 | D10 | Prime `ai_cache`; seed flag loads a pre-extracted LCCAP | S6 | User-confirmed |
 | D11 | Data lane picks the second CCC conflict pair | S1 | Delegated to the data lane (master spec AC-39) |
 | D12 | Overlapping findings allowed; citing an unsent page ID is invalid output | S4, S5 | User-confirmed |
-| D13 | Scanned PDF: extract anyway, panel shows "No text on this page" | S2 | User-confirmed |
+| D13 | Replaced 2026-11-15 by S2-12 (#17, grilling Q1): the model reads page text, so a PDF with no text fails with "No text found. Scanned PDFs aren't supported." | S2 | Replaced |
 
 ## Roadmap rules
 
@@ -110,13 +110,13 @@ Full steps: [master spec section 1](plantrace-spec.md#acceptance-journey-the-dem
 
 ## Slices
 
-**Current slice:** S2. Tickets: GitHub Issues on Hanseooo/PlanTrace. S0 ([#1](https://github.com/Hanseooo/PlanTrace/issues/1)) and S1 ([#10](https://github.com/Hanseooo/PlanTrace/issues/10)) are Complete; S2 to S6 implementation is unblocked, and S1's answer key is ready for S4's tests.
+**Current slice:** S3. Tickets: GitHub Issues on Hanseooo/PlanTrace. S0 ([#1](https://github.com/Hanseooo/PlanTrace/issues/1)), S1 ([#10](https://github.com/Hanseooo/PlanTrace/issues/10)) and S2 ([#17](https://github.com/Hanseooo/PlanTrace/issues/17)) are Complete; S3 to S6 implementation is unblocked, S1's answer key is ready for S4's tests, and S2's `llm.py` is ready for S4 and S5.
 
 | ID | Outcome | Master spec scope | Depends on | Status | Spec |
 |---|---|---|---|---|---|
 | S0 | Walking skeleton: the deployed app shows every journey screen on `seed/fixtures/`, every endpoint in ARCHITECTURE.md's API table answers, CI runs typecheck, lint, unit tests and the demo smoke | AGENTS.md "Parallel work", RS-01 to RS-03 shells, D3 sector list in the contract, D7 | — | Complete | [#1](https://github.com/Hanseooo/PlanTrace/issues/1); PR [#8](https://github.com/Hanseooo/PlanTrace/pull/8); [CI green](https://github.com/Hanseooo/PlanTrace/actions/runs/43611755202); deployed smoke passed 2026-11-15 on https://plan-trace-gov.vercel.app with api https://plantrace-2a39.onrender.com |
 | S1 | Seeded demo city: one command loads CLUP, CDP, LDRRMP and AIP as confirmed; answer key and the LCCAP PDF exist | US-06 AC-37 to AC-40, D11 | S0 | Complete | [#10](https://github.com/Hanseooo/PlanTrace/issues/10); tickets [#11](https://github.com/Hanseooo/PlanTrace/issues/11) to [#13](https://github.com/Hanseooo/PlanTrace/issues/13) in PR [#15](https://github.com/Hanseooo/PlanTrace/pull/15) (with the slice review fixes, `/code-review` pass 1 of 2), closeout [#14](https://github.com/Hanseooo/PlanTrace/issues/14); [CI green](https://github.com/Hanseooo/PlanTrace/actions/runs/43620804166), 38 api tests with none skipped; S1-12: the deployed smoke went red on J1 against the unseeded demo database; seed then run 2026-11-15 on the Supabase demo database, and the deployed smoke passed J1 on https://plan-trace-gov.vercel.app with api https://plantrace-2a39.onrender.com. Accepted findings: `lccap_ppas` in the answer key is a hand copy of `city.json` (a test enforces equality); S1-07's zone-type list omits `industrial` and `commercial`, which S1-07 itself needs; AIP-07 (flood control) links to CDP-09 (evacuation); the page loop appears twice in `seed.py`, and `seed.py` both renders the PDFs and loads the database |
-| S2 | Upload and extract: a PDF becomes a plan with draft PPAs (and zones for a CLUP), with failure and retry. Ships `llm.py` (cache, Gemini, OpenRouter) first, since S4 and S5 call it | US-01 AC-01 to AC-09, RS-09, D1, D2, D8, D13 | S0 | Outline | — |
+| S2 | Upload and extract: a PDF becomes a plan with draft PPAs, with failure and retry. Ships `llm.py` (cache, Gemini, OpenRouter) first, since S4 and S5 call it | US-01 AC-01 to AC-06, AC-08, AC-09 (AC-07 CLUP zones deferred), RS-09, D1, D2, D8, D13 replaced by S2-12 | S0 | Complete | [#17](https://github.com/Hanseooo/PlanTrace/issues/17); tickets [#18](https://github.com/Hanseooo/PlanTrace/issues/18) to [#20](https://github.com/Hanseooo/PlanTrace/issues/20) and [#22](https://github.com/Hanseooo/PlanTrace/issues/22) in PR [#24](https://github.com/Hanseooo/PlanTrace/pull/24), retry [#21](https://github.com/Hanseooo/PlanTrace/issues/21) in PR [#25](https://github.com/Hanseooo/PlanTrace/pull/25), closeout [#23](https://github.com/Hanseooo/PlanTrace/issues/23); [CI green](https://github.com/Hanseooo/PlanTrace/actions/runs/43628909336) for #24 and [CI green](https://github.com/Hanseooo/PlanTrace/actions/runs/43629686390) for #25 (red first on its 4 new tests: [run](https://github.com/Hanseooo/PlanTrace/actions/runs/43629540826)); `/code-review` pass 1 of 2 over the slice, fixes in c387321 (plain SQL constants, ARCHITECTURE AI row); demo database migrated, seeded and primed with `seed/ai_cache/lccap.json`, the deployed smoke passed J2 2026-11-15 on https://plan-trace-gov.vercel.app with api https://plantrace-2a39.onrender.com, then reseeded and primed again (4 plans). Accepted findings: the cache row shares the extraction's transaction, so a failed PPA insert also drops a valid cache row; broad `except Exception` in `read_pages`, `llm.py` and the background task, each turned into a plan status; the module-level `File` map in `plan-upload.ts` (D2); smells left as is: the 11-field `INSERT_PPA` tuple, the plan query key written three times, `chooseFile` in two pages, thin `apiGet`/`apiPostForm`, `load_cache` importing `barangays` from `routes.py` |
 | S3 | Confirm the PPA table: edit, add, delete, source panel, confirm | US-02 AC-10 to AC-16, RS-05, RS-06, D6 | S0 | Outline | — |
 | S4 | Checks and review for duplicate, orphan and zone: run, findings list, side-by-side, confirm, reject, note, accept parent | US-03 AC-17 to AC-19, AC-21 to AC-24; US-04 AC-26 to AC-31; D4, D5, D12 | S0; S2's `llm.py` for orphan suggestions; S1's answer key for its tests | Outline | — |
 | S5 | CCC pairs, matrix and export | US-03 AC-20, AC-25; US-05 AC-32 to AC-36; D9, D12 | S4's run endpoint and findings list; S2's `llm.py` | Outline | — |
