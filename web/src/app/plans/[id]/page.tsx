@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QueryStates } from "@/components/query-states";
+import { SourcePanel, usePage } from "@/components/source-panel";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   ApiError,
@@ -34,6 +35,7 @@ const COLUMNS = [
   "Cost",
   "Years",
   "Status",
+  "Source",
 ];
 
 const isNotFound = (e: unknown) => e instanceof ApiError && e.status === 404;
@@ -167,15 +169,42 @@ function FailedPlan({ plan }: { plan: Plan }) {
       {retry.isPending && !file && <p role="status">Retrying…</p>}
       {fileError && <p className="text-destructive">{fileError}</p>}
       {retry.isError && (
-        <p className="text-destructive">
-          Retry failed. {retry.error.message}
-        </p>
+        <p className="text-destructive">Retry failed. {retry.error.message}</p>
       )}
     </div>
   );
 }
 
+/** S3-12: the page number comes from the page, so the button fetches it. */
+function SourceButton({
+  pageId,
+  onOpen,
+}: {
+  pageId: number;
+  onOpen: (pageId: number, opener: HTMLElement) => void;
+}) {
+  const page = usePage(pageId);
+  const pageNo = page.data?.page_no;
+  return (
+    <Button
+      variant="link"
+      size="sm"
+      className="h-auto px-0"
+      aria-label={
+        pageNo === undefined ? "Source page" : `Source page ${pageNo}`
+      }
+      onClick={(e) => onOpen(pageId, e.currentTarget)}
+    >
+      {pageNo === undefined ? "p. …" : `p. ${pageNo}`}
+    </Button>
+  );
+}
+
 function PpaTable({ planId }: { planId: number }) {
+  const [source, setSource] = useState<{
+    pageId: number;
+    opener: HTMLElement;
+  } | null>(null);
   const ppas = useQuery({
     queryKey: ["plans", String(planId), "ppas"],
     queryFn: () => apiGet<Schemas["Ppa"][]>(`/plans/${planId}/ppas`),
@@ -189,38 +218,59 @@ function PpaTable({ planId }: { planId: number }) {
       empty="No PPAs found. Add rows by hand."
     >
       {(data) => (
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b text-muted-foreground">
-              <tr>
-                {COLUMNS.map((c) => (
-                  <th key={c} className="py-2 pr-4 font-medium">
-                    {c}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((ppa) => (
-                <tr key={ppa.id} className="border-b align-top">
-                  <td className="py-2 pr-4">{ppa.code ?? "—"}</td>
-                  <td className="py-2 pr-4">{ppa.title ?? "—"}</td>
-                  <td className="py-2 pr-4">{ppa.office ?? "—"}</td>
-                  <td className="py-2 pr-4">{ppa.sector ?? "—"}</td>
-                  <td className="py-2 pr-4">
-                    {ppa.barangays.join(", ") || "—"}
-                  </td>
-                  <td className="py-2 pr-4 tabular-nums">
-                    {ppa.cost === null ? "—" : pesos.format(ppa.cost)}
-                  </td>
-                  <td className="py-2 pr-4">
-                    {years(ppa.year_start, ppa.year_end)}
-                  </td>
-                  <td className="py-2">{ppa.status}</td>
+        <div className="flex w-full flex-col items-start gap-4 lg:flex-row">
+          <div className="w-full min-w-0 flex-1 overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b text-muted-foreground">
+                <tr>
+                  {COLUMNS.map((c) => (
+                    <th key={c} className="py-2 pr-4 font-medium">
+                      {c}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.map((ppa) => (
+                  <tr key={ppa.id} className="border-b align-top">
+                    <td className="py-2 pr-4">{ppa.code ?? "—"}</td>
+                    <td className="py-2 pr-4">{ppa.title ?? "—"}</td>
+                    <td className="py-2 pr-4">{ppa.office ?? "—"}</td>
+                    <td className="py-2 pr-4">{ppa.sector ?? "—"}</td>
+                    <td className="py-2 pr-4">
+                      {ppa.barangays.join(", ") || "—"}
+                    </td>
+                    <td className="py-2 pr-4 tabular-nums">
+                      {ppa.cost === null ? "—" : pesos.format(ppa.cost)}
+                    </td>
+                    <td className="py-2 pr-4">
+                      {years(ppa.year_start, ppa.year_end)}
+                    </td>
+                    <td className="py-2 pr-4">{ppa.status}</td>
+                    <td className="py-2">
+                      {ppa.page_id === null ? (
+                        "—"
+                      ) : (
+                        <SourceButton
+                          pageId={ppa.page_id}
+                          onOpen={(pageId, opener) =>
+                            setSource({ pageId, opener })
+                          }
+                        />
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {source && (
+            <SourcePanel
+              pageId={source.pageId}
+              returnFocusTo={source.opener}
+              onClose={() => setSource(null)}
+            />
+          )}
         </div>
       )}
     </QueryStates>

@@ -37,12 +37,38 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
       res.status,
     );
   }
+  // A 204 (e.g. DELETE) has no body to parse (S3-16).
+  if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
 
 /** GET a JSON body from the API. */
 export function apiGet<T>(path: string): Promise<T> {
   return apiFetch<T>(path);
+}
+
+/** Send a JSON body with `method` and read the JSON answer. */
+function apiSendJson<T>(method: string, path: string, body: unknown) {
+  return apiFetch<T>(path, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+/** POST a JSON body and read the JSON answer. */
+export function apiPost<T>(path: string, body: unknown = {}): Promise<T> {
+  return apiSendJson<T>("POST", path, body);
+}
+
+/** PATCH a JSON body and read the JSON answer. */
+export function apiPatch<T>(path: string, body: unknown): Promise<T> {
+  return apiSendJson<T>("PATCH", path, body);
+}
+
+/** DELETE a resource; the API answers 204. */
+export function apiDelete(path: string): Promise<void> {
+  return apiFetch<void>(path, { method: "DELETE" });
 }
 
 /** POST a multipart form (an upload) and read the JSON answer. */
