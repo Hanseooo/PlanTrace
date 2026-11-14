@@ -1,10 +1,10 @@
 {
   "AIP-04": {
     "parent_code": "CDP-03",
-    "reason": "The AIP project on upland sitio road concreting and the CDP project's farm-to-market roads program both fall under the roads sector. They share the barangay PSGC code 1199900006 and have overlapping years, making the CDP-03 a suitable candidate."
+    "reason": "Both the AIP project and the candidate program focus on roads and involve Barangay 6. Additionally, they share an overlapping timeframe with the AIP project extending into the years 2026-2031."
   },
   "AIP-05": {
     "parent_code": "CDP-03",
-    "reason": "Both the AIP project and CDP-03 focus on roads, specifically aiming to improve accessibility to agricultural areas. Furthermore, they share the overlapping barangay PSGC code 1199900010 and have an overlapping year (2027)."
+    "reason": "Both the AIP project and the CDP-03 project fall under the roads sector and share an overlapping barangay (Barangay 10) with the same target year (2027). This indicates a direct connection between the two projects in terms of infrastructure development."
   }
 }
