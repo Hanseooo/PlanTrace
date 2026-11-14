@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "skills": {
+    "code-review": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "c2e0695f4d6bb9e1cc0b4c68d9965d062271cff387000fa59c1c2d31a18c25b8"
+    },
+    "hack-init": {
+      "source": "Hanseooo/hanseo-skills",
+      "sourceType": "github",
+      "computedHash": "6f069f074a5d0ccb0d022d8a5a821de0a7ea6553d799c70b686548fb75c37f99"
+    },
+    "han-grill": {
+      "source": "Hanseooo/hanseo-skills",
+      "sourceType": "github",
+      "computedHash": "f263554f57c8b6bc4a65cfec11ab31af0e466399155caf8849ec1a0968d74ec4"
+    },
+    "han-to-spec": {
+      "source": "Hanseooo/hanseo-skills",
+      "sourceType": "github",
+      "computedHash": "1fe4c198079d31feff9f98b673a43ae833faa3e6dcab43627d75fcbde144e217"
+    },
+    "han-to-tickets": {
+      "source": "Hanseooo/hanseo-skills",
+      "sourceType": "github",
+      "computedHash": "d10376e9a36d0a1a0a264148acc22f63f692ff4e8dd378176eda8b844e84d9eb"
+    },
+    "setup-matt-pocock-skills": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "a7107058cd22442215320bb4282a7d8623aeabc7fbf9817b560c5464f34efd51"
+    },
+    "stint": {
+      "source": "Hanseooo/hanseo-skills",
+      "sourceType": "github",
+      "computedHash": "6c50d7bd975c34dff68f9e00adf8d76bf3b0a7e67b3c9538f3001d5a99bfbc08"
+    },
+    "tdd": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "computedHash": "535d1a6f3bd5bded8971e7e4ea76538907cbff6b6d32c39cf97b669869dcd383"
+    }
+  }
+}
