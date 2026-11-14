@@ -382,6 +382,10 @@ function PpaTable({ planId }: { planId: number }) {
           {source && (
             <SourcePanel
               pageId={source.pageId}
+              highlight={(() => {
+                const row = data.find((p) => p.id === source.ppaId);
+                return [row?.code, row?.title];
+              })()}
               returnFocusTo={source.opener}
               onClose={() => setSource(null)}
             />
