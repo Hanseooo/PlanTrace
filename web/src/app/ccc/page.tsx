@@ -57,7 +57,8 @@ async function downloadExport() {
   a.href = url;
   a.download = "ccc_export.xlsx";
   a.click();
-  URL.revokeObjectURL(url);
+  // Revoking in the same task can cancel the download in Firefox and Safari.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 export default function CccPage() {
@@ -68,7 +69,7 @@ export default function CccPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="CCC matrix"
-        description="Every pair of projects that share a place, and how they affect each other. Read across a row and down a column to find a pair."
+        description="Every pair of projects from different plans that share a barangay or sector, and how they affect each other. Read across a row and down a column to find a pair."
         actions={
           <Button
             variant="outline"
