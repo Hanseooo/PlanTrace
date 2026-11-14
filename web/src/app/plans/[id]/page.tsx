@@ -8,7 +8,7 @@ import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { QueryStates } from "@/components/query-states";
 import { SourcePanel, usePage } from "@/components/source-panel";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { PpaCell, type PpaField } from "./ppa-cell";
+import { PpaCell, ppasKey, type PpaField } from "./ppa-cell";
 import {
   ApiError,
   apiDelete,
@@ -57,16 +57,18 @@ export default function PlanPage() {
     retry: (count, error) => !isNotFound(error) && count < 1,
   });
   const status = plan.data?.status;
+  const planId = plan.data?.id;
 
   // The status changed (e.g. extracting → ready): refresh the list's copy too.
   const lastStatus = useRef(status);
   useEffect(() => {
     if (lastStatus.current && status && lastStatus.current !== status) {
       void queryClient.invalidateQueries({ queryKey: ["plans"], exact: true });
-      void queryClient.invalidateQueries({ queryKey: ["plans", id, "ppas"] });
+      if (planId !== undefined)
+        void queryClient.invalidateQueries({ queryKey: ppasKey(planId) });
     }
     lastStatus.current = status;
-  }, [status, id, queryClient]);
+  }, [status, planId, queryClient]);
 
   return (
     <div className="flex flex-col items-start gap-4">
@@ -124,7 +126,6 @@ function PlanBody({ plan }: { plan: Plan }) {
 }
 
 type Ppa = Schemas["Ppa"];
-const ppasKey = (planId: number) => ["plans", String(planId), "ppas"];
 
 /** S3-15: confirm a ready plan and its rows; disabled with no rows. */
 function ConfirmPlan({ planId }: { planId: number }) {
@@ -261,6 +262,8 @@ function PpaTable({ planId }: { planId: number }) {
   const [source, setSource] = useState<{
     pageId: number;
     opener: HTMLElement;
+    /** The row whose Source button opened the panel. */
+    ppaId: number;
   } | null>(null);
   const queryClient = useQueryClient();
   const ppas = useQuery({
@@ -329,12 +332,11 @@ function PpaTable({ planId }: { planId: number }) {
                     rowName={ppa.code ?? ppa.title ?? `row ${i + 1}`}
                     autoOpen={ppa.id === addedId}
                     onOpenSource={(pageId, opener) =>
-                      setSource({ pageId, opener })
+                      setSource({ pageId, opener, ppaId: ppa.id })
                     }
                     onDeleted={() => {
-                      // S3-14: the panel closes with the row whose page it showed.
-                      if (source && source.pageId === ppa.page_id)
-                        setSource(null);
+                      // S3-14: the panel closes with the row that opened it.
+                      if (source?.ppaId === ppa.id) setSource(null);
                     }}
                   />
                 ))}
@@ -370,7 +372,12 @@ function PpaRow({
   onOpenSource: (pageId: number, opener: HTMLElement) => void;
   onDeleted: () => void;
 }) {
-  const [saveError, setSaveError] = useState<string | null>(null);
+  // One slot per cell, so one cell's save doesn't clear another's error.
+  const [saveErrors, setSaveErrors] = useState<
+    Partial<Record<PpaField, string>>
+  >({});
+  const errors = FIELDS.flatMap(({ field }) => saveErrors[field] ?? []);
+  const saveError = errors.length ? errors.join(" ") : null;
   return (
     <>
       <tr className={`align-top ${saveError ? "" : "border-b"}`}>
@@ -382,7 +389,9 @@ function PpaRow({
               label={label}
               rowName={rowName}
               autoOpen={autoOpen && field === FIELDS[0].field}
-              onSaveError={setSaveError}
+              onSaveError={(message) =>
+                setSaveErrors((e) => ({ ...e, [field]: message ?? undefined }))
+              }
             />
           </td>
         ))}
