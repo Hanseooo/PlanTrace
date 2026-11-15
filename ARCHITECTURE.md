@@ -24,7 +24,7 @@ The web app calls the API directly over HTTPS, with CORS. There is no Next.js pr
 
 | Part | Choice | Why |
 |---|---|---|
-| Frontend | Next.js, shadcn/ui, TanStack Table and Query | Editable tables and the matrix |
+| Frontend | Next.js, shadcn/ui, TanStack Query; tables are plain HTML `<table>` | Server data, polling and cache updates for the editable tables and the matrix |
 | Backend | FastAPI, Pydantic, `uv` | One schema for extraction, checks and API |
 | Types across languages | `openapi-typescript` from FastAPI's OpenAPI | Frontend and backend agree on the contract |
 | Database | Supabase as plain Postgres, `pg_trgm`, full-text search. No Supabase Auth or auto API | One shared database for dev and demo |
