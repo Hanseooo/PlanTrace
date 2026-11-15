@@ -31,7 +31,7 @@ PRD, architecture, coding standards, master spec and slice roadmap. No code yet.
 
 ```
 plantrace/
-  web/    Next.js, shadcn/ui, TanStack Table and Query
+  web/    Next.js, shadcn/ui, TanStack Query
   api/    FastAPI, Pydantic, uv, psycopg 3, PyMuPDF, LangChain (Gemini, OpenRouter fallback)
   seed/   Synthetic plans for the fictional City of Sampaguita, and expected_findings.json
 ```
